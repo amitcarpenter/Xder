@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { fetchUserById } = require('../models/users')
+const { fetchUserById } = require("../models/users");
 
 const auth = async (req, res, next) => {
   try {
@@ -8,38 +8,35 @@ const auth = async (req, res, next) => {
     if (typeof bearerHeader !== undefined) {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
-      const verifyUser = jwt.verify(req.token, 'SecretKey');
-      const userdata = verifyUser.data.id
+      const verifyUser = jwt.verify(req.token, "SecretKey");
+      const userdata = verifyUser.data.id;
       console.log(verifyUser, "user verify");
 
       const user = await fetchUserById({ id: verifyUser.data.id });
 
       if (user !== null) {
         next();
-      }
-      else {
+      } else {
         return res.json({
           message: "Access Forbidden",
           status: 401,
           success: "0",
         });
       }
-    }
-    else {
+    } else {
       return res.json({
         message: "Token Not Provided",
         status: 400,
         success: "0",
       });
     }
-  }
-  catch (err) {
+  } catch (err) {
     console.log(err);
     return res.json({
       message: "Access forbidden",
       status: 401,
       success: "0",
-      Error:err
+      Error: err,
     });
   }
 };

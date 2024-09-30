@@ -179,9 +179,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return distance;
 }
 // Function to convert degrees to radians
-  function deg2rad(deg) {
-    return deg * (Math.PI / 180);
-  }
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
 
 function generateRandomFiveDigitNumber() {
   return Math.floor(10000 + Math.random() * 90000);
