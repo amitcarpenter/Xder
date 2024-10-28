@@ -3,7 +3,8 @@ const util = require('util');
 
 var db_config = {
   host: 'localhost',
-  user: 'xder_dating',
+  // user: 'xder_dating',
+  user: 'root',
   // password: 'w9cTq4@A68Du',
   password: 'root',
   port: '3306',
