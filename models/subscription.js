@@ -3,6 +3,7 @@ const config = require("../config");
 const baseurl = config.base_url;
 
 module.exports = {
+
   Allsubscription: async (status) => {
     return db.query("select * from subscription_plan where status = ?", [status]);
   },
@@ -19,6 +20,7 @@ module.exports = {
   ChecksubscriptionUser: async (user_id) => {
     return db.query("select A.expired_at,A.subscription_id,A.start_date, A.sub_status as sub_status, A.id as user_sub_id ,A.created_at as created_at,B.* from user_subscription A JOIN  subscription_plan B ON B.id = A.subscription_id  where A.user_id = ? AND A.overlap_status = 0 ORDER BY A.id ASC ", [user_id]);
   },
+  
   Checksubscription_by_id: async (user_id) => {
     return db.query("select A.expired_at,A.subscription_id,A.start_date,A.overlap_status,A.overlap_date,A.created_at as created_at,B.* from user_subscription A JOIN  subscription_plan B ON B.id = A.subscription_id  where A.user_id = ? AND overlap_status = 1  ", [user_id]);
   },

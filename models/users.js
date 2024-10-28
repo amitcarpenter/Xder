@@ -55,8 +55,6 @@ module.exports = {
     ]);
   },
 
-  // SELECT * FROM `notifications` WHERE `sender_id` = 3 AND `reciver_id` = 1 ORDER BY `id` DESC;
-
   notificationVisit: async (where) => {
     return db.query(`select * from notifications  '${where}' , order by id DESC`);
   },
@@ -82,6 +80,7 @@ module.exports = {
       act_token,
     ]);
   },
+
   update_otp_by_email: async (otp,email) => {
     return db.query(`Update users set OTP_forgot= ? where email=?`, [
       otp,email
@@ -137,6 +136,7 @@ module.exports = {
   fetchUserBy_Id: async (id) => {
     return db.query(`select * from users where id= '${id}'`);
   },
+  
   fcmToken: async (email, fcm_token) => {
     return db.query(`Update users set fcm_token= '${fcm_token}' where email='${email}'`);
   },
@@ -157,12 +157,15 @@ module.exports = {
   check_notification: async (notification_id) => {
     return db.query(`select * from notifications where id = '${notification_id}'`);
   },
+
   update_notification: async (notification_id, status) => {
     return db.query(`update notifications set status = '${status} where id = '${notification_id}'`);
   },
+
   add_favorite_user: async (favorite_user_info) => {
     return db.query("insert into favorite_users set ?", [favorite_user_info]);
   },
+
   addnotification: (async (send_notification) => {
     return db.query('insert into notifications set ?', [send_notification])
   }),
@@ -171,20 +174,15 @@ module.exports = {
     return db.query(`update notifications set request_status = '${request_status}', status= '1' where id = '${notification_id}'`);
   },
 
-
   fetch_fcm: async (id) => {
     return db.query(`select *  from users where id = '${id}'`);
   },
+
   Online_Status: async (user_id) => {
     return db.query(
       `update users set online_status = 1 where id = '${user_id}'`
     );
   },
-  // offline_Status: async (user_id) => {
-  //   return db.query(
-  //     `update users set online_status = 0 where id = '${user_id}'`
-  //   );
-  // },
 
   offline_Status: async (user_id) => {
     return db.query(
@@ -193,10 +191,9 @@ module.exports = {
        WHERE id = ?`,
       [user_id]
     );
-  }
-  ,
-  my_all_favorite_user: async (user_id) => {
+  },
 
+  my_all_favorite_user: async (user_id) => {
     return db.query(
       `select * from  favorite_users  where user_id = '${user_id}' ORDER BY created_at DESC`
     );
@@ -235,7 +232,6 @@ module.exports = {
     return db.query("select * from users  where phone_number=?", [phone_number]);
   },
 
-
   updatePassword_1: async (password, token) => {
     return db.query("Update users set show_password = ? where token=?", [
       password,
@@ -246,12 +242,15 @@ module.exports = {
   update_chat_notification_status: async (user_id, chat_notification_status) => {
     return db.query(`Update users set chat_notification = '${chat_notification_status}'  where id= '${user_id}'`);
   },
+
   update_group_notification_status: async (user_id, group_notification_status) => {
     return db.query(`Update users set group_notification = '${group_notification_status}'  where id= '${user_id}'`);
   },
+
   update_tapes_notification_status: async (user_id, taps_notification_status) => {
     return db.query(`Update users set taps_notification	 = '${taps_notification_status}'  where id= '${user_id}'`);
   },
+
   update_video_call_notification_status: async (user_id, video_call_notification_status) => {
     return db.query(`Update users set video_Call_notification = '${video_call_notification_status}'  where id= '${user_id}'`);
   },
@@ -259,6 +258,8 @@ module.exports = {
   update_dont_disturb_status: async (user_id, dont_disturb) => {
     return db.query(`Update users set dont_disturb = '${dont_disturb}'  where id= '${user_id}'`);
   },
+
+
   get_all_users: async (user_id, search) => {
     let where = "";
     if (search) {
@@ -276,7 +277,6 @@ module.exports = {
   // ameen
 
   filter: async (age1, age2, search, user_id, body_type, relationship_status, looking_for, meet_at, height_1, height_2, weight_1, weight_2, online, app_verify, has_photo, ethnicity) => {
-    // console.log("age1==>",age1, "age2==>",age2, "search==>",search, "user_id==>",user_id, "body_type==>",body_type, "relationship_status==>",relationship_status, "looking_for==>",looking_for, "meet_at==>",meet_at, "height_1==>",height_1, "height_2==>",height_2, "weight_1==>",weight_1, "weight_2==>",weight_2, "online==>",online, "app_verify==>",app_verify, "has_photo==>",has_photo);
     let where = ` WHERE id != '${user_id}' AND complete_profile_status = 1 AND incognito_mode = 0`;
 
     if ((age1 != undefined && age2 != undefined) && (age1 != "" && age2 != "")) {
