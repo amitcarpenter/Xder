@@ -8090,7 +8090,6 @@ exports.new_get_all_users = async (req, res) => {
     );
     console.log("bodyishere+++++", req.body);
     const result = schema.validate(req.body);
-
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
 
