@@ -585,7 +585,7 @@ module.exports = {
   deleteAllProfileVisits: async (lastDay) => {
     return db.query(`Delete from profile_visit  where created_at < ? `, [lastDay])
   },
-  newUpdateUserById: async (user, user_id) => { 
+  newUpdateUserById: async (user, user_id) => {
     return db.query(
       `UPDATE users SET 
        name=?, 

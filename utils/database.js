@@ -1,21 +1,15 @@
 const mysql = require('mysql2');
 const util = require('util');
 
-// var db_config = {
-//     host: 'localhost',
-//     user: 'xder_dating',
-//     password: 'w9cTq4@A68Du',
-//     port: '3306',
-//     database: 'xdar_dating'
-// };
-
 var db_config = {
   host: 'localhost',
-  user: 'root',
+  user: 'xder_dating',
+  password: 'w9cTq4@A68Du',
   password: 'root',
   port: '3306',
   database: 'xdar_dating'
 };
+
 var connection;
 
 function handleDisconnect() {

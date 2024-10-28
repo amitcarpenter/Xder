@@ -47,6 +47,7 @@ router.post("/email_change", auth, userController.email_change);
 
 router.post("/incognito_mode", userController.incognito_mode);
 
+
 router.post("/change_Password_after_login", auth, userController.change_Password_after_login);
 
 router.post(
@@ -99,6 +100,7 @@ router.post(
 router.post("/myAlbum", auth, userController.myAlbum);
 
 router.post("/deleteAlbum", userController.deleteAlbum);
+
 
 router.post("/deleteAlbumPhotos", userController.deleteAlbumPhotos);
 

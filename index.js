@@ -2,33 +2,23 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const user = require("./routes/users");
 const subscription = require("./routes/subscription")
-const cron  = require('node-cron')
+const cron = require('node-cron')
 const app = express();
 const moment = require('moment-timezone');
 const cors = require("cors");
 const http = require("http");
 const { deleteAllNotificationsProfileVisits, deleteAllProfileVisits } = require("./models/users");
 
-// app.use(cors());
-// // app.use(express.json());
-// app.use(
-//   express.urlencoded({
-//     extended: true,
-//   })
-// );
-// app.use(express.static("public"));
-
-// app.use(bodyParser.json());
-
 app.use(cors());
-
-// Middleware to parse JSON data
-app.use(express.json());
-
-// Middleware to parse URL-encoded data
-app.use(express.urlencoded({ extended: true }));
-
+// app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 app.use(express.static("public"));
+
+app.use(bodyParser.json());
 
 app.use("/", user);
 
@@ -42,30 +32,30 @@ cron.schedule('*/5 * * * * *', async () => {
   // // Get the current date and time in the custom time zone
   const currentDate = moment.tz(timeZone);
 
-  const twentyFourHoursBefore = moment(currentDate).subtract(1, 'days');
+  const twentyFourHoursBefore = moment(currentDate).subtract(7, 'days');
 
   // const tenMinutesBefore = moment(currentDate).subtract(1, 'days');
 
   // Format the current date in 'YYYY-MM-DD HH:mm:ss' format
-   const formattedCurrentDate = currentDate.format('YYYY-MM-DD HH:mm:ss');
+  const formattedCurrentDate = currentDate.format('YYYY-MM-DD HH:mm:ss');
 
   // Format the date 10 minutes ago in 'YYYY-MM-DD HH:mm:ss' format
   const formattedtwentyFourHoursBefore = twentyFourHoursBefore.format('YYYY-MM-DD HH:mm:ss');
 
 
   // const formattedTenMinutesAgo = tenMinutesBefore.format('YYYY-MM-DD HH:mm:ss');
-  // await deleteAllNotificationsProfileVisits(forma  ttedtwentyFourHoursBefore);
-  // await deleteAllProfileVisits(formattedtwentyFourHoursBefore)
+  await deleteAllNotificationsProfileVisits(formattedtwentyFourHoursBefore);
+  await deleteAllProfileVisits(formattedtwentyFourHoursBefore)
 
-  //  console.log('Current Date:', formattedCurrentDate);
-  // console.log('Ten Minutes Ago:', formattedTenMinutesAgo);
+  // console.log('Current Date:', formattedCurrentDate);
+  // console.log('Ten Minutes Ago:', formattedtwentyFourHoursBefore);
 
   //await updateBookingStatusIfTimePassed(formattedTenMinutesAgo);
 
 });
 
 app.get("/", (req, res) => {
-  
+
   res.setHeader("Access-Control-Allow-Origin", "*", "http://44.199.1.149:4000", {
     reconnect: true,
   });

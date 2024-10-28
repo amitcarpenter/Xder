@@ -18,6 +18,11 @@ module.exports = {
   getSelectedColumn: async (table, where, column) => {
     return db.query(`select ${column} from ${table} ${where}`);
   },
+  // filtertags: async (search) => {
+  //   let where = ` WHERE tag_name  LIKE '%${search}%'`;
+  //   const query = `SELECT * FROM tags ${where} ORDER BY id DESC`;
+  //   return db.query(query);
+  // },
   // filtertags : async (search) => {
   //   let where = search ? ` WHERE tag_name LIKE '%${search}%'` : '';
   //   const query = `

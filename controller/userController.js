@@ -13,46 +13,21 @@ const fs = require("fs");
 const axios = require("axios");
 require("moment-timezone");
 const config = require("../config");
-const logError = require("../logger/errorHandler"); // Import the logError function
-const {
-  ChecksubscriptionDates,
-  fetch_subscription_plan,
-  get_subscription_plan_by_id,
-} = require("../models/subscription");
-const pdf = require("html-pdf");
-const userFcm = require("../utils/firebaseAdminUser.js");
+const logError = require('../logger/errorHandler'); // Import the logError function
+const { ChecksubscriptionDates, fetch_subscription_plan, get_subscription_plan_by_id } = require('../models/subscription')
+const pdf = require('html-pdf');
+const userFcm = require('../utils/firebaseAdminUser.js');
 
 const {
   registerUser,
-  phone_no_check,
-  delete_text,
-  fetch_text,
-  add_text,
-  update_notification_status,
-  update_chat_notification_status,
-  update_video_call_notification_status,
-  update_group_notification_status,
-  get_all_users,
-  Allnotification,
-  update_incognito_status,
-  Allnotificationbyuser_id,
-  update_tapes_notification_status,
-  my_all_favorite_user,
-  Get_user_info,
-  get_block_user_status,
-  deleteNotification,
-  delete_User,
-  addnotification,
-  update_dont_disturb_status,
-  updateUserBy_ActToken,
-  get_profile_vist,
-  fetchUserByToken,
-  all_Users,
-  username_Check,
-  filter,
-  insert_report,
-  updatePassword_1,
-  Get_new_users,
+  phone_no_check, delete_text, fetch_text, add_text, update_notification_status, update_chat_notification_status, update_video_call_notification_status, update_group_notification_status,
+  get_all_users, Allnotification, update_incognito_status, Allnotificationbyuser_id, update_tapes_notification_status,
+  my_all_favorite_user, Get_user_info, get_block_user_status, deleteNotification,
+  delete_User, addnotification, update_dont_disturb_status,
+  updateUserBy_ActToken, get_profile_vist,
+  fetchUserByToken, all_Users,
+  username_Check, filter, insert_report,
+  updatePassword_1, Get_new_users,
   updatePassword,
   fetchUserByPhone_number_and_otp,
   fetchUserByPhone_number,
@@ -74,49 +49,19 @@ const {
   verify_otp,
   updateUserById,
   verify_status,
-  Online_Status,
-  profile_vist,
-  getAllprofileVist,
+  Online_Status, profile_vist, getAllprofileVist,
   add_favorite_user,
   fetchUserByIdtoken,
   deleteFavUser,
-  Addalbums,
-  fcmToken_phone,
-  MyAlbums,
-  fetch_fcm,
-  Allsubscription,
-  uploadAlbums,
-  update_notification,
-  albumsPhotos,
-  check_notification,
-  myAlbumbyId,
-  fcmToken,
-  updateAlbum,
-  appVerification,
-  addShowme,
-  updateShowme,
-  appVerificationImage,
-  updateReqnotification,
-  insertAlbumShare,
-  addProfileimages,
-  profileimages,
-  deleteProfileimages,
-  fetchUserByphoneEmail,
-  MyAlbumsharing,
-  update_viewed_profile,
-  checkViewedProfile,
-  insertgroup,
-  inserttags,
-  groupChat,
-  updateUserByIdcompletet,
-  getUser_by_id,
-  block_unblock,
-  insert_block_unblock,
-  get_block_user,
-  get_block_list,
-  shared_to_count,
-  Get_nearby_users,
-  notificationVisit,
+  Addalbums, fcmToken_phone,
+  MyAlbums, fetch_fcm, Allsubscription,
+  uploadAlbums, update_notification,
+  albumsPhotos, check_notification,
+  myAlbumbyId, fcmToken,
+  updateAlbum, appVerification, addShowme, updateShowme, appVerificationImage, updateReqnotification,
+  insertAlbumShare, addProfileimages, profileimages, deleteProfileimages, fetchUserByphoneEmail,
+  MyAlbumsharing, update_viewed_profile, checkViewedProfile, insertgroup, inserttags, groupChat, updateUserByIdcompletet,
+  getUser_by_id, block_unblock, insert_block_unblock, get_block_user, get_block_list, shared_to_count, Get_nearby_users, notificationVisit,
   fetchVisitsInPast24Hours,
   markNotificationAsSeen,
   selectGames,
@@ -142,10 +87,8 @@ const {
   getUniqueUserIds,
   checkAlbumRequest,
   checkAlbumRequestNotification,
-  cancelAlbumRequestNotification,
-  all_group_notifications,
-  getUsers_by_ids,
-} = require("../models/users");
+  cancelAlbumRequestNotification ,
+  all_group_notifications,getUsers_by_ids} = require("../models/users");
 const {
   insertData,
   updateData,
@@ -153,9 +96,9 @@ const {
   deleteData,
   fetchCount,
   getSelectedColumn,
-  insertInvoiceData,
-  get_invoice_detailby_id,
   filterTags,
+  insertInvoiceData,
+  get_invoice_detailby_id
 } = require("../models/common");
 const { Console, count } = require("console");
 const e = require("express");
@@ -164,16 +107,15 @@ const baseurl = config.base_url;
 const Fcm_serverKey = config.fcm_serverKey;
 const googledistance_key = config.googledistance_key;
 
+
+
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = deg2rad(lat2 - lat1);
   const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) *
-      Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c; // Distance in kilometers
   return distance;
@@ -209,28 +151,28 @@ function distanceShow(units, origins, destinations) {
   return new Promise((resolve, reject) => {
     const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=${units}&origins=${origins}&destinations=${destinations}&key=${googledistance_key}`;
     // console.log("apiUrlapiUrlapiUrlapiUrlapiUrlapiUrl",apiUrl)
-    axios
-      .get(apiUrl)
-      .then((response) => {
+    axios.get(apiUrl)
+      .then(response => {
         // Handle the response here
         // const distance = response.data.rows[0]?.elements[0]?.distance.text;
         // resolve(distance);
         // console.log("response is here ", response)
         const distanceObj = response.data.rows[0]?.elements[0];
-        console.log("distanceObj", distanceObj);
+        console.log("distanceObj", distanceObj)
         if (distanceObj.distance) {
-          console.log("distanceObj", distanceObj);
+          console.log("distanceObj", distanceObj)
           const distanceValue = distanceObj.distance.value;
-          console.log("distanceValue", distanceValue);
+          console.log("distanceValue", distanceValue)
 
           const distance = distanceObj.distance.text;
 
           resolve({ distance, distanceValue });
+
         } else {
           resolve("No distance information available");
         }
       })
-      .catch((error) => {
+      .catch(error => {
         // Handle errors here
         console.error(error);
         reject(error);
@@ -238,8 +180,9 @@ function distanceShow(units, origins, destinations) {
   });
 }
 
+
 function calculateAge(dateString) {
-  const [day, month, year] = dateString.split("/").map(Number);
+  const [day, month, year] = dateString.split('/').map(Number);
 
   // Create a Date object using the parsed values
   const birthDate = new Date(year, month - 1, day);
@@ -307,10 +250,11 @@ function generateOTP(length = 8) {
   return OTP;
 }
 
+
 async function checkSubscriptionDetail(user_id) {
   try {
     const currentDate = moment();
-    let start_date = currentDate.format("YYYY-MM-DD");
+    let start_date = currentDate.format('YYYY-MM-DD')
     const subscriptionStatus = await ChecksubscriptionDates(user_id);
     console.log("subscriptionStatus", subscriptionStatus);
     const Freesubscription = await Allsubscription(0);
@@ -318,17 +262,20 @@ async function checkSubscriptionDetail(user_id) {
     if (subscriptionStatus.length > 0) {
       if (start_date == subscriptionStatus[0].expired_at) {
         return 1;
+
       } else {
         return subscriptionStatus[0];
       }
     } else {
       return Freesubscription[0];
     }
+
   } catch (error) {
     console.error("Error:", error);
     return 2;
   }
 }
+
 
 var transporter = nodemailer.createTransport({
   // service: 'gmail',
@@ -525,6 +472,7 @@ exports.verifyUser = async (req, res) => {
           message: "Email verified successfully! You can now log in.",
           status: 200,
         });
+
       } else {
         return res.json({
           success: false,
@@ -571,11 +519,8 @@ exports.verifyUserEmail = async (req, res) => {
         );
 
         let setting = {
-          explore: 1,
-          distance: 1,
-          view_me: 0,
-          user_id: data[0]?.id,
-        };
+          explore: 1, distance: 1, view_me: 0, user_id: data[0]?.id
+        }
         const caddShowme = addShowme(setting);
 
         if (result.affectedRows) {
@@ -610,7 +555,7 @@ exports.loginUser = async (req, res) => {
           "string.max": "maximum 15 values allowed",
         }),
         latitude: Joi.string().optional(),
-        longitude: Joi.string().optional(),
+        longitude: Joi.string().optional()
       })
     );
     const result = schema.validate({ email, password, fcm_token });
@@ -700,6 +645,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+
 exports.social_login = async (req, res) => {
   try {
     const { email, social_id, name, fcm_token } = req.body;
@@ -716,6 +662,7 @@ exports.social_login = async (req, res) => {
         social_id: [Joi.string().empty().required()],
         name: [Joi.string().empty().required()],
         fcm_token: [Joi.string().empty().required()],
+
       })
     );
     const result = schema.validate(req.body);
@@ -732,6 +679,7 @@ exports.social_login = async (req, res) => {
       const data = await fetchUserByEmail(email);
 
       if (data.length !== 0) {
+
         const toke = jwt.sign(
           {
             data: {
@@ -747,9 +695,10 @@ exports.social_login = async (req, res) => {
           message: " login successfully ",
           status: 200,
           Jwt_token: toke,
-          user_info: data[0],
+          user_info: data[0]
         });
       } else {
+
         const user = {
           email: email,
           social_id: social_id,
@@ -761,11 +710,8 @@ exports.social_login = async (req, res) => {
         };
         const create_user = await registerUser(user);
         let setting = {
-          explore: 1,
-          distance: 1,
-          view_me: 0,
-          user_id: create_user.insertId,
-        };
+          explore: 1, distance: 1, view_me: 0, user_id: create_user.insertId
+        }
         const caddShowme = addShowme(setting);
         const user_id = create_user.insertId;
         const toke = jwt.sign(
@@ -783,7 +729,7 @@ exports.social_login = async (req, res) => {
           message: " Successfully ",
           Jwt_token: toke,
           status: 200,
-          user_info: data1[0],
+          user_info: data1[0]
         });
       }
     }
@@ -797,6 +743,7 @@ exports.social_login = async (req, res) => {
     });
   }
 };
+
 
 exports.loginUser_with_phone = async (req, res) => {
   try {
@@ -813,7 +760,7 @@ exports.loginUser_with_phone = async (req, res) => {
           "string.max": "maximum 15 values allowed",
         }),
         latitude: Joi.string().optional(),
-        longitude: Joi.string().optional(),
+        longitude: Joi.string().optional()
       })
     );
     const result = schema.validate(req.body);
@@ -849,7 +796,8 @@ exports.loginUser_with_phone = async (req, res) => {
                     id: check_phone_number[0].id,
                   },
                 },
-                "SecretKey"
+                "SecretKey",
+
               );
               bcrypt.genSalt(saltRounds, async function (err, salt) {
                 bcrypt.hash(token, salt, async function (err, hash) {
@@ -859,10 +807,7 @@ exports.loginUser_with_phone = async (req, res) => {
                   let data = `token = '${hash}'`;
                   let where = `where phone_number = ${phone_number}`;
                   const result1 = await updateData("users", where, data);
-                  const upload_fcm_token = await fcmToken_phone(
-                    phone_number,
-                    fcm_token
-                  );
+                  const upload_fcm_token = await fcmToken_phone(phone_number, fcm_token);
 
                   if (latitude && longitude) {
                     let data = ` latitude = '${latitude}' ,longitude = '${longitude}' `;
@@ -1107,13 +1052,13 @@ exports.forgotPassword_otp_match_phone_number = async (req, res) => {
             success: true,
             OTP: otp,
             message: " OTP match successfully",
-            status: 200,
+            status:200
           });
         } else {
           return res.json({
             success: true,
             message: " Invalid OTP ",
-            status: 400,
+            status:400
           });
         }
       } else {
@@ -1162,13 +1107,13 @@ exports.forgotPassword_otp_match_email = async (req, res) => {
           const update_OTP = await update_otp_by_email(email, otp);
           return res.json({
             success: true,
-            status: 200,
+            status:200,
             message: " OTP match successfully",
           });
         } else {
           return res.json({
             success: true,
-            status: 400,
+            status:400,
             message: " Invalid OTP ",
           });
         }
@@ -1224,7 +1169,7 @@ exports.forgotPassword_by_phone_number = async (req, res) => {
             "Password reset OTP sent successfully to your phone_number  " +
             phone_number,
           phone_number: phone_number,
-          status: 200,
+          status: 200
         });
       } else {
         return res.json({
@@ -1354,19 +1299,17 @@ exports.myProfile = async (req, res) => {
     if (user_info != 0) {
       await Promise.all(
         user_info.map(async (item) => {
+
           const profileimage = await new_profileimages(user_id);
 
           if (item.profile_image != "No image") {
             // item.profile_image = baseurl + "/profile/" + item.profile_image;
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           }
-          console.log(profileimage);
+          console.log(profileimage)
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) => {
-              return {
-                ...imageObj,
-                image: baseurl + "/profile/" + imageObj.image,
-              };
+            item.images = profileimage.map(imageObj => {
+              return { ...imageObj, image: baseurl + '/profile/' + imageObj.image }
             });
           } else {
             item.images = [];
@@ -1482,20 +1425,20 @@ exports.complete_Profile = async (req, res) => {
     const schema = Joi.alternatives(
       Joi.object({
         name: [Joi.string().empty().required()],
-        username: [Joi.string().empty().required()], //
-        DOB: [Joi.string().empty().required()], //
-        about: [Joi.string().empty().required()], //
-        country: [Joi.string().empty().required()], //
-        city: [Joi.string().empty().required()], //
-        tags: [Joi.string().empty().required()], //
+        username: [Joi.string().empty().required()],//
+        DOB: [Joi.string().empty().required()],//
+        about: [Joi.string().empty().required()],//
+        country: [Joi.string().empty().required()],//
+        city: [Joi.string().empty().required()],//
+        tags: [Joi.string().empty().required()],//
         height: [Joi.optional().allow("")],
         weight: [Joi.optional().allow("")],
         ethnicity: [Joi.optional().allow("")],
         body_type: [Joi.optional().allow("")],
         // tribes: [Joi.string().empty().required()],
         relationship_status: [Joi.optional().allow("")],
-        looking_for: [Joi.string().empty().required()], //
-        meet_at: [Joi.string().empty().required()], //
+        looking_for: [Joi.string().empty().required()],//
+        meet_at: [Joi.string().empty().required()],//
         sex: [Joi.optional().allow("")],
         pronouns: [Joi.optional().allow("")],
         covid_19: [Joi.optional().allow("")],
@@ -1646,9 +1589,9 @@ exports.editProfile = async (req, res) => {
         meet_at: [Joi.string().empty()],
         sex: [Joi.string().empty()],
         pronouns: [Joi.string().empty()],
-        twitter: [Joi.string().allow(null, "").optional()],
-        instagram: [Joi.string().allow(null, "").optional()],
-        facebook: [Joi.string().allow(null, "").optional()],
+        twitter: [Joi.string().allow(null, "").optional(),],
+        instagram: [Joi.string().allow(null, "").optional(),],
+        facebook: [Joi.string().allow(null, "").optional(),],
         covid_19: [Joi.string().empty()],
       })
     );
@@ -1684,7 +1627,7 @@ exports.editProfile = async (req, res) => {
             status: 400,
           });
         }
-        let get_age = "";
+        let get_age = '';
         if (DOB) {
           const birthdate = DOB;
           get_age = calculateAge(birthdate);
@@ -1713,22 +1656,10 @@ exports.editProfile = async (req, res) => {
           sex: sex ? sex : userInfo[0].sex,
           pronouns: pronouns ? pronouns : userInfo[0].pronouns,
           covid_19: covid_19 ? covid_19 : userInfo[0].covid_19,
-          twitter_link: twitter
-            ? twitter
-            : userInfo[0].twitter_link != null
-            ? userInfo[0].twitter_link
-            : "",
-          instagram_link: instagram
-            ? instagram
-            : userInfo[0].instagram_link != null
-            ? userInfo[0].instagram_link
-            : "",
-          facebook_link: facebook
-            ? facebook
-            : userInfo[0].facebook_link != null
-            ? userInfo[0].facebook_link
-            : "",
-          age: get_age ? get_age : 0,
+          twitter_link: twitter ? twitter : userInfo[0].twitter_link != null ? userInfo[0].twitter_link : "",
+          instagram_link: instagram ? instagram : userInfo[0].instagram_link != null ? userInfo[0].instagram_link : "",
+          facebook_link: facebook ? facebook : userInfo[0].facebook_link != null ? userInfo[0].facebook_link : "",
+          age: get_age ? get_age : 0
         };
         console.log(user);
         const result = await updateUserById(user, user_id);
@@ -1766,6 +1697,7 @@ exports.editProfile = async (req, res) => {
 
 exports.get_all_users_1 = async (req, res) => {
   try {
+
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
@@ -1790,10 +1722,9 @@ exports.get_all_users_1 = async (req, res) => {
         }
         const profileimage = await profileimages(item.id);
 
+
         if (profileimage?.length > 0) {
-          item.images = profileimage.map((imageObj) =>
-            imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-          );
+          item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
         } else {
           item.images = [];
         }
@@ -1825,7 +1756,8 @@ exports.get_all_users_1 = async (req, res) => {
         all_users: all_users,
         profile_length: profile_length,
         viewed_count: viewd_count ? viewd_count.length : 0,
-        checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
+        checkViewed: checkViewed ? checkViewed[0].count_profile : 0
+
       });
     } else {
       return res.json({
@@ -1834,6 +1766,7 @@ exports.get_all_users_1 = async (req, res) => {
         success: false,
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -1844,6 +1777,8 @@ exports.get_all_users_1 = async (req, res) => {
     });
   }
 };
+
+
 
 // exports.get_all_users = async (req, res) => {
 //   try {
@@ -1954,6 +1889,7 @@ exports.get_all_users_1 = async (req, res) => {
 //             }
 //           }
 
+
 //         })
 //       );
 //       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
@@ -2001,40 +1937,27 @@ exports.get_all_users_1 = async (req, res) => {
 // };
 exports.get_all_users = async (req, res) => {
   try {
-    const {
-      age1,
-      age2,
-      search,
-      body_type,
-      relationship_status,
-      looking_for,
-      meet_at,
-      height_1,
-      height_2,
-      weight_1,
-      weight_2,
-      online,
-      app_verify,
-      has_photo,
-      has_album,
-    } = req.body;
+    const { age1, age2, search, body_type, relationship_status,
+      looking_for, meet_at, height_1, height_2,
+      weight_1, weight_2, online, app_verify, has_photo, has_album } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
-        age1: [Joi.number().allow(null, "").optional()],
-        age2: [Joi.number().allow(null, "").optional()],
-        body_type: [Joi.string().allow(null, "").optional()],
-        relationship_status: [Joi.string().allow(null, "").optional()],
-        looking_for: [Joi.string().allow(null, "").optional()],
-        meet_at: [Joi.string().allow(null, "").optional()],
-        height_1: [Joi.number().allow(null, "").optional()],
-        height_2: [Joi.number().allow(null, "").optional()],
-        weight_1: [Joi.number().allow(null, "").optional()],
-        weight_2: [Joi.number().allow(null, "").optional()],
-        search: [Joi.string().allow(null, "").optional()],
-        online: [Joi.string().allow(null, "").optional()],
-        app_verify: [Joi.string().allow(null, "").optional()],
+        age1: [Joi.number().allow(null, "").optional(),],
+        age2: [Joi.number().allow(null, "").optional(),],
+        body_type: [Joi.string().allow(null, "").optional(),],
+        relationship_status: [Joi.string().allow(null, "").optional(),],
+        looking_for: [Joi.string().allow(null, "").optional(),],
+        meet_at: [Joi.string().allow(null, "").optional(),],
+        height_1: [Joi.number().allow(null, "").optional(),],
+        height_2: [Joi.number().allow(null, "").optional(),],
+        weight_1: [Joi.number().allow(null, "").optional(),],
+        weight_2: [Joi.number().allow(null, "").optional(),],
+        search: [Joi.string().allow(null, "").optional(),],
+        online: [Joi.string().allow(null, "").optional(),],
+        app_verify: [Joi.string().allow(null, "").optional(),],
         has_photo: [Joi.string().allow(null, "").optional()],
         has_album: [Joi.string().allow(null, "").optional()],
+
       })
     );
     const result = schema.validate(req.body);
@@ -2062,64 +1985,34 @@ exports.get_all_users = async (req, res) => {
       } else {
         profile_length = "";
       }
-      let all_users = await filter(
-        age1,
-        age2,
-        search,
-        user_id,
-        body_type,
-        relationship_status,
-        looking_for,
-        meet_at,
-        height_1,
-        height_2,
-        weight_1,
-        weight_2,
-        online,
-        app_verify,
-        has_photo
-      );
+      let all_users = await filter(age1, age2, search, user_id, body_type, relationship_status, looking_for, meet_at, height_1, height_2,
+        weight_1, weight_2, online, app_verify, has_photo);
 
-      const settingshow_me = await getData(
-        "setting_show_me",
-        `where user_id= ${user_id}`
-      );
+      const settingshow_me = await getData("setting_show_me", `where user_id= ${user_id}`);
 
       await Promise.all(
         all_users.map(async (item) => {
-          const settingshow_me = await getData(
-            "setting_show_me",
-            `where user_id= ${item.id}`
-          );
-          item.explore_status = settingshow_me[0]?.explore == 1 ? true : false;
-          item.distance_status =
-            settingshow_me[0]?.distance == 1 ? true : false;
+          const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
+          item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
+          item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
 
-          if (
-            item.latitude != null &&
-            item.latitude != "" &&
-            item.latitude != undefined &&
-            item.longitude != null &&
-            item.longitude != "" &&
-            item.longitude != undefined
-          ) {
-            const unit = "metric";
-            const origin =
-              check_user[0]?.latitude + "," + check_user[0]?.longitude;
-            const destination = item.latitude + "," + item.longitude;
+          if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+            const unit = 'metric';
+            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+            const destination = item.latitude + ',' + item.longitude;
 
             console.log("origin>>>>>>", origin);
             console.log("dest>>>>>>>", destination);
             try {
               const disvalue = await distanceShow(unit, origin, destination);
-              console.log("disvalye >>>>>>>", disvalue);
+              console.log("disvalye >>>>>>>", disvalue)
               item.distance = disvalue.distance;
             } catch (error) {
-              console.error("Error in yourAsyncFunction:", error);
+              console.error('Error in yourAsyncFunction:', error);
               // Handle errors as needed
             }
           } else {
-            item.distance = "";
+            item.distance = ""
           }
           if (item.profile_image != "No image") {
             // item.profile_image = baseurl + "/profile/" + item.profile_image;
@@ -2128,9 +2021,7 @@ exports.get_all_users = async (req, res) => {
           const profileimage = await profileimages(item.id);
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -2156,20 +2047,13 @@ exports.get_all_users = async (req, res) => {
               array.push(item);
             }
           }
+
+
         })
       );
-      if (
-        array.length > 0 &&
-        has_album != "" &&
-        has_album != undefined &&
-        has_album != "0"
-      ) {
+      if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
-      } else if (
-        has_album != "" &&
-        has_album != undefined &&
-        has_album != "0"
-      ) {
+      } else if (has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
       } else {
         all_users = all_users;
@@ -2189,6 +2073,7 @@ exports.get_all_users = async (req, res) => {
           viewed_count: viewd_count ? viewd_count.length : 0,
           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
           // distance_statusss: (settingshow_me[0]?.distance == 1) ? true:false
+
         });
       } else {
         return res.json({
@@ -2197,6 +2082,7 @@ exports.get_all_users = async (req, res) => {
           success: false,
         });
       }
+
     }
   } catch (error) {
     console.log(error);
@@ -2215,10 +2101,12 @@ exports.get_all_users = async (req, res) => {
 //     const token_1 = authHeader;
 //     const token = token_1.replace("Bearer ", "");
 
+
 //     const decoded = jwt.decode(token);
 //     const user_id = decoded.data.id;
 
 //     const Delete_user = await delete_User(user_id);
+
 
 //     if (Delete_user.affectedRows > 0) {
 
@@ -2247,6 +2135,7 @@ exports.get_all_users = async (req, res) => {
 //     });
 //   }
 // };
+
 
 exports.Add_favorites = async (req, res) => {
   try {
@@ -2343,62 +2232,47 @@ exports.my_favorite_users_list = async (req, res) => {
     let array = [];
     if (check_user.length != 0) {
       const my_favorite_users = await my_all_favorite_user(user_id);
-      console.log("?????????????", my_favorite_users);
+      console.log("?????????????", my_favorite_users)
       await Promise.all(
         my_favorite_users.map(async (item) => {
           let where = "";
-          if (req.body.online_status == "1") {
+          if (req.body.online_status == '1') {
             where = ` AND online_status = '1' AND incognito_mode = 0 `;
           }
-          var user_info = await getData(
-            "users",
-            `where id= ${item.favorite_user_id} ${where}`
-          );
+          var user_info = await getData("users", `where id= ${item.favorite_user_id} ${where}`);
 
-          if (
-            user_info[0]?.latitude != null &&
-            user_info[0]?.latitude != "" &&
-            user_info[0]?.latitude != undefined &&
-            user_info[0]?.longitude != null &&
-            user_info[0]?.longitude != "" &&
-            user_info[0]?.longitude != undefined
-          ) {
-            const unit = "metric";
-            const origin =
-              check_user[0]?.latitude + "," + check_user[0]?.longitude;
-            const destination =
-              user_info[0]?.latitude + "," + user_info[0]?.longitude;
+          if (user_info[0]?.latitude != null && user_info[0]?.latitude != "" && user_info[0]?.latitude != undefined && user_info[0]?.longitude != null && user_info[0]?.longitude != "" && user_info[0]?.longitude != undefined) {
+            const unit = 'metric';
+            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+            const destination = user_info[0]?.latitude + ',' + user_info[0]?.longitude;
             try {
               const disvalue = await distanceShow(unit, origin, destination);
               item.distance = disvalue.distance;
-              const settingshow_me = await getData(
-                "setting_show_me",
-                `where user_id= ${item.favorite_user_id}`
-              );
+              const settingshow_me = await getData("setting_show_me", `where user_id= ${item.favorite_user_id}`);
               user_info?.map(async (userinfo) => {
                 userinfo.distance = disvalue.distance;
-                userinfo.distance_status =
-                  settingshow_me[0]?.distance == 1 ? true : false;
+                userinfo.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
               });
             } catch (error) {
-              item.distance = "";
-              console.error("Error in yourAsyncFunction:", error);
+              item.distance = ""
+              console.error('Error in yourAsyncFunction:', error);
               // Handle errors as needed
             }
           } else {
-            item.distance = "";
+            item.distance = ""
           }
-          console.log("userinfo", user_info);
+          console.log("userinfo", user_info)
           user_info?.map(async (userinfo) => {
             if (userinfo.profile_image != "No image") {
-              userinfo.profile_image =
-                baseurl + "/profile/" + userinfo.profile_image;
+              userinfo.profile_image = baseurl + "/profile/" + userinfo.profile_image;
+
             } else {
               userinfo.profile_image = "";
             }
 
-            userinfo.admin = false;
-            userinfo.favorites_user = "Y";
+
+            userinfo.admin = false
+            userinfo.favorites_user = "Y"
 
             // if (userinfo.latitude != null && userinfo.latitude != "" && userinfo.longitude != null && userinfo.longitude != "") {
             //   const unit = 'metric';
@@ -2422,20 +2296,22 @@ exports.my_favorite_users_list = async (req, res) => {
             // } else {
             //   userinfo.distance = "0"
             // }
+
           });
-          console.log("userid", user_info[0].id);
+          console.log("userid", user_info[0].id)
           const profileimage = await profileimages(user_info[0].id);
-          console.log("profileimage++==", profileimage);
+          console.log("profileimage++==", profileimage)
           if (profileimage?.length > 0) {
-            user_info[0].images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+
+            user_info[0].images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             user_info[0].images = [];
           }
 
+
           item.favorite_user_info = user_info;
-          item.select = false;
+          item.select = false
+
 
           if (user_info.length > 0) {
             item.online_status = user_info[0].online_status;
@@ -2443,7 +2319,7 @@ exports.my_favorite_users_list = async (req, res) => {
           }
         })
       );
-      console.log("{{{{{{{{{{{{{{{{", array);
+      console.log("{{{{{{{{{{{{{{{{", array)
       return res.json({
         message: "successfull",
         success: true,
@@ -2470,6 +2346,7 @@ exports.my_favorite_users_list = async (req, res) => {
 
 exports.online_status = async (req, res) => {
   try {
+
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
@@ -2491,6 +2368,7 @@ exports.online_status = async (req, res) => {
         status: 400,
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -2511,7 +2389,7 @@ exports.offline_status = async (req, res) => {
     const user_id = decoded.data.id;
     const check_user = await getData("users", `where id= ${user_id}`);
     const data = Date.now();
-    console.log();
+    console.log()
     if (check_user.length != 0) {
       const OFFLine_Status = await offline_Status(user_id);
       return res.json({
@@ -2526,6 +2404,7 @@ exports.offline_status = async (req, res) => {
         status: 400,
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -2766,7 +2645,7 @@ exports.email_change = async (req, res) => {
 exports.add_Album = async (req, res) => {
   try {
     const { album_name } = req.body;
-    let baseurlimage = ["1"];
+    let baseurlimage = ['1'];
     let images = [];
     const schema = Joi.alternatives(
       Joi.object({
@@ -2792,35 +2671,30 @@ exports.add_Album = async (req, res) => {
       let filename = "";
       const check_user = await getData("users", `where id= ${user_id}`);
       if (check_user.length != 0) {
-        let albums = { user_id: user_id, album_name: album_name };
+
+        let albums = { 'user_id': user_id, album_name: album_name };
         const result = await Addalbums(albums);
 
         if (result.affectedRows > 0) {
+
           if (req.files) {
             const file = req.files;
             if (file.length != 0) {
               for (let i = 0; i < file.length; i++) {
                 images.push(req.files[i].filename);
                 if (req.files[i].filename) {
-                  baseurlimage.push(
-                    baseurl + "/albums/" + req.files[i].filename
-                  );
+                  baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
                 }
               }
             }
           }
           if (images.length > 0) {
-            await Promise.all(
-              images.map(async (item) => {
-                let albums = {
-                  album_image: item,
-                  album_id: result.insertId,
-                  user_id: user_id,
-                };
-                const result1 = await uploadAlbums(albums);
-              })
-            );
+            await Promise.all(images.map(async (item) => {
+              let albums = { 'album_image': item, 'album_id': result.insertId, 'user_id': user_id };
+              const result1 = await uploadAlbums(albums);
+            }));
           }
+
 
           return res.json({
             message: "Photos Added to Albums Successfully",
@@ -2837,6 +2711,7 @@ exports.add_Album = async (req, res) => {
             status: 200,
           });
         }
+
       } else {
         return res.json({
           message: "User not found please sign-up first",
@@ -2869,12 +2744,14 @@ exports.myAlbum = async (req, res) => {
 
     if (user_info != 0) {
       const my_album = await MyAlbums(user_id);
-      const imageExtensions = ["jpeg", "jpg", "png", "gif"];
-      const videoExtensions = ["mp4", "mkv", "avi", "mov"];
+      const imageExtensions = ['jpeg', 'jpg', 'png', 'gif'];
+      const videoExtensions = ['mp4', 'mkv', 'avi', 'mov'];
 
       await Promise.all(
         my_album.map(async (item, i) => {
-          if (item.profile_image != "No image") {
+
+
+          if (item.profile_image != 'No image') {
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           } else {
             item.profile_image = "No image";
@@ -2882,9 +2759,7 @@ exports.myAlbum = async (req, res) => {
           const profileimage = await profileimages(item.user_id);
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -2894,11 +2769,11 @@ exports.myAlbum = async (req, res) => {
           let hasVideo = false;
           if (albumphotos.length > 0) {
             const imagesWithExtention = albumphotos.map((image) => {
-              const extention = image.album_image.split("albums/");
-              return extention[1];
-            });
+              const extention = image.album_image.split('albums/');
+              return extention[1]
+            })
             const myImageExtension = imagesWithExtention.map((image) => {
-              return image.split(".")[1];
+              return image.split('.')[1];
             });
             for (let i = 0; i < myImageExtension.length; i++) {
               if (imageExtensions.includes(myImageExtension[i])) {
@@ -2919,10 +2794,11 @@ exports.myAlbum = async (req, res) => {
             item.album_images = [];
           }
           item.hasImage = hasImage;
-          item.hasVideo = hasVideo;
+          item.hasVideo = hasVideo
+
         })
       );
-      var arraydata = { is_plus: "1" };
+      var arraydata = { 'is_plus': '1' };
       my_album.unshift(arraydata);
       return res.json({
         status: 200,
@@ -2950,6 +2826,7 @@ exports.myAlbum = async (req, res) => {
 
 exports.deleteAlbum = async (req, res) => {
   try {
+
     const { album_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -2967,6 +2844,7 @@ exports.deleteAlbum = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -2977,7 +2855,7 @@ exports.deleteAlbum = async (req, res) => {
 
       if (user_info != 0) {
         let where = ` where id= '${album_id}' and user_id = '${user_id}'`;
-        const deletealbum = await deleteData("albums", where);
+        const deletealbum = await deleteData('albums', where);
 
         if (deletealbum.affectedRows > 0) {
           return res.json({
@@ -2985,13 +2863,16 @@ exports.deleteAlbum = async (req, res) => {
             success: true,
             message: "My Albums Delteted Successfully!",
           });
+
         } else {
           return res.json({
             status: 200,
             success: true,
             message: "Something went wrong!",
+
           });
         }
+
       } else {
         return res.json({
           status: 400,
@@ -3038,15 +2919,17 @@ exports.uploadAlbum = async (req, res) => {
       let filename = "";
       const check_user = await getData("users", `where id= ${user_id}`);
       let images = [];
-      let baseurlimage = ["1"];
+      let baseurlimage = ['1'];
       if (check_user.length != 0) {
+
         if (req.files) {
           const file = req.files;
           if (file.length != 0) {
             for (let i = 0; i < file.length; i++) {
               images.push(req.files[i].filename);
               if (req.files[i].filename) {
-                baseurlimage.push(baseurl + "/albums/" + req.files[i].filename);
+                baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
+
               }
             }
           } else {
@@ -3055,26 +2938,22 @@ exports.uploadAlbum = async (req, res) => {
               success: false,
               status: 200,
             });
+
           }
         }
 
         if (images.length > 0) {
-          await Promise.all(
-            images.map(async (item) => {
-              let albums = {
-                album_image: item,
-                album_id: album_id,
-                user_id: user_id,
-              };
-              const result = await uploadAlbums(albums);
-            })
-          );
+          await Promise.all(images.map(async (item) => {
+            let albums = { 'album_image': item, 'album_id': album_id, 'user_id': user_id };
+            const result = await uploadAlbums(albums);
+          }));
           return res.json({
             message: "Photos Added to Albums Successfully",
             success: true,
             images: baseurlimage,
             status: 200,
           });
+
         } else {
           return res.json({
             message: "Something went wrong!",
@@ -3082,6 +2961,7 @@ exports.uploadAlbum = async (req, res) => {
             status: 200,
           });
         }
+
       } else {
         return res.json({
           message: "User not found please sign-up first",
@@ -3103,6 +2983,7 @@ exports.uploadAlbum = async (req, res) => {
 
 exports.myAlbumbyId = async (req, res) => {
   try {
+
     const { album_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -3120,6 +3001,7 @@ exports.myAlbumbyId = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -3128,25 +3010,24 @@ exports.myAlbumbyId = async (req, res) => {
 
       const user_info = await getData("users", `where id= ${user_id}`);
 
-      var arraydata = { is_plus: "1" };
+      var arraydata = { 'is_plus': '1' };
+
+
 
       if (user_info != 0) {
         const my_album = await myAlbumbyId(user_id, album_id);
 
         await Promise.all(
           my_album.map(async (item, i) => {
-            if (item.profile_image != "No image") {
+
+            if (item.profile_image != 'No image') {
               item.profile_image = baseurl + "/profile/" + item.profile_image;
             } else {
               item.profile_image = "No image";
             }
 
             const albumphotos = await albumsPhotos(item.user_id, item.id);
-            const share_count = await shared_to_count(
-              "albums_sharing",
-              user_id,
-              album_id
-            );
+            const share_count = await shared_to_count('albums_sharing', user_id, album_id);
             if (albumphotos.length > 0) {
               item.album_images = albumphotos;
               item.album_images.unshift(arraydata);
@@ -3157,6 +3038,8 @@ exports.myAlbumbyId = async (req, res) => {
               item.album_images = [];
               item.share_count = 0;
             }
+
+
           })
         );
         return res.json({
@@ -3213,15 +3096,16 @@ exports.editAlbum = async (req, res) => {
       let filename = "";
       const check_user = await getData("users", `where id= ${user_id}`);
       let images = [];
-      let baseurlimage = ["1"];
+      let baseurlimage = ['1'];
       if (check_user.length != 0) {
+
         if (req.files) {
           const file = req.files;
           // if (file.length != 0) {
           for (let i = 0; i < file.length; i++) {
             images.push(req.files[i].filename);
             if (req.files[i].filename) {
-              baseurlimage.push(baseurl + "/albums/" + req.files[i].filename);
+              baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
             }
           }
           // } else {
@@ -3238,16 +3122,10 @@ exports.editAlbum = async (req, res) => {
         }
 
         // if (images.length > 0) {
-        await Promise.all(
-          images.map(async (item) => {
-            let albums = {
-              album_image: item,
-              album_id: album_id,
-              user_id: user_id,
-            };
-            const result = await uploadAlbums(albums);
-          })
-        );
+        await Promise.all(images.map(async (item) => {
+          let albums = { 'album_image': item, 'album_id': album_id, 'user_id': user_id };
+          const result = await uploadAlbums(albums);
+        }));
 
         return res.json({
           message: "Photos Added to Albums Successfully",
@@ -3263,6 +3141,7 @@ exports.editAlbum = async (req, res) => {
         //     status: 200,
         //   });
         // }
+
       } else {
         return res.json({
           message: "User not found please sign-up first",
@@ -3284,6 +3163,7 @@ exports.editAlbum = async (req, res) => {
 
 exports.deleteAlbumPhotos = async (req, res) => {
   try {
+
     const { id, album_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -3302,6 +3182,7 @@ exports.deleteAlbumPhotos = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -3312,13 +3193,10 @@ exports.deleteAlbumPhotos = async (req, res) => {
 
       if (user_info != 0) {
         let where = ` where id= '${id}' and album_id ='${album_id}'  and user_id = '${user_id}'`;
-        const deletealbum = await deleteData("albums_photos", where);
+        const deletealbum = await deleteData('albums_photos', where);
 
         if (deletealbum.affectedRows > 0) {
-          let currentDate = new Date()
-            .toISOString()
-            .slice(0, 19)
-            .replace("T", " ");
+          let currentDate = new Date().toISOString().slice(0, 19).replace("T", " ");
           let data = `updated_at = '${currentDate}'`;
           let wherealbum = `where id = ${album_id}`;
           const result1 = await updateData("albums", wherealbum, data);
@@ -3327,13 +3205,16 @@ exports.deleteAlbumPhotos = async (req, res) => {
             success: true,
             message: "My Albums Delteted Successfully!",
           });
+
         } else {
           return res.json({
             status: 200,
             success: true,
             message: "Something went wrong!",
+
           });
         }
+
       } else {
         return res.json({
           status: 400,
@@ -3355,6 +3236,7 @@ exports.deleteAlbumPhotos = async (req, res) => {
 
 exports.AlbumShare = async (req, res) => {
   try {
+
     const { album_id, shared_to } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -3373,6 +3255,7 @@ exports.AlbumShare = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -3382,31 +3265,32 @@ exports.AlbumShare = async (req, res) => {
       const user_info = await getData("users", `where id= ${user_id}`);
 
       if (user_info != 0) {
-        let array = shared_to.split(",").map(Number);
+        let array = shared_to.split(',').map(Number);
         await Promise.all(
           array.map(async (item) => {
-            let data = {
-              user_id: user_id,
-              album_id: album_id,
-              shared_to: item,
-            };
+            let data = { "user_id": user_id, "album_id": album_id, "shared_to": item }
             const my_album = await insertAlbumShare(data);
           })
         );
 
+
         if (array.length > 0) {
+
           return res.json({
             status: 200,
             success: true,
             message: "Shared Successfully!",
+
           });
         } else {
           return res.json({
             status: 200,
             success: true,
             message: "No data found!",
+
           });
         }
+
       } else {
         return res.json({
           status: 400,
@@ -3445,6 +3329,7 @@ exports.addProfileimage = async (req, res) => {
         success: true,
       });
     } else {
+
       let filename = "";
       if (req.file) {
         const file = req.file;
@@ -3506,7 +3391,7 @@ exports.myAlbumSharing = async (req, res) => {
     const user_info = await getData("users", `where id= ${user_id}`);
     let cheksub = await checkSubscriptionDetail(user_id);
 
-    console.log("checksub==========>", cheksub);
+    console.log("checksub==========>", cheksub)
 
     if (cheksub) {
       albumlimit = cheksub.album;
@@ -3514,13 +3399,14 @@ exports.myAlbumSharing = async (req, res) => {
       albumlimit = "";
     }
 
-    const my_album = await MyAlbumsharing(user_id, "");
+    const my_album = await MyAlbumsharing(user_id, '');
     if (user_info != 0) {
-      const imageExtensions = ["jpeg", "jpg", "png", "gif"];
-      const videoExtensions = ["mp4", "mkv", "avi", "mov"];
+      const imageExtensions = ['jpeg', 'jpg', 'png', 'gif'];
+      const videoExtensions = ['mp4', 'mkv', 'avi', 'mov'];
       await Promise.all(
         my_album.map(async (item, i) => {
-          if (item.profile_image != "No image") {
+
+          if (item.profile_image != 'No image') {
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           } else {
             item.profile_image = "No image";
@@ -3529,9 +3415,7 @@ exports.myAlbumSharing = async (req, res) => {
           const profileimage = await profileimages(item.user_id);
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -3540,11 +3424,11 @@ exports.myAlbumSharing = async (req, res) => {
           let hasVideo = false;
           if (albumphotos.length > 0) {
             const imagesWithExtention = albumphotos.map((image) => {
-              const extention = image.album_image.split("albums/");
-              return extention[1];
-            });
+              const extention = image.album_image.split('albums/');
+              return extention[1]
+            })
             const myImageExtension = imagesWithExtention.map((image) => {
-              return image.split(".")[1];
+              return image.split('.')[1];
             });
             for (let i = 0; i < myImageExtension.length; i++) {
               if (imageExtensions.includes(myImageExtension[i])) {
@@ -3565,17 +3449,17 @@ exports.myAlbumSharing = async (req, res) => {
             item.album_images = [];
           }
           item.hasImage = hasImage;
-          item.hasVideo = hasVideo;
+          item.hasVideo = hasVideo
         })
       );
-      var arraydata = { is_plus: "1" };
+      var arraydata = { 'is_plus': '1' };
       my_album.unshift(arraydata);
       return res.json({
         status: 200,
         success: true,
         message: "My Albums Found Successfully!",
         user_info: my_album,
-        album_length: albumlimit,
+        album_length: albumlimit
       });
     } else {
       return res.json({
@@ -3597,6 +3481,7 @@ exports.myAlbumSharing = async (req, res) => {
 
 exports.myAlbumbyIdsingle = async (req, res) => {
   try {
+
     const { album_id, user_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -3615,6 +3500,8 @@ exports.myAlbumbyIdsingle = async (req, res) => {
         success: false,
       });
     } else {
+
+
       const user_info = await getData("users", `where id= ${user_id}`);
       //var arraydata = {'is_plus':'1'};
 
@@ -3623,7 +3510,8 @@ exports.myAlbumbyIdsingle = async (req, res) => {
 
         await Promise.all(
           my_album.map(async (item, i) => {
-            if (item.profile_image != "No image") {
+
+            if (item.profile_image != 'No image') {
               item.profile_image = baseurl + "/profile/" + item.profile_image;
             } else {
               item.profile_image = "No image";
@@ -3633,26 +3521,22 @@ exports.myAlbumbyIdsingle = async (req, res) => {
 
             if (albumphotos.length > 0) {
               item.albumImages = albumphotos.map((album) => {
-                return album.album_image;
-              });
+                return album.album_image
+              })
               // 07032024 ameen
               // item.album_images = albumphotos.filter(photo => photo.album_image.endsWith('.jpg'));
               // item.album_videos = albumphotos.filter(photo => photo.album_image.endsWith('.mp4'));
 
               // Separate images and videos based on file extensions
-              item.album_images = albumphotos.filter((photo) => {
-                const imageExtensions = [".jpeg", ".jpg", ".png", ".gif"];
-                const fileExtension = photo.album_image
-                  .slice(photo.album_image.lastIndexOf("."))
-                  .toLowerCase();
+              item.album_images = albumphotos.filter(photo => {
+                const imageExtensions = ['.jpeg', '.jpg', '.png', '.gif'];
+                const fileExtension = photo.album_image.slice(photo.album_image.lastIndexOf('.')).toLowerCase();
                 return imageExtensions.includes(fileExtension);
               });
 
-              item.album_videos = albumphotos.filter((photo) => {
-                const videoExtensions = [".mp4", ".mkv", ".avi", ".mov"];
-                const fileExtension = photo.album_image
-                  .slice(photo.album_image.lastIndexOf("."))
-                  .toLowerCase();
+              item.album_videos = albumphotos.filter(photo => {
+                const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
+                const fileExtension = photo.album_image.slice(photo.album_image.lastIndexOf('.')).toLowerCase();
                 return videoExtensions.includes(fileExtension);
               });
               // 07032024 ameen
@@ -3663,6 +3547,8 @@ exports.myAlbumbyIdsingle = async (req, res) => {
               item.total_photos = 0;
               item.album_images = [];
             }
+
+
           })
         );
         return res.json({
@@ -3718,29 +3604,32 @@ exports.delete_User = async (req, res) => {
     } else {
       const data = await fetchUserById(user_id);
       if (data.length !== 0) {
+
         const match = bcrypt.compareSync(password, data[0]?.password);
         if (match) {
+
           let where = ` where id= '${user_id}'`;
-          const delete_user = await deleteData("users", where);
+          const delete_user = await deleteData('users', where);
 
           let where1 = ` where user_id= '${user_id}'`;
-          const delete_user1 = await deleteData("albums", where1);
-          const delete_user2 = await deleteData("albums_photos", where1);
-          const delete_user3 = await deleteData("chat_group", where1);
-          const delete_user6 = await deleteData("user_subscription", where1);
-          const delete_user9 = await deleteData("profile_images", where1);
+          const delete_user1 = await deleteData('albums', where1);
+          const delete_user2 = await deleteData('albums_photos', where1);
+          const delete_user3 = await deleteData('chat_group', where1);
+          const delete_user6 = await deleteData('user_subscription', where1);
+          const delete_user9 = await deleteData('profile_images', where1);
 
           let where2 = ` where user_id= '${user_id}' OR favorite_user_id = '${user_id}'`;
-          const delete_user4 = await deleteData("favorite_users", where2);
+          const delete_user4 = await deleteData('favorite_users', where2);
 
           let where3 = ` where user_id= '${user_id}' OR visit_user_id = '${user_id}'`;
-          const delete_user5 = await deleteData("profile_visit", where3);
+          const delete_user5 = await deleteData('profile_visit', where3);
 
           let where4 = ` where sender_id= '${user_id}' OR reciver_id = '${user_id}'`;
-          const delete_user7 = await deleteData("notifications", where4);
+          const delete_user7 = await deleteData('notifications', where4);
 
           let where5 = ` where user_id= '${user_id}' OR shared_to = '${user_id}'`;
-          const delete_user8 = await deleteData("albums_sharing", where5);
+          const delete_user8 = await deleteData('albums_sharing', where5);
+
 
           return res.json({
             status: 200,
@@ -3775,6 +3664,7 @@ exports.delete_User = async (req, res) => {
 
 exports.group_notification = async (req, res) => {
   try {
+
     const { user_id, id, group_name, group_id, public } = req.body;
 
     const schema = Joi.alternatives(
@@ -3804,45 +3694,45 @@ exports.group_notification = async (req, res) => {
       const userData = await fetchUserBy_Id(user_id);
 
       // Use Promise.all to wait for all asynchronous operations to complete
-      await Promise.all(
-        id.map(async (id_1) => {
-          const userFcm1 = await fetch_fcm(id_1);
-          const message = {
-            token: userFcm1[0]?.fcm_token,
-            notification: {
-              title: "Group_notification",
-              body: `${userData[0].username} Invited you in ${group_name} group`,
-            },
-            data: {
-              user_id: `${user_id}`,
-              group_name: `${group_name}`,
-            },
+      await Promise.all(id.map(async (id_1) => {
+        const userFcm1 = await fetch_fcm(id_1);
+        const message = {
+          token: userFcm1[0]?.fcm_token,
+          notification: {
+            title: "Group_notification",
+            body: `${userData[0].username} Invited you in ${group_name} group`,
+          },
+          data: {
+            user_id: `${user_id}`,
+            group_name: `${group_name}`,
+          },
+        };
+
+        return new Promise(async(resolve) => {
+          const response = await userFcm.messaging().send(message);
+          const sendNotification = {
+            sender_id: user_id,
+            reciver_id: id_1,
+            group_id: group_id,
+            group_name: group_name,
+            public: public,
+            body: `Invited you in group`,
+
+            notification_type: 1,
           };
-
-          return new Promise(async (resolve) => {
-            const response = await userFcm.messaging().send(message);
-            const sendNotification = {
-              sender_id: user_id,
-              reciver_id: id_1,
-              group_id: group_id,
-              group_name: group_name,
-              public: public,
-              body: `Invited you in group`,
-
-              notification_type: 1,
-            };
-            await addnotification(sendNotification);
-            resolve(response);
-          });
-        })
-      );
+          await addnotification(sendNotification);
+          resolve(response);
+         
+        });
+      }));
 
       // Now, after all promises are resolved, send the final response
-      return res.json({
+     return res.json({
         message: "Notifications sent successfully",
         success: true,
         status: 200,
       });
+
     }
   } catch (err) {
     console.log(err);
@@ -3857,6 +3747,7 @@ exports.group_notification = async (req, res) => {
 
 exports.addProfileimages = async (req, res) => {
   try {
+
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
@@ -3865,15 +3756,16 @@ exports.addProfileimages = async (req, res) => {
     let filename = "";
     const check_user = await getData("users", `where id= ${user_id}`);
     let images = [];
-    let baseurlimage = ["1"];
+    let baseurlimage = ['1'];
     if (check_user.length != 0) {
+
       if (req.files) {
         const file = req.files;
         if (file.length <= 5) {
           for (let i = 0; i < file.length; i++) {
             images.push(req.files[i].filename);
             if (req.files[i].filename) {
-              baseurlimage.push(baseurl + "/profile/" + req.files[i].filename);
+              baseurlimage.push(baseurl + '/profile/' + req.files[i].filename);
             }
           }
         } else {
@@ -3882,16 +3774,15 @@ exports.addProfileimages = async (req, res) => {
             success: false,
             status: 200,
           });
+
         }
       }
 
       if (images.length > 0) {
-        await Promise.all(
-          images.map(async (item) => {
-            let imagesName = { image: item, user_id: user_id };
-            const result = await addProfileimages(imagesName);
-          })
-        );
+        await Promise.all(images.map(async (item) => {
+          let imagesName = { 'image': item, 'user_id': user_id };
+          const result = await addProfileimages(imagesName);
+        }));
         const deleteimage = await deleteProfileimages(user_id);
         return res.json({
           message: "Photos Added to Profile Successfully",
@@ -3899,6 +3790,7 @@ exports.addProfileimages = async (req, res) => {
           images: baseurlimage,
           status: 200,
         });
+
       } else {
         return res.json({
           message: "Something went wrong!",
@@ -3906,6 +3798,7 @@ exports.addProfileimages = async (req, res) => {
           status: 200,
         });
       }
+
     } else {
       return res.json({
         message: "User not found please sign-up first",
@@ -3913,6 +3806,7 @@ exports.addProfileimages = async (req, res) => {
         status: 400,
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -3947,26 +3841,28 @@ exports.accept_reject_group_invite = async (req, res) => {
     } else {
       const notification_check = await check_notification(notification_id);
       if (notification_check.length > 0) {
+
         if (status == 1) {
-          const update_notification = await check_notification(
-            notification_id,
-            status
-          );
+          const update_notification = await check_notification(notification_id, status);
           return res.json({
             success: true,
             message: "accepted Successfully",
-            status: 200,
+            status: 200
           });
         } else if (status == 2) {
+
           let where = ` where id= '${notification_id}' `;
-          const deletealbum = await deleteData("notifications", where);
+          const deletealbum = await deleteData('notifications', where);
 
           return res.json({
             success: true,
             message: " rejected Successfully ",
-            status: 200,
+            status: 200
           });
         }
+
+
+
       } else {
         return res.json({
           success: true,
@@ -4010,6 +3906,7 @@ exports.profile_visit = async (req, res) => {
     } else {
       const user_info = await Get_user_info(user_id);
       if (user_info.length > 0) {
+
         const getprofileVisit = await getAllprofileVist(user_id, visit_user_id);
 
         if (getprofileVisit.length == 0) {
@@ -4025,7 +3922,10 @@ exports.profile_visit = async (req, res) => {
             message: "Aready Visted!",
             status: 200,
           });
+
         }
+
+
       } else {
         return res.json({
           success: true,
@@ -4069,29 +3969,24 @@ exports.get_profile_visit = async (req, res) => {
       const user_info = await Get_user_info(user_id);
 
       if (user_info.length > 0) {
+
         //const Get_profile_vist = await get_profile_vist(user_id);
         const Get_profile_vist = await fetchVisitsInPast24Hours(user_id);
         const checkSubscription = await checkSubscriptionDetail(user_id);
         await Promise.all(
           Get_profile_vist.map(async (item) => {
+
+
             // if (item.latitude != null && item.latitude != "" && item.longitude != null && item.longitude != "") {
-            if (
-              item.latitude != null &&
-              item.latitude != "" &&
-              item.latitude != undefined &&
-              item.longitude != null &&
-              item.longitude != "" &&
-              item.longitude != undefined
-            ) {
-              const unit = "metric";
-              const origin =
-                user_info[0]?.latitude + "," + user_info[0]?.longitude;
-              const destination = item.latitude + "," + item.longitude;
+            if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+              const unit = 'metric';
+              const origin = user_info[0]?.latitude + ',' + user_info[0]?.longitude;
+              const destination = item.latitude + ',' + item.longitude;
               try {
                 const disvalue = await distanceShow(unit, origin, destination);
                 //  item.distance = disvalue;
               } catch (error) {
-                console.error("Error in yourAsyncFunction:", error);
+                console.error('Error in yourAsyncFunction:', error);
                 // Handle errors as needed
               }
               // const distance = calculateDistance(user_info[0]?.latitude, user_info[0]?.longitude, item.latitude, item.longitude);
@@ -4105,35 +4000,35 @@ exports.get_profile_visit = async (req, res) => {
               // item.distance = "0"
             }
 
-            let visitor_id = item.user_id;
+
+            let visitor_id = item.user_id
 
             const user_info = await Get_user_info(visitor_id);
 
             if (user_info[0].profile_image != "No image") {
               // item.profile_image = baseurl + "/profile/" + item.profile_image;
-              user_info[0].profile_image =
-                baseurl + "/profile/" + user_info[0].profile_image;
+              user_info[0].profile_image = baseurl + "/profile/" + user_info[0].profile_image;
             }
 
             const profileimage = await profileimages(item.user_id);
 
             if (profileimage?.length > 0) {
-              item.images = profileimage.map((imageObj) =>
-                imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-              );
+              item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
             } else {
               item.images = [];
             }
 
-            item.visit_user_username = user_info[0].username;
-            item.visit_user_profile_image = user_info[0].profile_image;
-            item.id = item.user_id;
-            item.admin = false;
-            item.isBlockStatus = 0;
+            item.visit_user_username = user_info[0].username
+            item.visit_user_profile_image = user_info[0].profile_image
+            item.id = item.user_id
+            item.admin = false
+            item.isBlockStatus = 0
+
           })
         );
 
         if (Get_profile_vist.length > 0) {
+
           const updateprofileview = await update_viewed_profile(user_id);
 
           return res.json({
@@ -4142,7 +4037,8 @@ exports.get_profile_visit = async (req, res) => {
             status: 200,
             Subscription: checkSubscription.plan_name,
             Get_profile_vist: Get_profile_vist,
-            vist_count: Get_profile_vist ? Get_profile_vist.length : 0,
+            vist_count: Get_profile_vist ? Get_profile_vist.length : 0
+
           });
         } else {
           return res.json({
@@ -4151,6 +4047,7 @@ exports.get_profile_visit = async (req, res) => {
             status: 200,
           });
         }
+
       } else {
         return res.json({
           success: false,
@@ -4191,38 +4088,34 @@ exports.Allnotification = async (req, res) => {
       });
     } else {
       const currentDate = moment();
-      const current_date = currentDate.format("YYYY-MM-DD");
+      const current_date = currentDate.format('YYYY-MM-DD');
       const notification = await Allnotification(user_id);
       if (notification.length > 0) {
-        await Promise.all(
-          notification.map(async (item) => {
-            const owner_info = await Get_user_info(item.sender_id);
 
-            item.username = owner_info[0]?.username
-              ? owner_info[0]?.username
-              : "";
+        await Promise.all(notification.map(async (item) => {
 
-            const profileimage = await profileimages(item.sender_id);
+          const owner_info = await Get_user_info(item.sender_id);
 
-            if (profileimage?.length > 0) {
-              item.images = profileimage.map((imageObj) =>
-                imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-              );
-            } else {
-              item.images = [];
-            }
+          item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
 
-            item.profile_image = owner_info[0]?.profile_image
-              ? baseurl + "/profile/" + owner_info[0]?.profile_image
-              : "";
-            const created_at = moment(item.created_at);
-            const dateAfter7Days = created_at.add(7, "days");
-            const formattedDateAfter7Days = dateAfter7Days.format("YYYY-MM-DD");
-            if (current_date == formattedDateAfter7Days) {
-              const deleteuser = await deleteNotification(item.id);
-            }
-          })
-        );
+          const profileimage = await profileimages(item.sender_id);
+
+          if (profileimage?.length > 0) {
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
+          } else {
+            item.images = [];
+          }
+
+          item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
+          const created_at = moment(item.created_at);
+          const dateAfter7Days = created_at.add(7, 'days');
+          const formattedDateAfter7Days = dateAfter7Days.format('YYYY-MM-DD');
+          if (current_date == formattedDateAfter7Days) {
+            const deleteuser = await deleteNotification(item.id);
+          }
+
+        }));
+
 
         return res.json({
           success: true,
@@ -4273,6 +4166,7 @@ exports.Createchatgroup = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -4293,8 +4187,8 @@ exports.Createchatgroup = async (req, res) => {
           description: description,
           tag: tag,
           user_id: user_id,
-          group_image: filename ? filename : "",
-        };
+          group_image: filename ? filename : ""
+        }
 
         const getprofileVisit = await groupChat(group_id);
 
@@ -4311,7 +4205,9 @@ exports.Createchatgroup = async (req, res) => {
             message: "This group is already created!",
             status: 400,
           });
+
         }
+
       } else {
         return res.json({
           success: true,
@@ -4352,20 +4248,25 @@ exports.groupchatByid = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
       const decoded = jwt.decode(token);
       const user_id = decoded.data.id;
 
+
       const user_info = await Get_user_info(user_id);
       if (user_info.length > 0) {
+
         const groupchat = await groupChat(group_id);
 
         if (groupchat.length > 0) {
+
           await Promise.all(
             groupchat.map(async (item) => {
               if (item.group_image != "") {
+
                 item.group_image = baseurl + "/group/" + item.group_image;
               } else {
                 item.group_image = "";
@@ -4373,11 +4274,12 @@ exports.groupchatByid = async (req, res) => {
             })
           );
 
+
           return res.json({
             success: true,
             message: "Successfully",
             status: 200,
-            groupchat: groupchat,
+            groupchat: groupchat
           });
         } else {
           return res.json({
@@ -4385,6 +4287,7 @@ exports.groupchatByid = async (req, res) => {
             message: "No data found!",
             status: 400,
           });
+
         }
       } else {
         return res.json({
@@ -4414,6 +4317,7 @@ exports.appVerification = async (req, res) => {
     const decoded = jwt.decode(token);
     const user_id = decoded.data.id;
 
+
     let filename = "";
     if (req.file) {
       const file = req.file;
@@ -4421,7 +4325,8 @@ exports.appVerification = async (req, res) => {
     }
     const user_info = await Get_user_info(user_id);
     if (user_info.length > 0) {
-      let data = { user_id: user_id, image: filename };
+
+      let data = { "user_id": user_id, "image": filename };
       const appverifyImage = await appVerificationImage(data);
 
       const appverify = await appVerification(user_id);
@@ -4447,6 +4352,7 @@ exports.appVerification = async (req, res) => {
         status: 200,
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -4467,42 +4373,33 @@ exports.new_users = async (req, res) => {
     const user_id = decoded.data.id;
     const check_user = await Get_user_info(user_id);
 
-    const get_all_new_users = await Get_new_users(user_id);
+    const get_all_new_users = await Get_new_users(user_id)
     // Checking if the user is already in the database
     if (get_all_new_users.length != 0) {
       await Promise.all(
         get_all_new_users.map(async (item) => {
-          const settingshow_me = await getData(
-            "setting_show_me",
-            `where user_id= ${item.id}`
-          );
-          item.distance_status =
-            settingshow_me[0]?.distance == 1 ? true : false;
 
-          if (
-            item.latitude != null &&
-            item.latitude != "" &&
-            item.latitude != undefined &&
-            item.longitude != null &&
-            item.longitude != "" &&
-            item.longitude != undefined
-          ) {
-            const unit = "metric";
-            const origin =
-              check_user[0]?.latitude + "," + check_user[0]?.longitude;
-            const destination = item.latitude + "," + item.longitude;
+          const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
+          item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+
+
+          if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+            const unit = 'metric';
+            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+            const destination = item.latitude + ',' + item.longitude;
             try {
               const disvalue = await distanceShow(unit, origin, destination);
               item.distance = disvalue.distance;
               // item.distance_status=true;
             } catch (error) {
-              console.error("Error in yourAsyncFunction:", error);
+              console.error('Error in yourAsyncFunction:', error);
               // Handle errors as needed
             }
           } else {
             item.distance = "";
             // item.distance_status=false;
           }
+
 
           if (item.profile_image != "No image") {
             // item.profile_image = baseurl + "/profile/" + item.profile_image;
@@ -4512,9 +4409,7 @@ exports.new_users = async (req, res) => {
           const profileimage = await profileimages(item.id);
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -4535,6 +4430,8 @@ exports.new_users = async (req, res) => {
         get_all_new_users: [],
       });
     }
+
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -4553,17 +4450,15 @@ function calculateHaversine(lat1, lon1, lat2, lon2) {
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distanceMeters = R * c; // Distance in meters
   const distanceKilometers = distanceMeters / 1000; // Convert meters to kilometers
 
   return {
     meters: distanceMeters,
-    kilometers: distanceKilometers,
+    kilometers: distanceKilometers
   };
 }
 
@@ -4575,7 +4470,7 @@ function calculateHaversine(lat1, lon1, lat2, lon2) {
 //     const decoded = jwt.decode(token);
 //     const user_id = decoded.data.id;
 //     const nearbyRange = 10000; // Distance in meters to consider as "nearby"
-
+    
 //     // Fetch the logged-in user's details
 //     const check_user = await fetchUserById(user_id);
 //     if (check_user.length === 0) {
@@ -4621,10 +4516,11 @@ function calculateHaversine(lat1, lon1, lat2, lon2) {
 //           } else {
 //             item.distance = disvalue.distance;
 //           }
-//         }
+//         } 
 //         if (item.city && item.city === userCity && !NearLocation.includes(item)) {
 //           console.log("<><><<<<><>><><><<<>");
 //           console.log(item.city);
+          
 
 //           // If lat/long are null, check if they are in the same city
 //           item.distance = ""; // You can set a specific value to indicate same city
@@ -4661,7 +4557,7 @@ exports.users_nearby = async (req, res) => {
     const decoded = jwt.decode(token);
     const user_id = decoded.data.id;
     const nearbyRange = 10000; // Distance in meters to consider as "nearby"
-
+    
     // Fetch the logged-in user's details
     const check_user = await fetchUserById(user_id);
     if (check_user.length === 0) {
@@ -4675,7 +4571,7 @@ exports.users_nearby = async (req, res) => {
     const userLongitude = check_user[0]?.longitude;
     const userCity = check_user[0]?.city;
 
-    console.log(">>>>>>>>>>userCity", userCity);
+    console.log(">>>>>>>>>>userCity",userCity)
 
     let NearLocation = [];
 
@@ -4688,39 +4584,33 @@ exports.users_nearby = async (req, res) => {
         if (item.profile_image !== "No image") {
           item.profile_image = baseurl + "/profile/" + item.profile_image;
         }
-        console.log("+++++++++++++", item.city);
+        console.log("+++++++++++++",item.city)
         // Fetch the user's show settings
-        const settingshow_me = await getData(
-          "setting_show_me",
-          `where user_id=${item.id}`
-        );
-        item.explore_status = settingshow_me[0]?.explore == 1 ? true : false;
-        item.distance_status = settingshow_me[0]?.distance == 1 ? true : false;
+        const settingshow_me = await getData("setting_show_me", `where user_id=${item.id}`);
+        item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false;
+        item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false;
 
         if (item.latitude && item.longitude) {
           // Calculate distance using lat/long
-          const unit = "metric";
+          const unit = 'metric';
           const origin = `${userLatitude},${userLongitude}`;
           const destination = `${item.latitude},${item.longitude}`;
           const disvalue = await distanceShownear(unit, origin, destination);
 
           if (disvalue.distanceValue <= nearbyRange) {
             item.distance = disvalue.distance;
-            item.distanceValue = disvalue.distanceValue;
+            item.distanceValue = disvalue.distanceValue; 
             NearLocation.push(item);
           } else {
             item.distance = disvalue.distance;
           }
-        }
-        if (
-          item.city &&
-          item.city === userCity &&
-          !NearLocation.includes(item)
-        ) {
+        } 
+        if (item.city && item.city === userCity && !NearLocation.includes(item)) {
           console.log("<><><<<<><>><><><<<>");
           console.log(item.city);
 
-          item.distanceValue = Number.MAX_SAFE_INTEGER;
+          item.distanceValue = Number.MAX_SAFE_INTEGER; 
+          
 
           // If lat/long are null, check if they are in the same city
           item.distance = ""; // You can set a specific value to indicate same city
@@ -4729,12 +4619,7 @@ exports.users_nearby = async (req, res) => {
 
         // Add user's additional images if available
         const profileimage = await profileimages(item.id);
-        item.images =
-          profileimage?.length > 0
-            ? profileimage.map((imageObj) =>
-                imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-              )
-            : [];
+        item.images = profileimage?.length > 0 ? profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "") : [];
       })
     );
     NearLocation.sort((a, b) => a.distanceValue - b.distanceValue);
@@ -4757,35 +4642,37 @@ exports.users_nearby = async (req, res) => {
   }
 };
 function distanceShownear(units, origins, destinations) {
-  console.log(units, origins, destinations);
+
+  console.log(units, origins, destinations)
   return new Promise((resolve, reject) => {
     const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=${units}&origins=${origins}&destinations=${destinations}&key=${googledistance_key}`;
 
-    axios
-      .get(apiUrl)
-      .then((response) => {
+    axios.get(apiUrl)
+      .then(response => {
         console.log("response", response.data.rows[0]);
         const distanceObj = response.data.rows[0]?.elements[0];
-        console.log(distanceObj);
+        console.log(distanceObj)
         if (distanceObj.distance) {
-          console.log("distanceObj", distanceObj);
+          console.log("distanceObj", distanceObj)
           const distanceValue = distanceObj.distance.value;
-          console.log("distanceValue", distanceValue);
+          console.log("distanceValue", distanceValue)
 
           const distance = distanceObj.distance.text;
 
           resolve({ distance, distanceValue });
+
         } else {
           resolve("No distance information available");
         }
       })
-      .catch((error) => {
+      .catch(error => {
         // Handle errors here
         console.error(error);
         reject(error);
       });
   });
 }
+
 
 // exports.users_nearby = async (req, res) => {
 //   try {
@@ -4859,27 +4746,28 @@ function distanceShownear(units, origins, destinations) {
 //   }
 // };
 
+
 exports.maps = async (req, res) => {
   try {
-    const axios = require("axios");
+    const axios = require('axios');
 
     // Replace 'YOUR_API_KEY' with your actual HERE API key
-    const apiKey = "aIOc5ItQLdCfqBxlEOozaSme7-KdfGgSuatemfynJ_8";
+    const apiKey = 'aIOc5ItQLdCfqBxlEOozaSme7-KdfGgSuatemfynJ_8';
 
     // Example: Get speed limit for a specific location
-    const location = "18.77492200,84.40980100qqweertyqwertp[]  1278"; // Berlin, Germany
+    const location = '18.77492200,84.40980100qqweertyqwertp[]\  1278';  // Berlin, Germany
 
     const apiUrl = `https://route.ls.hereapi.com/routing/7.2/calculateroute.json?waypoint0=${location}&waypoint1=${location}&mode=fastest;car;traffic:disabled&apiKey=${apiKey}`;
 
-    axios
-      .get(apiUrl)
-      .then((response) => {
-        const speedLimit =
-          response.data.response.route[0].leg[0].maneuver[0].speedLimit;
+    axios.get(apiUrl)
+      .then(response => {
+        const speedLimit = response.data.response.route[0].leg[0].maneuver[0].speedLimit;
       })
-      .catch((error) => {
-        console.error("Error retrieving speed limit:", error.message);
+      .catch(error => {
+        console.error('Error retrieving speed limit:', error.message);
       });
+
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -4901,6 +4789,7 @@ exports.allShowme = async (req, res) => {
     let subscription_id = 0;
     const user_info = await fetchUserBy_Id(user_id);
     if (user_info.length > 0) {
+
       const settingshow_me = await getData(
         "setting_show_me",
         `where user_id= ${user_id}`
@@ -4914,6 +4803,7 @@ exports.allShowme = async (req, res) => {
         } else {
           subscription_id = 0;
         }
+
       } else {
         subscription_id = 0;
       }
@@ -4924,7 +4814,7 @@ exports.allShowme = async (req, res) => {
           message: "Successfully Verified!",
           status: 200,
           settingshow_me: settingshow_me,
-          subscription_id: subscription_id,
+          subscription_id: subscription_id
         });
       } else {
         return res.json({
@@ -4932,7 +4822,7 @@ exports.allShowme = async (req, res) => {
           message: "No data found!",
           settingshow_me: [],
           status: 200,
-          subscription_id: subscription_id,
+          subscription_id: subscription_id
         });
       }
     } else {
@@ -4941,9 +4831,10 @@ exports.allShowme = async (req, res) => {
         message: "No Data Found",
         settingshow_me: [],
         status: 200,
-        subscription_id: subscription_id,
+        subscription_id: subscription_id
       });
     }
+
   } catch (error) {
     console.log(error);
     return res.json({
@@ -4957,6 +4848,7 @@ exports.allShowme = async (req, res) => {
 
 exports.addShowme = async (req, res) => {
   try {
+
     const { explore, distance, view_me } = req.body;
 
     const schema = Joi.alternatives(
@@ -4964,6 +4856,7 @@ exports.addShowme = async (req, res) => {
         explore: [Joi.string().empty().required()],
         distance: [Joi.string().empty().required()],
         view_me: [Joi.string().empty().required()],
+
       })
     );
     const result = schema.validate(req.body);
@@ -4985,17 +4878,12 @@ exports.addShowme = async (req, res) => {
 
       const user_info = await fetchUserBy_Id(user_id);
       if (user_info.length > 0) {
-        let setting = {
-          explore: explore,
-          distance: distance,
-          view_me: view_me,
-          user_id: user_id,
-        };
 
-        const settingshow_me = await getData(
-          "setting_show_me",
-          `where user_id= ${user_id}`
-        );
+        let setting = {
+          explore: explore, distance: distance, view_me: view_me, user_id: user_id
+        }
+
+        const settingshow_me = await getData("setting_show_me", `where user_id= ${user_id}`);
         if (view_me == 1) {
           let checksub = await checkSubscriptionDetail(user_id);
           if (checksub?.id != 6) {
@@ -5008,12 +4896,7 @@ exports.addShowme = async (req, res) => {
         }
 
         if (settingshow_me.length > 0) {
-          const addsettingshow = updateShowme(
-            explore,
-            distance,
-            view_me,
-            user_id
-          );
+          const addsettingshow = updateShowme(explore, distance, view_me, user_id);
           const settingshow_me1 = await getData(
             "setting_show_me",
             `where user_id= ${user_id}`
@@ -5022,7 +4905,7 @@ exports.addShowme = async (req, res) => {
             success: true,
             message: "Successfully Show Me!",
             status: 200,
-            settingshow_me: settingshow_me1,
+            settingshow_me: settingshow_me1
           });
         } else {
           const addsettingshow = addShowme(setting);
@@ -5034,7 +4917,7 @@ exports.addShowme = async (req, res) => {
             success: true,
             message: "Successfully Show Me!",
             status: 200,
-            settingshow_me: settingshow_me1,
+            settingshow_me: settingshow_me1
           });
         }
       } else {
@@ -5059,16 +4942,7 @@ exports.addShowme = async (req, res) => {
 
 exports.send_notification = async (req, res) => {
   try {
-    const {
-      sender_id,
-      reciver_id,
-      notification_type,
-      group_id,
-      notification_id,
-      group_name,
-      body,
-      title,
-    } = req.body;
+    const { sender_id, reciver_id, notification_type, group_id, notification_id, group_name, body, title } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
         sender_id: [Joi.number().empty().required()],
@@ -5092,33 +4966,25 @@ exports.send_notification = async (req, res) => {
         success: false,
       });
     } else {
-      if (notification_type == "visit") {
-        const serverKey = Fcm_serverKey;
+      if (notification_type == 'visit') {
+
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
 
         const Get_fcm = await fetch_fcm(reciver_id);
 
-        let where =
-          "WHERE sender_id = '" +
-          sender_id +
-          "' AND reciver_id = '" +
-          reciver_id +
-          "' AND notification_type='visit' ";
-        const checkvisit = await getSelectedColumn(
-          "`notifications`",
-          where,
-          "*"
-        );
+        let where = "WHERE sender_id = '" + sender_id + "' AND reciver_id = '" + reciver_id + "' AND notification_type='visit' ";
+        const checkvisit = await getSelectedColumn("`notifications`", where, "*");
 
         console.log("check Visit", checkvisit);
-        console.log("Get_fcm[0].dont_disturb", Get_fcm[0].dont_disturb);
+        console.log("Get_fcm[0].dont_disturb", Get_fcm[0].dont_disturb)
 
         if (checkvisit.length == 0 && Get_fcm[0].dont_disturb == 1) {
-          console.log("here it is");
-          let user_id = sender_id;
+          console.log("here it is")
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
@@ -5135,16 +5001,20 @@ exports.send_notification = async (req, res) => {
             message: "notification send successfull",
             Response: [],
             success: true,
-            status: 200,
+            status: 200
           });
+
         } else if (checkvisit.length > 0) {
           return res.json({
             message: "Already visit",
             Response: [],
             success: true,
-            status: 200,
+            status: 200
           });
-        } else if (checkvisit.length == 0 && Get_fcm[0].dont_disturb != 1) {
+        }
+
+        else if (checkvisit.length == 0 && Get_fcm[0].dont_disturb != 1) {
+
           const message = {
             token: Get_fcm[0].fcm_token,
             notification: {
@@ -5155,16 +5025,16 @@ exports.send_notification = async (req, res) => {
             data: {
               sender_id: `${sender_id}`,
               reciver_id: `${reciver_id}`,
-              screen: "visit profile",
+              screen: 'visit profile',
             },
           };
           try {
             const response = await userFcm.messaging().send(message);
-            console.log("Successfully sent message:", response);
+            console.log('Successfully sent message:', response);
           } catch (error) {
-            console.error("Error sending message:", error);
+            console.error('Error sending message:', error);
           }
-          let user_id = sender_id;
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
@@ -5180,21 +5050,22 @@ exports.send_notification = async (req, res) => {
           return res.json({
             message: "Notification send successfull",
             success: true,
-            status: 200,
+            status: 200
           });
         }
-      } else if (notification_type == "group_request") {
+
+      }
+      else if (notification_type == 'group_request') {
+
+
         let array = [];
-        const serverKey = Fcm_serverKey;
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, "");
-        const allFcmTokens = await getData(
-          "users",
-          ` where id IN (${reciver_id1})`
-        );
+        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
@@ -5204,86 +5075,81 @@ exports.send_notification = async (req, res) => {
           data: {
             sender_id: `${sender_id}`,
             notification_type: "group_request",
-            screen: "group request",
+            screen: 'group request',
           },
         };
 
         // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
-            await Promise.all(
-              allFcmTokens.map(async (token) => {
-                try {
-                  if (token.dont_disturb == 1) {
-                    return; // Return early to skip processing for this token
-                  }
-
-                  await new Promise(async (resolve, reject) => {
-                    const response = await userFcm
-                      .messaging()
-                      .send({ ...message, token: token.fcm_token });
-                    const send_notification = {
-                      user_id: token.id,
-                      sender_id: sender_id,
-                      reciver_id: token.id,
-                      group_id: group_id,
-                      group_name: group_name,
-                      request_status: 3,
-                      body:
-                        data[0].username + " requested to add in the group!",
-                      notification_type: "group_request",
-                    };
-
-                    const result1 = await addnotification(send_notification);
-                    resolve(response);
-                    console.log("Successfully sent message:", response);
-                  });
-                } catch (error) {
-                  console.error(
-                    "Error sending notification to:",
-                    token.id,
-                    error
-                  );
+            await Promise.all(allFcmTokens.map(async (token) => {
+              try {
+                if (token.dont_disturb == 1) {
+                  return; // Return early to skip processing for this token
                 }
-              })
-            );
+
+                await new Promise(async (resolve, reject) => {
+                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  const send_notification = {
+                    user_id: token.id,
+                    sender_id: sender_id,
+                    reciver_id: token.id,
+                    group_id: group_id,
+                    group_name: group_name,
+                    request_status: 3,
+                    body: data[0].username + " requested to add in the group!",
+                    notification_type: "group_request",
+                  };
+
+                  const result1 = await addnotification(send_notification);
+                  resolve(response);
+                  console.log('Successfully sent message:', response);
+                });
+              }
+              catch (error) {
+                console.error("Error sending notification to:", token.id, error);
+              }
+            }));
             // Send response after sending notifications
             return res.json({
               message: "Notifications sent successfully to all users",
               success: true,
               Response: [],
-              status: 200,
+              status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             res.status(500).json({
               message: "Error sending notifications",
               success: false,
-              status: 500,
+              status: 500
             });
           }
         };
 
         await sendNotifications();
-      } else if (notification_type == "request_accept") {
-        const serverKey = Fcm_serverKey;
+
+
+      }
+      else if (notification_type == 'request_accept') {
+
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
 
         const Get_fcm = await fetch_fcm(reciver_id);
 
         if (Get_fcm[0].dont_disturb_mode == 1) {
-          let user_id = sender_id;
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
             reciver_id: reciver_id,
             group_id: group_id,
             request_status: 1,
-            body:
-              data[0].username + " accepted your request to add in the group!",
+            body: data[0].username + " accepted your request to add in the group!",
             notification_type: "request_accept",
           };
 
@@ -5292,78 +5158,82 @@ exports.send_notification = async (req, res) => {
           return res.json({
             message: "notification send successfull",
             success: true,
-            status: 200,
+            status: 200
           });
+
         }
 
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "group request",
-            body:
-              data[0].username + " accepted your request to add in the group!",
+            body: data[0].username + " accepted your request to add in the group!",
           },
 
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "request_accept",
-            screen: "group request",
+            screen: 'group request',
           },
         };
-        let user_id = sender_id;
+        let user_id = sender_id
         const send_notification = {
           user_id: reciver_id,
           sender_id: sender_id,
           reciver_id: reciver_id,
           group_id: group_id,
           request_status: 1,
-          body:
-            data[0].username + " accepted your request to add in the group!",
+          body: data[0].username + " accepted your request to add in the group!",
           notification_type: "request_accept",
         };
 
         if (notification_id) {
-          const updatenoti = await updateReqnotification(notification_id, 1);
+          const updatenoti = await updateReqnotification(notification_id, 1)
         }
+
 
         const result = await addnotification(send_notification);
         //notification_id
 
+
         try {
           const response = await userFcm.messaging().send(message);
-          console.log("Successfully sent message:", response);
+          console.log('Successfully sent message:', response);
         } catch (error) {
-          console.error("Error sending message:", error);
+          console.error('Error sending message:', error);
         }
         return res.json({
           message: "notification send successfull",
           success: true,
-          status: 200,
+          status: 200
         });
-      } else if (notification_type == "request_reject") {
-        const serverKey = Fcm_serverKey;
+
+      }
+      else if (notification_type == 'request_reject') {
+
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
 
         const Get_fcm = await fetch_fcm(reciver_id);
 
         if (Get_fcm[0].dont_disturb == 1) {
-          let user_id = sender_id;
+
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
             reciver_id: reciver_id,
             group_id: group_id,
             request_status: 2,
-            body:
-              data[0].username + " rejected your request to add in the group!",
+            body: data[0].username + " rejected your request to add in the group!",
             notification_type: "request_reject",
           };
           if (notification_id) {
-            const updatenoti = await updateReqnotification(notification_id, 2);
+            const updatenoti = await updateReqnotification(notification_id, 2)
           }
 
           const result = await addnotification(send_notification);
@@ -5371,129 +5241,122 @@ exports.send_notification = async (req, res) => {
           return res.json({
             message: "notification send successfull",
             success: true,
-            status: 200,
+            status: 200
           });
+
+
         }
 
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "group request",
-            body:
-              data[0].username + " rejected your request to add in the group!",
+            body: data[0].username + " rejected your request to add in the group!",
           },
 
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "request_reject",
-            screen: "group request",
+            screen: 'group request',
           },
         };
 
-        let user_id = sender_id;
+        let user_id = sender_id
         const send_notification = {
           user_id: reciver_id,
           sender_id: sender_id,
           reciver_id: reciver_id,
           group_id: group_id,
           request_status: 2,
-          body:
-            data[0].username + " rejected your request to add in the group!",
+          body: data[0].username + " rejected your request to add in the group!",
           notification_type: "request_reject",
         };
         if (notification_id) {
-          const updatenoti = await updateReqnotification(notification_id, 2);
+          const updatenoti = await updateReqnotification(notification_id, 2)
         }
 
         const result = await addnotification(send_notification);
 
         try {
           const response = await userFcm.messaging().send(message);
-          console.log("Successfully sent message:", response);
+          console.log('Successfully sent message:', response);
         } catch (error) {
-          console.error("Error sending message:", error);
+          console.error('Error sending message:', error);
         }
 
         return res.json({
           message: "notification send successfull",
           success: true,
-          status: 200,
+          status: 200
         });
-      } else if (notification_type == "chat") {
+
+
+      }
+      else if (notification_type == 'chat') {
+
         let array = [];
-        const serverKey = Fcm_serverKey;
+        const serverKey = Fcm_serverKey
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, "");
-        const allFcmTokens = await getData(
-          "users",
-          ` where id IN (${reciver_id1})`
-        );
+        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: title,
             body: body,
+
           },
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "chat",
-            screen: "chat",
+            screen: 'chat',
           },
         };
         // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
-            await Promise.all(
-              allFcmTokens.map(async (token) => {
-                try {
-                  if (token.dont_disturb == 1 || token.chat_notification == 0) {
-                    return; // Return early to skip processing for this token
-                  }
-                  await new Promise(async (resolve, reject) => {
-                    const response = await userFcm
-                      .messaging()
-                      .send({ ...message, token: token.fcm_token });
-                    resolve(response);
-                  });
-                } catch (error) {
-                  console.error(
-                    "Error sending notification to:",
-                    token.id,
-                    error
-                  );
+            await Promise.all(allFcmTokens.map(async (token) => {
+              try {
+                if (token.dont_disturb == 1 || token.chat_notification == 0) {
+                  return; // Return early to skip processing for this token
                 }
-              })
-            );
+                await new Promise(async (resolve, reject) => {
+                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  resolve(response)
+                });
+              } catch (error) {
+                console.error("Error sending notification to:", token.id, error);
+              }
+            }));
             return res.json({
               message: "Notifications sent successfully to all users",
               success: true,
-              status: 200,
+              status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             res.status(500).json({
               message: "Error sending notifications",
               success: false,
-              status: 500,
+              status: 500
             });
           }
         };
         await sendNotifications();
-      } else if (notification_type == "chatGroup") {
+      }
+      else if (notification_type == 'chatGroup') {
+
         let array = [];
-        const serverKey = Fcm_serverKey;
+        const serverKey = Fcm_serverKey
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, "");
-        const allFcmTokens = await getData(
-          "users",
-          ` where id IN (${reciver_id1})`
-        );
+        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
@@ -5504,63 +5367,51 @@ exports.send_notification = async (req, res) => {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "chat",
-            screen: "chat",
+            screen: 'chat',
           },
         };
         // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
-            await Promise.all(
-              allFcmTokens.map(async (token) => {
-                try {
-                  if (
-                    token.dont_disturb == 1 ||
-                    token.group_notification == 0
-                  ) {
-                    return; // Return early to skip processing for this token
-                  }
-                  await new Promise(async (resolve, reject) => {
-                    const response = await userFcm
-                      .messaging()
-                      .send({ ...message, token: token.fcm_token });
-                    resolve(response);
-                  });
-                } catch (error) {
-                  console.error(
-                    "Error sending notification to:",
-                    token.id,
-                    error
-                  );
+            await Promise.all(allFcmTokens.map(async (token) => {
+              try {
+                if (token.dont_disturb == 1 || token.group_notification == 0) {
+                  return; // Return early to skip processing for this token
                 }
-              })
-            );
+                await new Promise(async (resolve, reject) => {
+                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  resolve(response)
+                });
+              } catch (error) {
+                console.error("Error sending notification to:", token.id, error);
+              }
+            }));
             // Send response after sending notifications
             return res.json({
               message: "Notifications sent successfully to all users",
               success: true,
-              status: 200,
+              status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             res.status(500).json({
               message: "Error sending notifications",
               success: false,
-              status: 500,
+              status: 500
             });
           }
         };
         await sendNotifications();
-      } else if (notification_type == "chatTap") {
+      }
+      else if (notification_type == 'chatTap') {
+
         let array = [];
-        const serverKey = Fcm_serverKey;
+        const serverKey = Fcm_serverKey
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, "");
-        const allFcmTokens = await getData(
-          "users",
-          ` where id IN (${reciver_id1})`
-        );
+        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
@@ -5571,61 +5422,52 @@ exports.send_notification = async (req, res) => {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "chatTap",
-            screen: "chat",
+            screen: 'chat',
           },
         };
         // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
-            await Promise.all(
-              allFcmTokens.map(async (token) => {
-                try {
-                  if (token.dont_disturb == 1 || token.taps_notification == 0) {
-                    return;
-                  }
-                  await new Promise(async (resolve, reject) => {
-                    const response = await userFcm
-                      .messaging()
-                      .send({ ...message, token: token.fcm_token });
-                    resolve(response);
-                  });
-                } catch (error) {
-                  console.error(
-                    "Error sending notification to:",
-                    token.id,
-                    error
-                  );
+            await Promise.all(allFcmTokens.map(async (token) => {
+              try {
+                if (token.dont_disturb == 1 || token.taps_notification == 0) {
+                  return;
                 }
-              })
-            );
+                await new Promise(async (resolve, reject) => {
+                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  resolve(response)
+                });
+              } catch (error) {
+                console.error("Error sending notification to:", token.id, error);
+              }
+            }));
             // Send response after sending notifications
             return res.json({
               message: "Notifications sent successfully to all users",
               success: true,
-              status: 200,
+              status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             return res.status(500).json({
               message: "Error sending notifications",
               success: false,
-              status: 500,
+              status: 500
             });
           }
         };
         await sendNotifications();
-      } else if (notification_type == "album_request") {
+      }
+      else if (notification_type == 'album_request') {
+
         let array = [];
-        const serverKey = Fcm_serverKey;
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, "");
-        const allFcmTokens = await getData(
-          "users",
-          ` where id IN (${reciver_id1})`
-        );
+        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
@@ -5635,83 +5477,75 @@ exports.send_notification = async (req, res) => {
           data: {
             sender_id: `${sender_id}`,
             notification_type: "album_request",
-            screen: "album request",
+            screen: 'album request',
           },
         };
 
         // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
-            await Promise.all(
-              allFcmTokens.map(async (token) => {
-                try {
-                  if (token.dont_disturb == 1) {
-                    return; // Return early to skip processing for this token
-                  }
-
-                  await new Promise(async (resolve, reject) => {
-                    const response = await userFcm
-                      .messaging()
-                      .send({ ...message, token: token.fcm_token });
-                    const send_notification = {
-                      user_id: token.id,
-                      sender_id: sender_id,
-                      reciver_id: token.id,
-                      group_id: group_id,
-                      group_name: group_name,
-                      request_status: 3,
-                      body:
-                        data[0].username + " requested to add in the group!",
-                      notification_type: "group_request",
-                    };
-
-                    const result1 = await addnotification(send_notification);
-                    resolve(response);
-                    console.log("Successfully sent message:", response);
-                  });
-                } catch (error) {
-                  console.error(
-                    "Error sending notification to:",
-                    token.id,
-                    error
-                  );
+            await Promise.all(allFcmTokens.map(async (token) => {
+              try {
+                if (token.dont_disturb == 1) {
+                  return; // Return early to skip processing for this token
                 }
-              })
-            );
+
+                await new Promise(async (resolve, reject) => {
+
+                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  const send_notification = {
+                    user_id: token.id,
+                    sender_id: sender_id,
+                    reciver_id: token.id,
+                    group_id: group_id,
+                    group_name: group_name,
+                    request_status: 3,
+                    body: data[0].username + " requested to add in the group!",
+                    notification_type: "group_request",
+                  };
+
+                  const result1 = await addnotification(send_notification);
+                  resolve(response);
+                  console.log('Successfully sent message:', response);
+                });
+              } catch (error) {
+                console.error("Error sending notification to:", token.id, error);
+              }
+            }));
             return res.json({
               message: "Notifications sent successfully to all users",
               success: true,
-              status: 200,
+              status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             res.status(500).json({
               message: "Error sending notifications",
               success: false,
-              status: 500,
+              status: 500
             });
           }
         };
 
         await sendNotifications();
-      } else if (notification_type == "album_accept") {
-        const serverKey = Fcm_serverKey;
+      }
+      else if (notification_type == 'album_accept') {
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
 
         const Get_fcm = await fetch_fcm(reciver_id);
 
         if (Get_fcm[0].dont_disturb_mode == 1) {
-          let user_id = sender_id;
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
             reciver_id: reciver_id,
             album_request_status: 1,
-            body:
-              data[0].username + " accepted your request to view the albums!",
+            body: data[0].username + " accepted your request to view the albums!",
             notification_type: "album_accept",
           };
 
@@ -5720,32 +5554,32 @@ exports.send_notification = async (req, res) => {
           return res.json({
             message: "notification send successfull",
             success: true,
-            status: 200,
+            status: 200
           });
+
         }
 
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "Album request",
-            body:
-              data[0].username + " accepted your request to view the album!",
+            body: data[0].username + " accepted your request to view the album!",
           },
 
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "album_accept",
-            screen: "album request",
+            screen: 'album request',
           },
         };
         try {
           const response = await userFcm.messaging().send(message);
-          console.log("Successfully sent message:", response);
+          console.log('Successfully sent message:', response);
         } catch (error) {
-          console.error("Error sending message:", error);
+          console.error('Error sending message:', error);
         }
-        let user_id = sender_id;
+        let user_id = sender_id
         const send_notification = {
           user_id: reciver_id,
           sender_id: sender_id,
@@ -5756,11 +5590,9 @@ exports.send_notification = async (req, res) => {
         };
 
         if (notification_id) {
-          const updatenoti = await updateAlbumRequestNotification(
-            notification_id,
-            1
-          );
+          const updatenoti = await updateAlbumRequestNotification(notification_id, 1)
         }
+
 
         const result = await addnotification(send_notification);
         //notification_id
@@ -5768,26 +5600,28 @@ exports.send_notification = async (req, res) => {
           message: "notification send successfull",
           Response: response,
           success: true,
-          status: 200,
+          status: 200
         });
-      } else if (notification_type == "album_reject") {
-        const serverKey = Fcm_serverKey;
+
+
+      }
+      else if (notification_type == 'album_reject') {
+        const serverKey = Fcm_serverKey
 
         const fcm = new FCM(serverKey);
-        let id = sender_id;
+        let id = sender_id
         let data = await fetchUserBy_Id(id);
 
         const Get_fcm = await fetch_fcm(reciver_id);
 
         if (Get_fcm[0].dont_disturb_mode == 1) {
-          let user_id = sender_id;
+          let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
             reciver_id: reciver_id,
             album_request_status: 2,
-            body:
-              data[0].username + " rejected your request to view their album!",
+            body: data[0].username + " rejected your request to view their album!",
             notification_type: "album_reject",
           };
 
@@ -5796,32 +5630,32 @@ exports.send_notification = async (req, res) => {
           return res.json({
             message: "notification send successfull",
             success: true,
-            status: 200,
+            status: 200
           });
+
         }
 
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "Album request",
-            body:
-              data[0].username + " rejected your request to view the album!",
+            body: data[0].username + " rejected your request to view the album!",
           },
 
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "album_reject",
-            screen: "album request",
+            screen: 'album request',
           },
         };
         try {
           const response = await userFcm.messaging().send(message);
-          console.log("Successfully sent message:", response);
+          console.log('Successfully sent message:', response);
         } catch (error) {
-          console.error("Error sending message:", error);
+          console.error('Error sending message:', error);
         }
-        let user_id = sender_id;
+        let user_id = sender_id
         const send_notification = {
           user_id: reciver_id,
           sender_id: sender_id,
@@ -5832,81 +5666,17 @@ exports.send_notification = async (req, res) => {
         };
 
         if (notification_id) {
-          const updatenoti = await updateAlbumRequestNotification(
-            notification_id,
-            2
-          );
+          const updatenoti = await updateAlbumRequestNotification(notification_id, 2)
         }
+
 
         const result = await addnotification(send_notification);
         return res.json({
           message: "notification send successfull",
           success: true,
-          status: 200,
+          status: 200
         });
-      } else if (notification_type == "favorite_user") {
-        const serverKey = Fcm_serverKey;
-
-        const fcm = new FCM(serverKey);
-        let id = sender_id;
-        let data = await fetchUserBy_Id(id);
-
-        const Get_fcm = await fetch_fcm(reciver_id);
-
-        if (Get_fcm[0].dont_disturb_mode == 1) {
-          let user_id = sender_id;
-          const send_notification = {
-            user_id: reciver_id,
-            sender_id: sender_id,
-            reciver_id: reciver_id,
-            body: data[0].username + " added  you  to  their favorites!",
-            notification_type: "favorite_user",
-          };
-
-          const result = await addnotification(send_notification);
-          //notification_id
-          return res.json({
-            message: "notification send successfull",
-            success: true,
-            status: 200,
-          });
-        }
-
-        const message = {
-          token: Get_fcm[0].fcm_token,
-          notification: {
-            title: "Favorites",
-            body: data[0].username + " added  you  to  their favorites!",
-          },
-
-          data: {
-            sender_id: `${sender_id}`,
-            reciver_id: `${reciver_id}`,
-            notification_type: "favorite_user",
-            screen: "favorite_user",
-          },
-        };
-        try {
-          const response = await userFcm.messaging().send(message);
-          console.log("Successfully sent message:", response);
-        } catch (error) {
-          console.error("Error sending message:", error);
-        }
-        let user_id = sender_id;
-        const send_notification = {
-          user_id: reciver_id,
-          sender_id: sender_id,
-          reciver_id: reciver_id,
-          body: data[0].username + " added  you  to  their favorites!",
-          notification_type: "favorite_user",
-        };
-
-        const result = await addnotification(send_notification);
-        return res.json({
-          message: "notification send successfull",
-          success: true,
-          status: 200,
-        });
+        
       } else {
         return res.json({
           success: false,
@@ -5926,7 +5696,6 @@ exports.send_notification = async (req, res) => {
     });
   }
 };
-
 exports.changePasswordbefore = async (req, res) => {
   try {
     const { password, confirm_password, email, phone_number } = req.body;
@@ -5939,8 +5708,7 @@ exports.changePasswordbefore = async (req, res) => {
             .max(255)
             .email({ tlds: { allow: false } })
             .lowercase()
-            .optional()
-            .allow(""),
+            .optional().allow("")
         ],
         password: Joi.string().min(8).max(15).required().messages({
           "any.required": "{{#label}} is required!!",
@@ -5968,9 +5736,11 @@ exports.changePasswordbefore = async (req, res) => {
       });
     } else {
       if (password == confirm_password) {
-        const data = await fetchUserByphoneEmail(email, phone_number);
+
+        const data = await fetchUserByphoneEmail(email, phone_number)
 
         if (data.length !== 0) {
+
           const hash = await bcrypt.hash(password, saltRounds);
           const result2 = await updatePassword(password, hash, data[0].id);
 
@@ -6010,8 +5780,10 @@ exports.changePasswordbefore = async (req, res) => {
       status: 500,
       error: error,
     });
+
   }
 };
+
 
 exports.getGroupRequest = async (req, res) => {
   const { user_id, group_id } = req.body;
@@ -6032,20 +5804,18 @@ exports.getGroupRequest = async (req, res) => {
       success: false,
     });
   } else {
+
     const notification = await Allnotificationbyuser_id(user_id, group_id);
     if (notification.length > 0) {
-      await Promise.all(
-        notification.map(async (item) => {
-          const owner_info = await Get_user_info(item.reciver_id);
 
-          item.username = owner_info[0]?.username
-            ? owner_info[0]?.username
-            : "";
-          item.profile_image = owner_info[0]?.profile_image
-            ? baseurl + "/profile/" + owner_info[0]?.profile_image
-            : "";
-        })
-      );
+      await Promise.all(notification.map(async (item) => {
+
+        const owner_info = await Get_user_info(item.reciver_id);
+
+        item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
+        item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
+
+      }));
 
       return res.json({
         status: 200,
@@ -6063,9 +5833,12 @@ exports.getGroupRequest = async (req, res) => {
       });
     }
   }
-};
+
+}
+
 
 exports.get_user_by_id = async (req, res) => {
+
   const { user_id } = req.body;
   const schema = Joi.alternatives(
     Joi.object({
@@ -6073,17 +5846,14 @@ exports.get_user_by_id = async (req, res) => {
     })
   );
   const result = schema.validate(req.body);
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", req.body);
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",req.body)
 
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
   const token = token_1.replace("Bearer ", "");
   const decoded = jwt.decode(token);
   const check_user = await getData("users", `where id= ${decoded.data.id}`);
-  const settingshow_me = await getData(
-    "setting_show_me",
-    `where user_id= ${decoded.data.id}`
-  );
+  const settingshow_me = await getData("setting_show_me", `where user_id= ${decoded.data.id}`);
 
   if (result.error) {
     const message = result.error.details.map((i) => i.message).join(",");
@@ -6100,28 +5870,22 @@ exports.get_user_by_id = async (req, res) => {
     if (user_detail !== 0) {
       await Promise.all(
         user_detail.map(async (item) => {
+
           // if (item.latitude != null && item.latitude != "" && item.longitude != null && item.longitude != "") {
-          if (
-            item.latitude != null &&
-            item.latitude != "" &&
-            item.latitude != undefined &&
-            item.longitude != null &&
-            item.longitude != "" &&
-            item.longitude != undefined
-          ) {
-            const unit = "metric";
-            const origin =
-              check_user[0]?.latitude + "," + check_user[0]?.longitude;
-            const destination = item.latitude + "," + item.longitude;
+          if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+            const unit = 'metric';
+            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+            const destination = item.latitude + ',' + item.longitude;
             try {
               const disvalue = await distanceShow(unit, origin, destination);
-              item.distance = disvalue.distance;
+              item.distance = disvalue.distance
+
             } catch (error) {
-              console.error("Error in yourAsyncFunction:", error);
+              console.error('Error in yourAsyncFunction:', error);
               // Handle errors as needed
             }
           } else {
-            item.distance = "";
+            item.distance = ""
           }
 
           const birthdate = item.DOB;
@@ -6134,9 +5898,7 @@ exports.get_user_by_id = async (req, res) => {
           }
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -6145,36 +5907,39 @@ exports.get_user_by_id = async (req, res) => {
 
           // const sharedAlbumsWithMe = await getSharedAlbumsToMe(user_id, myId);
 
-          const checkAlbumRequest = await checkAlbumRequestNotification(
-            myId,
-            parseInt(user_id)
-          );
+          const checkAlbumRequest = await checkAlbumRequestNotification(myId, parseInt(user_id));
 
           if (checkAlbumRequest.length > 0) {
-            item.albumRequestSend = true;
-          } else {
-            item.albumRequestSend = false;
+            item.albumRequestSend = true
+          }
+          else {
+            item.albumRequestSend = false
           }
 
           const albums = await getAlbumsByUserId(user_id);
           if (albums.length > 0) {
-            item.has_album = true;
-          } else {
-            item.has_album = false;
+            item.has_album = true
+          }
+          else {
+            item.has_album = false
           }
 
           item.age = get_age;
+
         })
       );
+
+
 
       return res.json({
         status: 200,
         success: true,
         message: "User fetch successful",
         user_info: user_detail,
-        distance_status: settingshow_me[0]?.distance == 1 ? true : false,
+        distance_status: (settingshow_me[0]?.distance == 1) ? true : false,
       });
-    } else {
+    }
+    else {
       // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
       return res.json({
         status: 404,
@@ -6184,16 +5949,19 @@ exports.get_user_by_id = async (req, res) => {
       });
     }
   }
-};
+
+}
 
 exports.block_unblock = async (req, res) => {
+
   const { user_id, block_status, block_id } = req.body;
+
 
   const schema = Joi.alternatives(
     Joi.object({
       user_id: [Joi.number().empty().required()],
       block_status: [Joi.number().empty().required()],
-      block_id: [Joi.number().empty().required()],
+      block_id: [Joi.number().empty().required()]
     })
   );
   const result = schema.validate(req.body);
@@ -6207,36 +5975,39 @@ exports.block_unblock = async (req, res) => {
       success: false,
     });
   } else {
-    const get__block_user = await get_block_user(user_id, block_id);
+
+    const get__block_user = await get_block_user(user_id, block_id)
 
     if (get__block_user.length !== 0) {
-      const update_block__user = await block_unblock(
-        user_id,
-        block_id,
-        block_status
-      );
+
+      const update_block__user = await block_unblock(user_id, block_id, block_status)
       return res.json({
         success: true,
         status: 200,
         block_status: block_status,
-        message: "update block user successfully! ",
-      });
+        message: "update block user successfully! "
+      })
+
+
     } else {
       const data = {
         user_id: user_id,
         block_status: block_status,
-        block_id: block_id,
-      };
+        block_id: block_id
+      }
 
-      const insert_block_user = await insert_block_unblock(data);
+      const insert_block_user = await insert_block_unblock(data)
       return res.json({
         success: true,
         status: 200,
-        message: "insert block user successfully",
-      });
+        message: "insert block user successfully"
+      })
     }
+
+
+
   }
-};
+}
 
 exports.get_block_list = async (req, res) => {
   const { user_id } = req.body;
@@ -6256,50 +6027,57 @@ exports.get_block_list = async (req, res) => {
       success: false,
     });
   } else {
-    const get__block__list = await get_block_list(user_id);
+    const get__block__list = await get_block_list(user_id)
     if (get__block__list.length !== 0) {
+
+
       await Promise.all(
         get__block__list.map(async (item) => {
-          const user_info = await getData(
-            "users",
-            `where id= ${item.block_id}`
-          );
+
+          const user_info = await getData("users", `where id= ${item.block_id}`);
 
           if (user_info.length != 0) {
+
             if (user_info[0]?.profile_image != "No image") {
               // item.profile_image = baseurl + "/profile/" + item.profile_image;
-              user_info[0].profile_image =
-                baseurl + "/profile/" + user_info[0].profile_image;
+              user_info[0].profile_image = baseurl + "/profile/" + user_info[0].profile_image;
             }
 
-            item.block_user_info = user_info[0];
+
+            item.block_user_info = user_info[0]
           } else {
-            item.block_user_info = [];
+            item.block_user_info = []
           }
+
         })
       );
       return res.json({
         success: true,
         status: 200,
         messgae: "list successfully fetched!",
-        data: get__block__list,
-      });
+        data: get__block__list
+      })
     } else {
       return res.json({
         success: false,
         status: 404,
-        message: "no user found!",
-      });
+        message: "no user found!"
+      })
     }
+
+
+
   }
-};
+
+}
 
 exports.get_block_by_id = async (req, res) => {
   const { user_id, block_id } = req.body;
   const schema = Joi.alternatives(
     Joi.object({
       user_id: [Joi.number().empty().required()],
-      block_id: [Joi.number().empty().required()],
+      block_id: [Joi.number().empty().required()]
+
     })
   );
   const result = schema.validate(req.body);
@@ -6313,23 +6091,27 @@ exports.get_block_by_id = async (req, res) => {
       success: false,
     });
   } else {
-    const get__block__list = await get_block_user_status(user_id, block_id);
+    const get__block__list = await get_block_user_status(user_id, block_id)
     if (get__block__list.length !== 0) {
       return res.json({
         success: true,
         status: 200,
         messgae: "list successfully fetched!",
-        data: get__block__list,
-      });
+        data: get__block__list
+      })
     } else {
       return res.json({
         success: false,
         status: 404,
-        message: "no user found!",
-      });
+        message: "no user found!"
+      })
     }
+
+
+
   }
-};
+
+}
 
 exports.add_text = async (req, res) => {
   try {
@@ -6450,8 +6232,7 @@ exports.delete_text = async (req, res) => {
     });
 
     const commonValidationResult = commonSchema.validate({
-      user_id,
-      msg_id,
+      user_id, msg_id
     });
 
     if (commonValidationResult.error) {
@@ -6473,6 +6254,7 @@ exports.delete_text = async (req, res) => {
           success: true,
           status: 200,
           message: "text deleted successsfully!",
+
         });
       } else {
         return res.json({
@@ -6495,7 +6277,9 @@ exports.delete_text = async (req, res) => {
 
 exports.submit_report = async (req, res) => {
   try {
-    const { group_id, comment, sender_id, reciver_id } = req.body;
+    const {
+      group_id, comment, sender_id, reciver_id
+    } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
         group_id: [Joi.number().empty().optional()],
@@ -6518,6 +6302,7 @@ exports.submit_report = async (req, res) => {
     } else {
       const userInfo = await fetchUserBy_Id(sender_id);
       if (userInfo.length !== 0) {
+
         let report_info = {
           reciver_id: reciver_id ? reciver_id : 0,
           sender_id: sender_id,
@@ -6579,55 +6364,65 @@ exports.incognito_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         let checksub = await checkSubscriptionDetail(user_id);
-        console.log("checksub", checksub);
+        console.log("checksub", checksub)
         if (checksub.id == 6) {
+
+
           if (incognito_status == 1) {
+
             if (check_user[0].incognito_mode == 1) {
+
               return res.json({
                 message: " Incognito mode is already ON ",
                 success: true,
                 status: 200,
               });
+
             } else {
-              const Update_incognito_status = await update_incognito_status(
-                user_id,
-                incognito_status
-              );
+
+              const Update_incognito_status = await update_incognito_status(user_id, incognito_status)
 
               return res.json({
                 message: " Incognito mode  ON",
                 success: true,
                 status: 200,
               });
+
             }
           } else if (incognito_status == 0) {
+
             if (check_user[0].incognito_mode == 0) {
               return res.json({
                 message: " Incognito mode is already OFF ",
                 success: true,
                 status: 200,
               });
+
             } else {
-              const Update_incognito_status = await update_incognito_status(
-                user_id,
-                incognito_status
-              );
+
+              const Update_incognito_status = await update_incognito_status(user_id, incognito_status)
 
               return res.json({
                 message: " Incognito mode  OFF ",
                 success: true,
                 status: 200,
               });
+
             }
           }
         } else {
+
           return res.json({
             message: " To use this feature please upgrade to full plan  ",
             success: true,
             status: 200,
           });
+
         }
       } else {
         return res.json({
@@ -6648,65 +6443,64 @@ exports.incognito_mode = async (req, res) => {
   }
 };
 
-exports.privacyPolicy_english_dark = async (req, res) => {
-  res.sendFile(__dirname + "/view/English_dark/privacy.html");
-};
+exports.privacyPolicy_english_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/English_dark/privacy.html')
+});
 
-exports.terms_condition_english_dark = async (req, res) => {
-  res.sendFile(__dirname + "/view/English_dark/terms-condition.html");
-};
+exports.terms_condition_english_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/English_dark/terms-condition.html');
+});
 
-exports.privacyPolicy_french_dark = async (req, res) => {
-  res.sendFile(
-    __dirname + "/view/French_dark/politique-de-confidentialite.html"
-  );
-};
+exports.privacyPolicy_french_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/French_dark/politique-de-confidentialite.html')
+});
 
-exports.terms_condition_french_dark = async (req, res) => {
-  res.sendFile(__dirname + "/view/French_dark/termes-et-conditions.html");
-};
+exports.terms_condition_french_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/French_dark/termes-et-conditions.html');
+});
 
-exports.privacyPolicy_spanish_dark = async (req, res) => {
-  res.sendFile(__dirname + "/view/Spanish_dark/politica-de-privacidad.html");
-};
+exports.privacyPolicy_spanish_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/Spanish_dark/politica-de-privacidad.html')
+});
 
-exports.terms_condition_spanish_dark = async (req, res) => {
-  res.sendFile(__dirname + "/view/Spanish_dark/terminos-y-condiciones.html");
-};
+exports.terms_condition_spanish_dark = (async (req, res) => {
+  res.sendFile(__dirname + '/view/Spanish_dark/terminos-y-condiciones.html');
+});
 
-exports.terms_condition_spanish_light = async (req, res) => {
-  res.sendFile(__dirname + "/view/Spanish_ligth/terminos-y-condiciones.html");
-};
+exports.terms_condition_spanish_light = (async (req, res) => {
+  res.sendFile(__dirname + '/view/Spanish_ligth/terminos-y-condiciones.html')
+});
 
-exports.privacyPolicy_spanish_light = async (req, res) => {
-  res.sendFile(__dirname + "/view/Spanish_ligth/politica-de-privacidad.html");
-};
+exports.privacyPolicy_spanish_light = (async (req, res) => {
+  res.sendFile(__dirname + '/view/Spanish_ligth/politica-de-privacidad.html');
+});
 
-exports.privacyPolicy_english_ligth = async (req, res) => {
-  res.sendFile(__dirname + "/view/English_ligth/privacy.html");
-};
+exports.privacyPolicy_english_ligth = (async (req, res) => {
+  res.sendFile(__dirname + '/view/English_ligth/privacy.html')
+});
 
-exports.terms_condition_english_ligth = async (req, res) => {
-  res.sendFile(__dirname + "/view/English_ligth/terms-condition.html");
-};
+exports.terms_condition_english_ligth = (async (req, res) => {
+  res.sendFile(__dirname + '/view/English_ligth/terms-condition.html');
+});
 
-exports.privacyPolicy_french_ligth = async (req, res) => {
-  res.sendFile(
-    __dirname + "/view/French_ligth/politique-de-confidentialite.html"
-  );
-};
+exports.privacyPolicy_french_ligth = (async (req, res) => {
+  res.sendFile(__dirname + '/view/French_ligth/politique-de-confidentialite.html')
+});
 
-exports.terms_condition_french_ligth = async (req, res) => {
-  res.sendFile(__dirname + "/view/French_ligth/termes-et-conditions.html");
-};
 
-exports.Updatelatlong = async (req, res) => {
+
+exports.terms_condition_french_ligth = (async (req, res) => {
+  res.sendFile(__dirname + '/view/French_ligth/termes-et-conditions.html');
+});
+
+exports.Updatelatlong = (async (req, res) => {
+
   try {
     const { latitude, longitude } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
         latitude: [Joi.string().empty().required()],
-        longitude: [Joi.string().empty().required()],
+        longitude: [Joi.string().empty().required()]
       })
     );
     const result = schema.validate(req.body);
@@ -6720,6 +6514,7 @@ exports.Updatelatlong = async (req, res) => {
         success: false,
       });
     } else {
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -6735,6 +6530,7 @@ exports.Updatelatlong = async (req, res) => {
           success: true,
           status: 200,
           message: "latitude and longitude updated Successfully!",
+
         });
       } else {
         return res.json({
@@ -6753,7 +6549,8 @@ exports.Updatelatlong = async (req, res) => {
       error: error,
     });
   }
-};
+
+});
 
 exports.chat_notification_mode = async (req, res) => {
   try {
@@ -6777,48 +6574,53 @@ exports.chat_notification_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         if (chat_notification_status == 1) {
+
           if (check_user[0].chat_notification == 1) {
+
             return res.status(200).json({
               message: " chat_notification is already ON ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_chat_notification_status(
-                user_id,
-                chat_notification_status
-              );
+
+            const Update_incognito_status = await update_chat_notification_status(user_id, chat_notification_status)
 
             return res.status(200).json({
               message: " chat_notification mode  ON",
               success: true,
               status: 200,
             });
+
           }
         } else if (chat_notification_status == 0) {
+
           if (check_user[0].chat_notification_status == 0) {
             return res.status(200).json({
               message: " chat_notification mode is already OFF ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_chat_notification_status(
-                user_id,
-                chat_notification_status
-              );
+
+            const Update_incognito_status = await update_chat_notification_status(user_id, chat_notification_status)
 
             return res.status(200).json({
               message: " chat_notification mode  OFF ",
               success: true,
               status: 200,
             });
+
           }
         }
+
       } else {
         return res.status(400).json({
           message: "User not found please sign-up first",
@@ -6860,48 +6662,53 @@ exports.group_notification_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         if (group_notification_status == 1) {
+
           if (check_user[0].group_notification == 1) {
+
             return res.status(200).json({
               message: " group_notification is already ON ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_group_notification_status(
-                user_id,
-                group_notification_status
-              );
+
+            const Update_incognito_status = await update_group_notification_status(user_id, group_notification_status)
 
             return res.status(200).json({
               message: " group_notification mode  ON",
               success: true,
               status: 200,
             });
+
           }
         } else if (group_notification_status == 0) {
+
           if (check_user[0].group_notification == 0) {
             return res.status(200).json({
               message: " group_notification mode is already OFF ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_group_notification_status(
-                user_id,
-                group_notification_status
-              );
+
+            const Update_incognito_status = await update_group_notification_status(user_id, group_notification_status)
 
             return res.status(200).json({
               message: " group_notification mode  OFF ",
               success: true,
               status: 200,
             });
+
           }
         }
+
       } else {
         return res.status(400).json({
           message: "User not found please sign-up first",
@@ -6943,48 +6750,53 @@ exports.taps_notification_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         if (taps_notification_status == 1) {
+
           if (check_user[0].taps_notification == 1) {
+
             return res.status(200).json({
               message: " taps_notification	 is already ON ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_tapes_notification_status(
-                user_id,
-                taps_notification_status
-              );
+
+            const Update_incognito_status = await update_tapes_notification_status(user_id, taps_notification_status)
 
             return res.status(200).json({
               message: " taps_notification	 mode  ON",
               success: true,
               status: 200,
             });
+
           }
         } else if (taps_notification_status == 0) {
+
           if (check_user[0].taps_notification == 0) {
             return res.status(200).json({
               message: " taps_notification	 mode is already OFF ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_tapes_notification_status(
-                user_id,
-                taps_notification_status
-              );
+
+            const Update_incognito_status = await update_tapes_notification_status(user_id, taps_notification_status)
 
             return res.status(200).json({
               message: " taps_notification	 mode  OFF ",
               success: true,
               status: 200,
             });
+
           }
         }
+
       } else {
         return res.status(400).json({
           message: "User not found please sign-up first",
@@ -7026,46 +6838,53 @@ exports.dont_disturb_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         if (dont_disturb == 1) {
+
           if (check_user[0].dont_disturb == 1) {
+
             return res.status(200).json({
               message: " video_Call_notification	 is already ON ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status = await update_dont_disturb_status(
-              user_id,
-              dont_disturb
-            );
+
+            const Update_incognito_status = await update_dont_disturb_status(user_id, dont_disturb)
 
             return res.status(200).json({
               message: " dont_disturb	 mode  ON",
               success: true,
               status: 200,
             });
+
           }
         } else if (dont_disturb == 0) {
+
           if (check_user[0].dont_disturb == 0) {
             return res.status(200).json({
               message: " dont_disturb	 mode is already OFF ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status = await update_dont_disturb_status(
-              user_id,
-              dont_disturb
-            );
+
+            const Update_incognito_status = await update_dont_disturb_status(user_id, dont_disturb)
 
             return res.status(200).json({
               message: " dont_disturb	 mode  OFF ",
               success: true,
               status: 200,
             });
+
           }
         }
+
       } else {
         return res.status(400).json({
           message: "User not found please sign-up first",
@@ -7107,48 +6926,53 @@ exports.video_call_notification_mode = async (req, res) => {
     } else {
       const check_user = await fetchUserById(user_id);
 
+
       if (check_user.length != 0) {
+
+
         if (video_call_notification_status == 1) {
+
           if (check_user[0].video_Call_notification == 1) {
+
             return res.status(200).json({
               message: " video_Call_notification	 is already ON ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_video_call_notification_status(
-                user_id,
-                video_call_notification_status
-              );
+
+            const Update_incognito_status = await update_video_call_notification_status(user_id, video_call_notification_status)
 
             return res.status(200).json({
               message: " video_Call_notification	 mode  ON",
               success: true,
               status: 200,
             });
+
           }
         } else if (video_call_notification_status == 0) {
+
           if (check_user[0].video_Call_notification == 0) {
             return res.status(200).json({
               message: " video_Call_notification	 mode is already OFF ",
               success: true,
               status: 200,
             });
+
           } else {
-            const Update_incognito_status =
-              await update_video_call_notification_status(
-                user_id,
-                video_call_notification_status
-              );
+
+            const Update_incognito_status = await update_video_call_notification_status(user_id, video_call_notification_status)
 
             return res.status(200).json({
               message: " video_Call_notification	 mode  OFF ",
               success: true,
               status: 200,
             });
+
           }
         }
+
       } else {
         return res.status(400).json({
           message: "User not found please sign-up first",
@@ -7167,6 +6991,8 @@ exports.video_call_notification_mode = async (req, res) => {
     });
   }
 };
+
+
 
 // exports.get_tag = async (req, res) => {
 //   try {
@@ -7220,12 +7046,12 @@ exports.video_call_notification_mode = async (req, res) => {
 exports.get_tag = async (req, res) => {
   try {
     // Extracting search, limit from query params and language from body
-    const { search = "", limit = 20 } = req.query;
+    const { search = '', limit = 20 } = req.query;
     const { language } = req.body;
 
     // Validate the input
     const schema = Joi.object({
-      language: Joi.string().valid("Spanish", "English", "French").required(),
+      language: Joi.string().valid('Spanish', 'English', 'French').required(),
     });
 
     const result = schema.validate(req.body);
@@ -7249,11 +7075,10 @@ exports.get_tag = async (req, res) => {
         search_tag: search_tag,
       });
     } else {
-      return res.status(200).json({
+      return res.status(404).json({
         message: "No data found",
         status: 404,
         success: false,
-        search_tag,
       });
     }
   } catch (error) {
@@ -7270,7 +7095,7 @@ exports.add_tag = async (req, res) => {
     const { tags_name } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
-        tags_name: [Joi.string().allow(null, "").optional()],
+        tags_name: [Joi.string().allow(null, "").optional(),],
       })
     );
     const result = schema.validate(req.body);
@@ -7290,6 +7115,7 @@ exports.add_tag = async (req, res) => {
       console.log(">>>>>>>>>>>>>>>>>>saaaaa", savedData);
       let result = await inserttags(savedData);
       if (result.affectedRows > 0) {
+
         return res.json({
           message: "Insert tag successfully",
           status: 200,
@@ -7302,6 +7128,7 @@ exports.add_tag = async (req, res) => {
           success: false,
         });
       }
+
     }
   } catch (error) {
     console.log(error);
@@ -7323,6 +7150,7 @@ exports.markAsSeen = async (req, res) => {
       Joi.object({
         user_id: [Joi.number().empty().required()],
         notification_id: [Joi.number().empty().required()],
+
       })
     );
     const result = schema.validate(req.body);
@@ -7336,13 +7164,15 @@ exports.markAsSeen = async (req, res) => {
         success: false,
       });
     } else {
+
       await markNotificationAsSeen(user_id, notification_id);
 
       return res.status(200).json({
         status: 200,
-        message: "Marked As Seen ",
+        message: 'Marked As Seen ',
         success: true,
-      });
+      })
+
     }
   } catch (error) {
     console.log(error);
@@ -7363,6 +7193,7 @@ exports.getGames = async (req, res) => {
       Joi.object({
         game: [Joi.string().empty().required()],
         language: [Joi.string().empty().required()],
+
       })
     );
     const result = schema.validate(req.body);
@@ -7377,21 +7208,23 @@ exports.getGames = async (req, res) => {
       });
     }
 
-    const data = await fetchRandomData(game, language);
+    const data = await fetchRandomData(game, language)
 
     return res.json({
-      data: data[0],
-    });
+      data: data[0]
+    })
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: 200,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
       success: false,
-      error: error,
-    });
+      error: error
+    })
+
   }
-};
+
+}
 
 exports.markAllSeen = async (req, res) => {
   try {
@@ -7413,13 +7246,15 @@ exports.markAllSeen = async (req, res) => {
         success: false,
       });
     } else {
+
       await markAllNotificationAsSeen(user_id);
 
       return res.status(200).json({
         status: 200,
-        message: "Marked As Seen ",
+        message: 'Marked As Seen ',
         success: true,
-      });
+      })
+
     }
   } catch (error) {
     console.log(error);
@@ -7434,52 +7269,30 @@ exports.markAllSeen = async (req, res) => {
 
 exports.newEditProfile = async (req, res) => {
   try {
-    const {
-      name,
-      username,
-      DOB,
-      about_me,
-      country,
-      city,
-      tags,
-      looking_for,
-      relationship_type,
-      sexual_orientation,
-      gender,
-      sub_gender,
-      pronouns,
-      height,
-      ethnicity,
-      twitter_link,
-      instagram_link,
-      facebook_link,
-      linkedIn_link,
-      CountryCode,
-    } = req.body;
-    const schema = Joi.alternatives(
-      Joi.object({
-        name: Joi.string().max(15).optional(),
-        username: Joi.string().optional(),
-        DOB: Joi.string().optional(),
-        about_me: Joi.string().optional(),
-        country: Joi.string().optional(),
-        city: Joi.string().optional(),
-        tags: Joi.string().optional(),
-        looking_for: Joi.string().optional(),
-        relationship_type: Joi.string().optional(),
-        sexual_orientation: Joi.string().optional(),
-        gender: Joi.string().optional(),
-        pronouns: Joi.string().optional(),
-        height: Joi.string().optional(),
-        ethnicity: Joi.string().optional(),
-        instagram_link: Joi.string().optional(),
-        facebook_link: Joi.string().optional(),
-        twitter_link: Joi.string().optional(),
-        linkedIn_link: Joi.string().optional(),
-        sub_gender: Joi.string().optional(),
-        CountryCode: Joi.string().optional(),
-      })
-    );
+    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link,CountryCode } = req.body;
+    const schema = Joi.alternatives(Joi.object({
+      name: Joi.string().max(15).optional(),
+      username: Joi.string().optional(),
+      DOB: Joi.string().optional(),
+      about_me: Joi.string().optional(),
+      country: Joi.string().optional(),
+      city: Joi.string().optional(),
+      tags: Joi.string().optional(),
+      looking_for: Joi.string().optional(),
+      relationship_type: Joi.string().optional(),
+      sexual_orientation: Joi.string().optional(),
+      gender: Joi.string().optional(),
+      pronouns: Joi.string().optional(),
+      height: Joi.string().optional(),
+      ethnicity: Joi.string().optional(),
+      instagram_link: Joi.string().optional(),
+      facebook_link: Joi.string().optional(),
+      twitter_link: Joi.string().optional(),
+      linkedIn_link: Joi.string().optional(),
+      sub_gender: Joi.string().optional(),
+      CountryCode:Joi.string().optional()
+
+    }))
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -7490,7 +7303,8 @@ exports.newEditProfile = async (req, res) => {
         status: 400,
         success: false,
       });
-    } else {
+    }
+    else {
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -7507,14 +7321,14 @@ exports.newEditProfile = async (req, res) => {
             status: 400,
           });
         }
-        let get_age = "";
+        let get_age = '';
         if (DOB) {
           const birthdate = DOB;
           get_age = calculateAge(birthdate);
         } else {
           get_age = "";
         }
-        let images = [];
+        let images = []
         if (req.files) {
           const file = req.files;
           for (let i = 0; i < file.length; i++) {
@@ -7523,12 +7337,10 @@ exports.newEditProfile = async (req, res) => {
         }
 
         if (images.length > 0) {
-          await Promise.all(
-            images.map(async (item) => {
-              let imagesName = { image: item, user_id: user_id };
-              await addProfileimages(imagesName);
-            })
-          );
+          await Promise.all(images.map(async (item) => {
+            let imagesName = { 'image': item, 'user_id': user_id };
+            await addProfileimages(imagesName);
+          }));
         }
         let user = {
           name: name ? name : userInfo[0].name,
@@ -7540,42 +7352,19 @@ exports.newEditProfile = async (req, res) => {
           tags: tags ? tags : userInfo[0].tags,
           height: height ? height : userInfo[0].height,
           ethnicity: ethnicity ? ethnicity : userInfo[0].ethnicity,
-          relationship_type: relationship_type
-            ? relationship_type
-            : userInfo[0].relationship_type,
+          relationship_type: relationship_type ? relationship_type : userInfo[0].relationship_type,
           looking_for: looking_for ? looking_for : userInfo[0].looking_for,
-          sexual_orientation: sexual_orientation
-            ? sexual_orientation
-            : userInfo[0].sexual_orientation,
+          sexual_orientation: sexual_orientation ? sexual_orientation : userInfo[0].sexual_orientation,
           gender: gender ? gender : userInfo[0].gender,
           pronouns: pronouns ? pronouns : userInfo[0].pronouns,
-          twitter_link: twitter_link
-            ? twitter_link
-            : userInfo[0].twitter_link != null
-            ? userInfo[0].twitter_link
-            : "",
-          instagram_link: instagram_link
-            ? instagram_link
-            : userInfo[0].instagram_link != null
-            ? userInfo[0].instagram_link
-            : "",
-          facebook_link: facebook_link
-            ? facebook_link
-            : userInfo[0].facebook_link != null
-            ? userInfo[0].facebook_link
-            : "",
-          linkedIn_link: linkedIn_link
-            ? linkedIn_link
-            : userInfo[0].li != null
-            ? userInfo[0].linkedIn_link
-            : "",
+          twitter_link: twitter_link ? twitter_link : userInfo[0].twitter_link != null ? userInfo[0].twitter_link : "",
+          instagram_link: instagram_link ? instagram_link : userInfo[0].instagram_link != null ? userInfo[0].instagram_link : "",
+          facebook_link: facebook_link ? facebook_link : userInfo[0].facebook_link != null ? userInfo[0].facebook_link : "",
+          linkedIn_link: linkedIn_link ? linkedIn_link : userInfo[0].li != null ? userInfo[0].linkedIn_link : "",
           age: get_age ? get_age : 0,
-          profile_image:
-            req.file && req.file.filename
-              ? req.file.filename
-              : userInfo[0].profile_image,
+          profile_image: req.file && req.file.filename ? req.file.filename : userInfo[0].profile_image,
           sub_gender: sub_gender ? sub_gender : userInfo[0].sub_gender,
-          CountryCode: CountryCode ? CountryCode : userInfo[0].CountryCode,
+          CountryCode:CountryCode ? CountryCode : userInfo[0].CountryCode
         };
 
         console.log(user);
@@ -7595,58 +7384,37 @@ exports.newEditProfile = async (req, res) => {
         }
       }
     }
-  } catch (error) {}
-};
+  }
+  catch (error) {
+
+  }
+}
 exports.newComplete_Profile = async (req, res) => {
   try {
-    const {
-      name,
-      username,
-      DOB,
-      about_me,
-      country,
-      city,
-      tags,
-      looking_for,
-      relationship_type,
-      sexual_orientation,
-      gender,
-      sub_gender,
-      pronouns,
-      height,
-      ethnicity,
-      twitter_link,
-      instagram_link,
-      facebook_link,
-      linkedIn_link,
-      complete_profile_status,
-      CountryCode,
-    } = req.body;
-    const schema = Joi.alternatives(
-      Joi.object({
-        name: Joi.string().max(15).required(),
-        username: Joi.string().required(),
-        DOB: Joi.string().required(),
-        about_me: Joi.string().optional(),
-        country: Joi.string().optional(),
-        CountryCode: Joi.string().optional(),
-        city: Joi.string().optional(),
-        tags: Joi.string().optional(),
-        looking_for: Joi.string().required(),
-        relationship_type: Joi.string().optional(),
-        sexual_orientation: Joi.string().optional(),
-        gender: Joi.string().required(),
-        sub_gender: Joi.string().required(),
-        pronouns: Joi.string().optional(),
-        height: Joi.string().optional(),
-        ethnicity: Joi.string().optional(),
-        instagram_link: Joi.string().optional(),
-        facebook_link: Joi.string().optional(),
-        twitter_link: Joi.string().optional(),
-        linkedIn_link: Joi.string().optional(),
-        complete_profile_status: Joi.number().required(),
-      })
-    );
+    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link, complete_profile_status,CountryCode } = req.body;
+    const schema = Joi.alternatives(Joi.object({
+      name: Joi.string().max(15).required(),
+      username: Joi.string().required(),
+      DOB: Joi.string().required(),
+      about_me: Joi.string().optional(),
+      country: Joi.string().optional(),
+      CountryCode: Joi.string().optional(),
+      city: Joi.string().optional(),
+      tags: Joi.string().optional(),
+      looking_for: Joi.string().required(),
+      relationship_type: Joi.string().optional(),
+      sexual_orientation: Joi.string().optional(),
+      gender: Joi.string().required(),
+      sub_gender: Joi.string().required(),
+      pronouns: Joi.string().optional(),
+      height: Joi.string().optional(),
+      ethnicity: Joi.string().optional(),
+      instagram_link: Joi.string().optional(),
+      facebook_link: Joi.string().optional(),
+      twitter_link: Joi.string().optional(),
+      linkedIn_link: Joi.string().optional(),
+      complete_profile_status: Joi.number().required()
+    }))
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -7669,7 +7437,7 @@ exports.newComplete_Profile = async (req, res) => {
         const file = req.file;
         filename = file.filename;
       }
-      let images = [];
+      let images = []
       if (req.files) {
         const file = req.files;
         for (let i = 0; i < file.length; i++) {
@@ -7678,12 +7446,10 @@ exports.newComplete_Profile = async (req, res) => {
       }
 
       if (images.length > 0) {
-        await Promise.all(
-          images.map(async (item) => {
-            let imagesName = { image: item, user_id: user_id };
-            await addProfileimages(imagesName);
-          })
-        );
+        await Promise.all(images.map(async (item) => {
+          let imagesName = { 'image': item, 'user_id': user_id };
+          await addProfileimages(imagesName);
+        }));
       }
       const userInfo = await fetchUserBy_Id(user_id);
       if (userInfo.length !== 0) {
@@ -7723,7 +7489,8 @@ exports.newComplete_Profile = async (req, res) => {
           facebook_link: facebook_link ? facebook_link : null,
           linkedIn_link: linkedIn_link ? linkedIn_link : null,
           complete_profile_status: parseInt(complete_profile_status),
-          CountryCode: CountryCode ? CountryCode : null,
+          CountryCode:CountryCode ? CountryCode : null
+
         };
         const result = await newCompleteUserById(user, user_id);
         if (result.affectedRows) {
@@ -7762,39 +7529,39 @@ function buildSelectQuery(user_id, filters, userIds) {
   let baseQuery = `SELECT * FROM users WHERE id!=${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`; // Start with a base query
   let queryParams = [];
 
-  console.log(filters, "filters>>>>>>>>");
+  console.log(filters, "filters>>>>>>>>")
   if (userIds) {
     baseQuery += " AND id NOT IN (?)";
     queryParams.push([...userIds]);
   }
   if (filters.looking_for) {
-    const looking_forValues = filters.looking_for.split(",");
-    baseQuery += " AND (";
+    const looking_forValues = filters.looking_for.split(',');
+    baseQuery += ' AND ('
     for (let i = 0; i < looking_forValues.length; i++) {
       baseQuery += `CONCAT(',', looking_for, ',') LIKE '%,${looking_forValues[i]},%'`;
 
       if (i !== looking_forValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
 
-    baseQuery += ")";
+    baseQuery += ')';
     // const lookingFor = filters.looking_for.split(',').map(item => item.trim());
     // baseQuery += ` AND looking_for IN (${lookingFor.map(() => '?').join(', ')})`;
     // queryParams.push(...lookingFor);
   }
   if (filters.relationship_type) {
-    const relationship_typeValues = filters.relationship_type.split(",");
-    baseQuery += " AND (";
+    const relationship_typeValues = filters.relationship_type.split(',');
+    baseQuery += ' AND ('
     for (let i = 0; i < relationship_typeValues.length; i++) {
       baseQuery += `CONCAT(',', relationship_type, ',') LIKE '%,${relationship_typeValues[i]},%'`;
 
       if (i !== relationship_typeValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
 
-    baseQuery += ")";
+    baseQuery += ')';
     // const relationshipTypes = filters.relationship_type.split(',').map(type => type.trim());
     // baseQuery += ` AND relationship_type IN (${relationshipTypes.map(() => '?').join(', ')})`;
     // queryParams.push(...relationshipTypes);
@@ -7810,17 +7577,17 @@ function buildSelectQuery(user_id, filters, userIds) {
   if (filters.ethnicity) {
     // const ethnicities = filters.ethnicity.split(',').map(ethnicity => ethnicity.trim());
     // baseQuery += ` AND ethnicity IN (${ethnicities.map(() => '?').join(', ')})`;
-    const ethnicityValues = filters.ethnicity.split(",");
-    baseQuery += " AND (";
+    const ethnicityValues = filters.ethnicity.split(',');
+    baseQuery += ' AND ('
     for (let i = 0; i < ethnicityValues.length; i++) {
       baseQuery += `CONCAT(',', ethnicity, ',') LIKE '%,${ethnicityValues[i]},%'`;
 
       if (i !== ethnicityValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
 
-    baseQuery += ")";
+    baseQuery += ')';
     // baseQuery += ` AND  FIND_IN_SET (?,ethnicity)>0`;
   }
   if (filters.age1 && filters.age2) {
@@ -7829,7 +7596,7 @@ function buildSelectQuery(user_id, filters, userIds) {
     queryParams.push(filters.age2);
   }
   if (filters.online !== null && filters.online !== undefined) {
-    console.log("hello>>>>>>>>>>>>");
+    console.log("hello>>>>>>>>>>>>")
     baseQuery += " AND online_status = ?";
     queryParams.push(parseInt(filters.online));
   }
@@ -7842,18 +7609,19 @@ function buildSelectQuery(user_id, filters, userIds) {
     queryParams.push(parseInt(filters.has_photo));
   }
   if (filters.search) {
-    const searchValues = filters.search.split(",").map((term) => term.trim());
-    baseQuery += " AND (";
+    const searchValues = filters.search.split(',').map(term => term.trim());
+    baseQuery += ' AND (';
     for (let i = 0; i < searchValues.length; i++) {
       const searchTerm = searchValues[i];
       baseQuery += `username LIKE '%${searchTerm}%' OR country LIKE '%${searchTerm}%' OR CONCAT(',', tags, ',') LIKE '%,${searchTerm},%'`;
       if (i !== searchValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
-    baseQuery += ")";
+    baseQuery += ')';
+
   }
-  baseQuery += " ORDER BY id DESC";
+  baseQuery += ' ORDER BY id DESC';
   return { query: baseQuery, params: queryParams };
 }
 // function newBuildSelectQuery(user_id, filters, userIds, page, limit, chatted_userIds, subscription_id) {
@@ -7979,13 +7747,7 @@ function buildSelectQuery(user_id, filters, userIds) {
 
 //   return { query: baseQuery, params: queryParams };
 // }
-function newBuildSelectQuery(
-  user_id,
-  filters,
-  userIds,
-  chatted_userIds,
-  subscription_id
-) {
+function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscription_id) {
   let baseQuery = `SELECT * FROM users WHERE id != ${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
   let queryParams = [];
 
@@ -8011,36 +7773,35 @@ function newBuildSelectQuery(
     baseQuery += " AND id IN (?)";
     queryParams.push([...chatted_userIds]);
   }
-  if (keysLength === 0) {
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
-    baseQuery +=
-      " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
+  if (keysLength===0) {
+    console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa')
+    baseQuery += " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
   }
 
   if (filters.looking_for) {
-    const looking_forValues = filters.looking_for.split(",");
-    baseQuery += " AND (";
+    const looking_forValues = filters.looking_for.split(',');
+    baseQuery += ' AND (';
     for (let i = 0; i < looking_forValues.length; i++) {
       baseQuery += `FIND_IN_SET(?, looking_for)`;
       queryParams.push(looking_forValues[i]);
       if (i !== looking_forValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
-    baseQuery += ")";
+    baseQuery += ')';
   }
 
   if (filters.relationship_type) {
-    const relationship_typeValues = filters.relationship_type.split(",");
-    baseQuery += " AND (";
+    const relationship_typeValues = filters.relationship_type.split(',');
+    baseQuery += ' AND (';
     for (let i = 0; i < relationship_typeValues.length; i++) {
       baseQuery += `FIND_IN_SET(?, relationship_type)`;
       queryParams.push(relationship_typeValues[i]);
       if (i !== relationship_typeValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
-    baseQuery += ")";
+    baseQuery += ')';
   }
 
   if (filters.sexual_orientation) {
@@ -8054,16 +7815,16 @@ function newBuildSelectQuery(
   }
 
   if (filters.ethnicity) {
-    const ethnicityValues = filters.ethnicity.split(",");
-    baseQuery += " AND (";
+    const ethnicityValues = filters.ethnicity.split(',');
+    baseQuery += ' AND (';
     for (let i = 0; i < ethnicityValues.length; i++) {
       baseQuery += `FIND_IN_SET(?, ethnicity)`;
       queryParams.push(ethnicityValues[i]);
       if (i !== ethnicityValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
-    baseQuery += ")";
+    baseQuery += ')';
   }
 
   if (filters.age1 && filters.age2) {
@@ -8089,23 +7850,17 @@ function newBuildSelectQuery(
   // }
 
   if (filters.search) {
-    const searchValues = filters.search.split(",").map((term) => term.trim());
-    baseQuery += " AND (";
+    const searchValues = filters.search.split(',').map(term => term.trim());
+    baseQuery += ' AND (';
     for (let i = 0; i < searchValues.length; i++) {
       const searchTerm = searchValues[i];
       baseQuery += `(username LIKE ? OR name LIKE ? OR country LIKE ?  OR city LIKE ? OR FIND_IN_SET(?, tags))`;
-      queryParams.push(
-        `%${searchTerm}%`,
-        `%${searchTerm}%`,
-        `%${searchTerm}%`,
-        `%${searchTerm}%`,
-        searchTerm
-      );
+      queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`,searchTerm);
       if (i !== searchValues.length - 1) {
-        baseQuery += " OR ";
+        baseQuery += ' OR ';
       }
     }
-    baseQuery += ")";
+    baseQuery += ')';
   }
 
   // Add ORDER BY clause to sort the results by id in descending order
@@ -8114,12 +7869,12 @@ function newBuildSelectQuery(
   if (maxProfiles === Infinity) {
     effectiveLimit = 100000000;
   } else {
-    effectiveLimit = maxProfiles;
+    effectiveLimit = maxProfiles
   }
   baseQuery += ` ORDER BY id DESC LIMIT ? `;
   queryParams.push(effectiveLimit);
 
-  console.log(">>>>>>>>", baseQuery);
+  console.log(">>>>>>>>",baseQuery)
 
   return { query: baseQuery, params: queryParams };
 }
@@ -8257,6 +8012,7 @@ function newBuildSelectQuery(
 //             }
 //           }
 
+
 //         })
 //       );
 //       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
@@ -8304,25 +8060,11 @@ function newBuildSelectQuery(
 // };
 exports.new_get_all_users = async (req, res) => {
   try {
-    console.log("<<<<<", req.body);
-    const {
-      looking_for,
-      relationship_type,
-      sexual_orientation,
-      gender,
-      ethnicity,
-      age1,
-      age2,
-      online,
-      app_verify,
-      has_photo,
-      has_album,
-      all_chatted_userIds,
-      havent_chatted_userIds,
-      search,
-      data,
-      onlyRecent,
-    } = req.body;
+    console.log("<<<<<", req.body)
+    const { looking_for, relationship_type,
+      sexual_orientation, gender,
+      ethnicity, age1, age2, online, app_verify, has_photo, has_album, all_chatted_userIds, havent_chatted_userIds, search, data,
+      onlyRecent } = req.body
 
     const schema = Joi.alternatives(
       Joi.object({
@@ -8343,7 +8085,7 @@ exports.new_get_all_users = async (req, res) => {
         page: Joi.number().optional(),
         limit: Joi.number().optional(),
         data: Joi.string().optional(),
-        onlyRecent: Joi.number().optional(),
+        onlyRecent : Joi.number().optional()
       })
     );
     console.log("bodyishere+++++", req.body);
@@ -8359,7 +8101,11 @@ exports.new_get_all_users = async (req, res) => {
         status: 400,
         success: false,
       });
+
+
     } else {
+
+
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -8379,32 +8125,22 @@ exports.new_get_all_users = async (req, res) => {
         profile_length = "";
       }
       let userIds = null;
-      let chatted_userIds = null;
+      let chatted_userIds = null
       if (havent_chatted_userIds) {
-        userIds = havent_chatted_userIds
-          .split(",")
-          .map((item) => parseInt(item));
+        userIds = havent_chatted_userIds.split(',').map(item => parseInt(item));
       }
       if (all_chatted_userIds) {
-        chatted_userIds = all_chatted_userIds
-          .split(",")
-          .map((item) => parseInt(item));
+        chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item));
       }
 
       const subscriptionStatus = await checkSubscriptionDetail(user_id);
 
-      const subscription_id = subscriptionStatus.id;
+      const subscription_id = subscriptionStatus.id
 
-      console.log("++++++++++++++>", subscriptionStatus.id);
+      console.log("++++++++++++++>", subscriptionStatus.id)
       // const { query, params } = buildSelectQuery(user_id, req.body, userIds);
 
-      const { query, params } = newBuildSelectQuery(
-        user_id,
-        req.body,
-        userIds,
-        chatted_userIds,
-        subscription_id
-      );
+      const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
       console.log("====>", query, params);
 
       let all_users = await selectUsersByFilters(query, params);
@@ -8416,40 +8152,28 @@ exports.new_get_all_users = async (req, res) => {
           let birthdate = item.DOB;
           let get_age = calculateAge(birthdate);
           item.age = get_age;
-          const settingshow_me = await getData(
-            "setting_show_me",
-            `where user_id= ${item.id}`
-          );
-          item.explore_status = settingshow_me[0]?.explore == 1 ? true : false;
-          item.distance_status =
-            settingshow_me[0]?.distance == 1 ? true : false;
+          const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
+          item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
+          item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
 
-          if (
-            item.latitude != null &&
-            item.latitude != "" &&
-            item.latitude != undefined &&
-            item.longitude != null &&
-            item.longitude != "" &&
-            item.longitude != undefined
-          ) {
-            const unit = "metric";
-            const origin =
-              check_user[0]?.latitude + "," + check_user[0]?.longitude;
-            const destination = item.latitude + "," + item.longitude;
+          if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+            const unit = 'metric';
+            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+            const destination = item.latitude + ',' + item.longitude;
 
             console.log("origin>>>>>>", origin);
             console.log("dest>>>>>>>", destination);
             try {
               const disvalue = await distanceShow(unit, origin, destination);
-              console.log("disvalye >>>>>>>", disvalue);
+              console.log("disvalye >>>>>>>", disvalue)
               item.distance = disvalue.distance;
             } catch (error) {
-              console.log("<<<<<<>>>>><>>,errorsssss");
-              console.error("Error in yourAsyncFunction:", error);
+              console.log("<<<<<<>>>>><>>,errorsssss")
+              console.error('Error in yourAsyncFunction:', error);
               // Handle errors as needed
             }
           } else {
-            item.distance = "";
+            item.distance = ""
           }
           if (item.profile_image != "No image") {
             // item.profile_image = baseurl + "/profile/" + item.profile_image;
@@ -8458,9 +8182,7 @@ exports.new_get_all_users = async (req, res) => {
           const profileimage = await profileimages(item.id);
 
           if (profileimage?.length > 0) {
-            item.images = profileimage.map((imageObj) =>
-              imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-            );
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
@@ -8487,39 +8209,32 @@ exports.new_get_all_users = async (req, res) => {
               array.push(item);
             }
           }
+
+
         })
       );
-      if (
-        array.length > 0 &&
-        has_album != "" &&
-        has_album != undefined &&
-        has_album != "0"
-      ) {
+      if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
-      } else if (
-        has_album != "" &&
-        has_album != undefined &&
-        has_album != "0"
-      ) {
+      } else if (has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
       } else {
         all_users = all_users;
       }
 
+
       if (all_users.length > 0) {
         const viewd_count = await fetchVisitsInPast24Hours(user_id);
         const checkViewed = await checkViewedProfile(user_id);
         const userWithImages = await getUniqueUserIds();
-        let final_users = [];
-        const userIdsArray = userWithImages[0].user_ids
-          .split(",")
-          .map((ele) => parseInt(ele));
+        let final_users = []
+        const userIdsArray = userWithImages[0].user_ids.split(',').map((ele) => parseInt(ele));
         if (has_photo == "1") {
-          console.log("controll_reaches_here");
+          console.log("controll_reaches_here")
           final_users = all_users.filter((user) => {
-            return userIdsArray.includes(user.id);
-          });
-          all_users = final_users;
+
+            return userIdsArray.includes(user.id)
+          })
+          all_users = final_users
         }
 
         // console.log("++++++++++++", all_users)
@@ -8538,6 +8253,7 @@ exports.new_get_all_users = async (req, res) => {
           // totalLength:final_users.length,
           // data:`${has_photo}/here`
           // distance_statusss: (settingshow_me[0]?.distance == 1) ? true:false
+
         });
       } else {
         return res.json({
@@ -8546,6 +8262,7 @@ exports.new_get_all_users = async (req, res) => {
           success: false,
         });
       }
+
     }
   } catch (error) {
     console.log(error);
@@ -8560,10 +8277,12 @@ exports.new_get_all_users = async (req, res) => {
 
 exports.deleteProfileimage = async (req, res) => {
   try {
-    const { id } = req.body;
+    const { id
+    } = req.body
     const schema = Joi.alternatives(
       Joi.object({
         id: Joi.number().required(),
+
       })
     );
     const result = schema.validate(req.body);
@@ -8587,24 +8306,24 @@ exports.deleteProfileimage = async (req, res) => {
 
     return res.status(200).json({
       status: 200,
-      message: "Deleted Profile Images",
+      message: 'Deleted Profile Images',
       success: true,
-    });
+    })
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: 200,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
       success: false,
-      error: error,
-    });
+      error: error
+    })
   }
 };
 
 exports.new_add_Album = async (req, res) => {
   try {
     const { album_name } = req.body;
-    let baseurlimage = ["1"];
+    let baseurlimage = ['1'];
     let images = [];
     const schema = Joi.alternatives(
       Joi.object({
@@ -8630,35 +8349,30 @@ exports.new_add_Album = async (req, res) => {
       let filename = "";
       const check_user = await getData("users", `where id= ${user_id}`);
       if (check_user.length != 0) {
-        let albums = { user_id: user_id, album_name: album_name };
+
+        let albums = { 'user_id': user_id, album_name: album_name };
         const result = await Addalbums(albums);
 
         if (result.affectedRows > 0) {
+
           if (req.files) {
             const file = req.files;
             if (file.length != 0) {
               for (let i = 0; i < file.length; i++) {
                 images.push(req.files[i].filename);
                 if (req.files[i].filename) {
-                  baseurlimage.push(
-                    baseurl + "/albums/" + req.files[i].filename
-                  );
+                  baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
                 }
               }
             }
           }
           if (images.length > 0) {
-            await Promise.all(
-              images.map(async (item) => {
-                let albums = {
-                  album_image: item,
-                  album_id: result.insertId,
-                  user_id: user_id,
-                };
-                const result1 = await uploadAlbums(albums);
-              })
-            );
+            await Promise.all(images.map(async (item) => {
+              let albums = { 'album_image': item, 'album_id': result.insertId, 'user_id': user_id };
+              const result1 = await uploadAlbums(albums);
+            }));
           }
+
 
           return res.json({
             message: "Photos Added to Albums Successfully",
@@ -8675,6 +8389,7 @@ exports.new_add_Album = async (req, res) => {
             status: 200,
           });
         }
+
       } else {
         return res.json({
           message: "User not found please sign-up first",
@@ -8698,11 +8413,11 @@ exports.get_my_Albums_To_share = async (req, res) => {
   try {
     const { reciver_id, sender_id } = req.body;
     //reciver => my albums
-    //sender => the user to share it
+    //sender => the user to share it 
     const schema = Joi.alternatives(
       Joi.object({
         reciver_id: Joi.number().required(),
-        sender_id: Joi.number().required(),
+        sender_id: Joi.number().required()
       })
     );
     const result = schema.validate(req.body);
@@ -8719,46 +8434,53 @@ exports.get_my_Albums_To_share = async (req, res) => {
 
     const myAlbums = await getAlbumsByUserId(reciver_id);
 
-    await Promise.all(
-      myAlbums.map(async (album) => {
-        const albumImages = await albumsPhotos(reciver_id, album.id);
+    await Promise.all(myAlbums.map(async (album) => {
+      const albumImages = await albumsPhotos(reciver_id, album.id);
 
-        if (albumImages.length > 0) {
-          album.count = albumImages.length;
+      if (albumImages.length > 0) {
 
-          album.image = albumImages[0].album_image;
-        } else {
-          album.count = 0;
+        album.count = albumImages.length
 
-          album.image = "No image";
-        }
+        album.image = albumImages[0].album_image;
+      }
+      else {
 
-        const albumShared = await isAlbumShare(album.id, reciver_id, sender_id);
+        album.count = 0
 
-        if (albumShared.length > 0) {
-          album.isShared = true;
-        } else {
-          album.isShared = false;
-        }
-      })
-    );
+        album.image = "No image"
+      }
+
+      const albumShared = await isAlbumShare(album.id, reciver_id, sender_id);
+
+      if (albumShared.length > 0) {
+        album.isShared = true
+      }
+      else {
+        album.isShared = false
+      }
+    }))
 
     return res.status(200).json({
       status: 200,
-      message: "My albums to share ",
+      message: 'My albums to share ',
       success: true,
-      myAlbums,
-    });
+      myAlbums
+    })
+
+
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: 200,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
       success: false,
-      error: error,
-    });
+      error: error
+    })
+
   }
 };
+
 
 exports.shareMyAlbums = async (req, res) => {
   try {
@@ -8767,7 +8489,7 @@ exports.shareMyAlbums = async (req, res) => {
       Joi.object({
         album_Ids: Joi.array().required(),
         user_id: Joi.number().required(),
-        shared_to: Joi.number().required(),
+        shared_to: Joi.number().required()
       })
     );
     const result = schema.validate(req.body);
@@ -8782,32 +8504,31 @@ exports.shareMyAlbums = async (req, res) => {
       });
     }
     await deleteAllSharedAlbums(user_id, shared_to);
-    await Promise.all(
-      album_Ids.map(async (id) => {
-        const data = {
-          album_id: id,
-          user_id,
-          shared_to,
-        };
-        await insertAlbumShare(data);
-      })
-    );
+    await Promise.all(album_Ids.map(async (id) => {
+      const data = {
+        album_id: id,
+        user_id,
+        shared_to
+      }
+      await insertAlbumShare(data);
+    }))
     return res.status(200).json({
       status: 200,
-      message: "Shared The albums",
+      message: 'Shared The albums',
       success: true,
-    });
+    })
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: 200,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
       success: false,
-      error: error,
-    });
-  }
-};
+      error: error
+    })
 
+  }
+}
 exports.getAllbums = async (req, res) => {
   try {
     let { userId } = req.params;
@@ -8824,7 +8545,7 @@ exports.getAllbums = async (req, res) => {
     const user_info = await getData("users", `where id= ${my_user_id}`);
     let cheksub = await checkSubscriptionDetail(my_user_id);
 
-    console.log("checksub,", cheksub);
+    console.log("checksub,", cheksub)
 
     if (cheksub) {
       albumlimit = cheksub.album;
@@ -8832,126 +8553,122 @@ exports.getAllbums = async (req, res) => {
       albumlimit = "";
     }
 
-    albumlimit = parseInt(albumlimit);
+    albumlimit = parseInt(albumlimit)
+
 
     if (albumlimit === 1) {
-      albumlimit = Infinity;
+      albumlimit = Infinity
     }
 
-    console.log(albumlimit, "albumLimut");
-    const latestSharedAlbums = await getLatestSharedAlbums(
-      my_user_id,
-      albumlimit
-    );
+    console.log(albumlimit, "albumLimut")
+    const latestSharedAlbums = await getLatestSharedAlbums(my_user_id, albumlimit);
 
-    console.log(latestSharedAlbums);
-    const latestSharedAlbumIds = latestSharedAlbums.map((row) => row.album_id);
+    console.log(latestSharedAlbums)
+    const latestSharedAlbumIds = latestSharedAlbums.map(row => row.album_id);
     const allSharedAlbums = await getAllSharedAlbums(userId, my_user_id);
 
-    console.log("allSharedAbluns", allSharedAlbums);
-    const allSharedAlbumIds = allSharedAlbums.map((row) => row.album_id);
-    const viewedAlbumIds = allSharedAlbumIds.filter((id) =>
-      latestSharedAlbumIds.includes(id)
-    );
-    const blurredAlbumIds = allSharedAlbumIds.filter(
-      (id) => !viewedAlbumIds.includes(id)
-    );
+    console.log("allSharedAbluns", allSharedAlbums)
+    const allSharedAlbumIds = allSharedAlbums.map(row => row.album_id);
+    const viewedAlbumIds = allSharedAlbumIds.filter(id => latestSharedAlbumIds.includes(id))
+    const blurredAlbumIds = allSharedAlbumIds.filter(id => !viewedAlbumIds.includes(id));
 
     const viewableAlbumDetails = await getAlbumDetails(viewedAlbumIds);
-    const imageExtensions = ["jpeg", "jpg", "png", "gif"];
-    const videoExtensions = ["mp4", "mkv", "avi", "mov"];
-    await Promise.all(
-      viewableAlbumDetails.map(async (album) => {
-        const albumImages = await albumsPhotos(album.user_id, album.id);
-        let hasImage = false;
-        let hasVideo = false;
-        if (albumImages.length > 0) {
-          const imagesWithExtention = albumImages.map((image) => {
-            const extention = image.album_image.split("albums/");
-            return extention[1];
-          });
-          const myImageExtension = imagesWithExtention.map((image) => {
-            return image.split(".")[1];
-          });
-          for (let i = 0; i < myImageExtension.length; i++) {
-            if (imageExtensions.includes(myImageExtension[i])) {
-              hasImage = true;
-              break;
-            }
+    const imageExtensions = ['jpeg', 'jpg', 'png', 'gif'];
+    const videoExtensions = ['mp4', 'mkv', 'avi', 'mov'];
+    await Promise.all(viewableAlbumDetails.map(async (album) => {
+      const albumImages = await albumsPhotos(album.user_id, album.id);
+      let hasImage = false;
+      let hasVideo = false;
+      if (albumImages.length > 0) {
+        const imagesWithExtention = albumImages.map((image) => {
+          const extention = image.album_image.split('albums/');
+          return extention[1]
+        })
+        const myImageExtension = imagesWithExtention.map((image) => {
+          return image.split('.')[1];
+        });
+        for (let i = 0; i < myImageExtension.length; i++) {
+          if (imageExtensions.includes(myImageExtension[i])) {
+            hasImage = true;
+            break;
           }
-          for (let i = 0; i < myImageExtension.length; i++) {
-            if (videoExtensions.includes(myImageExtension[i])) {
-              hasVideo = true;
-              break;
-            }
-          }
-          album.count = albumImages.length;
-          album.image = albumImages[0].album_image;
-        } else {
-          album.count = 0;
-          album.image = "No image";
         }
+        for (let i = 0; i < myImageExtension.length; i++) {
+          if (videoExtensions.includes(myImageExtension[i])) {
+            hasVideo = true;
+            break;
+          }
+        }
+        album.count = albumImages.length
+        album.image = albumImages[0].album_image;
+      }
+      else {
+        album.count = 0
+        album.image = "No image"
+      }
 
-        album.hasImage = hasImage;
-        album.hasVideo = hasVideo;
-      })
-    );
+      album.hasImage = hasImage;
+      album.hasVideo = hasVideo
+
+    }))
 
     const blurredAlbumDetails = await getAlbumDetails(blurredAlbumIds);
 
-    await Promise.all(
-      blurredAlbumDetails.map(async (album) => {
-        const albumImages = await albumsPhotos(album.user_id, album.id);
-        let hasImage = false;
-        let hasVideo = false;
-        if (albumImages.length > 0) {
-          const imagesWithExtention = albumImages.map((image) => {
-            const extention = image.album_image.split("albums/");
-            return extention[1];
-          });
-          const myImageExtension = imagesWithExtention.map((image) => {
-            return image.split(".")[1];
-          });
-          for (let i = 0; i < myImageExtension.length; i++) {
-            if (imageExtensions.includes(myImageExtension[i])) {
-              hasImage = true;
-              break;
-            }
+    await Promise.all(blurredAlbumDetails.map(async (album) => {
+      const albumImages = await albumsPhotos(album.user_id, album.id);
+      let hasImage = false;
+      let hasVideo = false;
+      if (albumImages.length > 0) {
+        const imagesWithExtention = albumImages.map((image) => {
+          const extention = image.album_image.split('albums/');
+          return extention[1]
+        })
+        const myImageExtension = imagesWithExtention.map((image) => {
+          return image.split('.')[1];
+        });
+        for (let i = 0; i < myImageExtension.length; i++) {
+          if (imageExtensions.includes(myImageExtension[i])) {
+            hasImage = true;
+            break;
           }
-          for (let i = 0; i < myImageExtension.length; i++) {
-            if (videoExtensions.includes(myImageExtension[i])) {
-              hasVideo = true;
-              break;
-            }
-          }
-          album.count = albumImages.length;
-          album.image = albumImages[0].album_image;
-        } else {
-          album.count = 0;
-          album.image = "No image";
         }
+        for (let i = 0; i < myImageExtension.length; i++) {
+          if (videoExtensions.includes(myImageExtension[i])) {
+            hasVideo = true;
+            break;
+          }
+        }
+        album.count = albumImages.length
+        album.image = albumImages[0].album_image;
+      }
+      else {
+        album.count = 0
+        album.image = "No image"
+      }
 
-        album.hasImage = hasImage;
-        album.hasVideo = hasVideo;
-      })
-    );
+      album.hasImage = hasImage;
+      album.hasVideo = hasVideo
+    }))
 
     res.json({
       status: 200,
       success: true,
       viewableAlbums: viewableAlbumDetails,
       blurredAlbums: blurredAlbumDetails,
+
     });
+
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       status: 200,
-      message: "Internal Server Error",
+      message: 'Internal Server Error',
       success: false,
-      error: error,
-    });
+      error: error
+    })
+
   }
-};
+}
 
 exports.cancelAlbumRequest = async (req, res) => {
   const { user_id } = req.body;
@@ -8967,10 +8684,7 @@ exports.cancelAlbumRequest = async (req, res) => {
   const token = token_1.replace("Bearer ", "");
   const decoded = jwt.decode(token);
   const check_user = await getData("users", `where id= ${decoded.data.id}`);
-  const settingshow_me = await getData(
-    "setting_show_me",
-    `where user_id= ${decoded.data.id}`
-  );
+  const settingshow_me = await getData("setting_show_me", `where user_id= ${decoded.data.id}`);
 
   if (result.error) {
     const message = result.error.details.map((i) => i.message).join(",");
@@ -8984,7 +8698,7 @@ exports.cancelAlbumRequest = async (req, res) => {
   } else {
     const user_detail = await getUser_by_id(user_id);
 
-    await cancelAlbumRequestNotification(decoded.data.id, parseInt(user_id));
+    await cancelAlbumRequestNotification(decoded.data.id, parseInt(user_id))
 
     if (user_detail !== 0) {
       return res.json({
@@ -8992,7 +8706,8 @@ exports.cancelAlbumRequest = async (req, res) => {
         success: true,
         message: "Cancelled the album request",
       });
-    } else {
+    }
+    else {
       // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
       return res.json({
         status: 404,
@@ -9002,39 +8717,40 @@ exports.cancelAlbumRequest = async (req, res) => {
       });
     }
   }
-};
+
+}
 
 exports.createInvoice = async (req, res) => {
   const { plan_id } = req.body;
   if (!plan_id) {
     return res.status(200).send({
       status: true,
-      message: "plan_id must be require",
+      message: "plan_id must be require"
     });
   }
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
   const token = token_1.replace("Bearer ", "");
   const decoded = jwt.decode(token);
-  let user_id = decoded.data.id;
+  let user_id = decoded.data.id
   // let user_id = 6
   // let plan_id = 2
   let cheksub = await fetch_subscription_plan(user_id, plan_id);
-  console.log("cheksub", cheksub);
+  console.log('cheksub', cheksub);
   if (cheksub.length > 0) {
-    let number_fetch = await generateRandomFiveDigitNumber();
-    console.log("number_fetch", `xdar${number_fetch}`);
+    let number_fetch = await generateRandomFiveDigitNumber()
+    console.log('number_fetch', `xdar${number_fetch}`);
     const check_user = await getData("users", `where id= ${user_id}`);
     const plan = await get_subscription_plan_by_id(cheksub[0].subscription_id);
-    console.log("plan", plan);
-    let planName = plan[0].plan_name;
-    let planType = plan[0].plan_type;
-    let planDay = plan[0].plan_days;
-    let ammount = plan[0].amount;
+    console.log('plan', plan);
+    let planName = plan[0].plan_name
+    let planType = plan[0].plan_type
+    let planDay = plan[0].plan_days
+    let ammount = plan[0].amount
 
-    let name = check_user[0].name;
-    let user_email = check_user[0].email;
-    let total_amount = Number(ammount) + Number(76.12);
+    let name = check_user[0].name
+    let user_email = check_user[0].email
+    let total_amount = Number(ammount) + Number(76.12)
     let invoice = {
       plan_id: `xdar${number_fetch}`,
       name: name,
@@ -9043,8 +8759,8 @@ exports.createInvoice = async (req, res) => {
       planDay: planDay,
       planType: planType,
       ammount: ammount,
-      total_amount: total_amount,
-    };
+      total_amount: total_amount
+    }
     // const invoiceHtml = generateInvoiceHtml(invoice);
     // const pdfOptions = { format: 'A4' };
     // const publicDir = path.join(__dirname, '..', 'public');
@@ -9078,7 +8794,7 @@ exports.createInvoice = async (req, res) => {
     });
   } else {
     return res.json({
-      message: "data not found",
+      message: 'data not found',
       status: 200,
       success: false,
     });
@@ -9089,7 +8805,7 @@ exports.createInvoice = async (req, res) => {
   //   status: 200,
   //   success: true,
   // });
-};
+}
 
 function generateInvoiceHtml(invoice) {
   return `
@@ -9338,20 +9054,18 @@ exports.getAllGroupRequest = async (req, res) => {
       success: false,
     });
   } else {
+
     const notification = await all_group_notifications(user_id);
     if (notification.length > 0) {
-      await Promise.all(
-        notification.map(async (item) => {
-          const owner_info = await Get_user_info(item.reciver_id);
 
-          item.username = owner_info[0]?.username
-            ? owner_info[0]?.username
-            : "";
-          item.profile_image = owner_info[0]?.profile_image
-            ? baseurl + "/profile/" + owner_info[0]?.profile_image
-            : "";
-        })
-      );
+      await Promise.all(notification.map(async (item) => {
+
+        const owner_info = await Get_user_info(item.reciver_id);
+
+        item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
+        item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
+
+      }));
 
       return res.json({
         status: 200,
@@ -9369,7 +9083,8 @@ exports.getAllGroupRequest = async (req, res) => {
       });
     }
   }
-};
+
+}
 
 exports.get_users_by_ids = async (req, res) => {
   const { user_ids } = req.body; // Expecting 'user_ids' to be a comma-separated string like "11,12,13"
@@ -9391,8 +9106,9 @@ exports.get_users_by_ids = async (req, res) => {
     });
   }
 
+
   // Parse the user_ids string into an array of numbers
-  const userIdsArray = user_ids.split(",").map((id) => parseInt(id.trim()));
+  const userIdsArray = user_ids.split(',').map(id => parseInt(id.trim()));
 
   // Fetch users by ids using IN clause
   const user_details = await getUsers_by_ids(userIdsArray);
@@ -9426,9 +9142,7 @@ exports.get_users_by_ids = async (req, res) => {
         }
 
         if (profileimage?.length > 0) {
-          item.images = profileimage.map((imageObj) =>
-            imageObj.image ? baseurl + "/profile/" + imageObj.image : ""
-          );
+          item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
         } else {
           item.images = [];
         }
@@ -9451,4 +9165,4 @@ exports.get_users_by_ids = async (req, res) => {
       user_info: [],
     });
   }
-};
+}
