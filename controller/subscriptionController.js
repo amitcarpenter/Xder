@@ -85,6 +85,7 @@ exports.Allsubscription = async (req, res) => {
     });
   }
 };
+
 exports.AddsubscriptionPlan = async (req, res) => {
   try {
 
