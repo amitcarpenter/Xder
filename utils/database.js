@@ -4,7 +4,7 @@ const util = require('util');
 var db_config = {
   host: 'localhost',
   user: 'xder_dating',
-  password: 'w9cTq4@A68Du',
+  // password: 'w9cTq4@A68Du',
   password: 'root',
   port: '3306',
   database: 'xdar_dating'
