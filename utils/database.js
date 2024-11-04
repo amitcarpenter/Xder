@@ -6,7 +6,7 @@ var db_config = {
   // user: 'xder_dating',
   user: 'root',
   // password: 'w9cTq4@A68Du',
-  password: 'root',
+  password: '',
   port: '3306',
   database: 'xdar_dating'
 };
@@ -21,7 +21,7 @@ function handleDisconnect() {
       console.log('error when connecting to db:', err);
       setTimeout(handleDisconnect, 2000);
     } else {
-      console.log("Connected to mysql Server!");
+      console.log("Connected to mysql Database!");
     }
   });
 
@@ -35,7 +35,6 @@ function handleDisconnect() {
   });
 }
 
-handleDisconnect();
 
 function makeDb() {
   return {
@@ -51,5 +50,6 @@ function makeDb() {
   }
 }
 
+handleDisconnect();
 const db = makeDb();
 module.exports = db;
