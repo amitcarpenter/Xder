@@ -6,8 +6,11 @@ const user = require("./routes/users");
 const bodyParser = require("body-parser");
 const moment = require('moment-timezone');
 const admin_router = require("./routes/admin");
+const firebase_router = require("./routes/firebase");
 const subscription = require("./routes/subscription")
 const { deleteAllNotificationsProfileVisits, deleteAllProfileVisits } = require("./models/users");
+
+const path = require("path");
 
 require("dotenv").config()
 
@@ -22,11 +25,15 @@ app.use(
   })
 );
 app.use(express.static("public"));
+app.use('/', express.static(path.join(__dirname, 'public/profile')));
+
 
 app.use(bodyParser.json());
 
 app.use("/", user);
+// app.use(user);
 app.use("/admin", admin_router);
+app.use("/firebase", firebase_router);
 app.use("/", subscription);
 
 // cron.schedule('*/5 * * * * *', async () => {

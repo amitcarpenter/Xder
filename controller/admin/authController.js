@@ -4,11 +4,13 @@ const ejs = require("ejs");
 const path = require("path");
 const bcrypt = require('bcrypt');
 const crypto = require("crypto");
-const db = require("../../utils/database");
 const jwt = require("jsonwebtoken");
+const db = require("../../utils/database");
 const sendEmail = require("../../utils/emailService");
 const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
+const { collection, getDocs } = require("firebase/firestore");
+const { db_firebase } = require('../../config/firebase');
 
 
 const saltRounds = 10;
@@ -185,61 +187,130 @@ exports.render_success_reset = (req, res) => {
 }
 
 exports.getProfile = async (req, res) => {
-  try {
-    const adminReq = req.admin; 
-    const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
-    if (!admin) {
-      return handleError(res, 404, "Admin Not Found");
+    try {
+        const adminReq = req.admin;
+        const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
+        if (!admin) {
+            return handleError(res, 404, "Admin Not Found");
+        }
+        if (admin.profile_image && !admin.profile_image.startsWith("http")) {
+            admin.profile_image = `${APP_URL}${admin.profile_image}`;
+        }
+        return handleSuccess(res, 200, "Admin profile fetched successfully", admin);
+    } catch (error) {
+        console.error("Error in getProfile:", error);
+        return handleError(res, 500, error.message);
     }
-    if (admin.profile_image && !admin.profile_image.startsWith("http")) {
-      admin.profile_image = `${APP_URL}${admin.profile_image}`;
-    }
-    return handleSuccess(res, 200, "Admin profile fetched successfully", admin);
-  } catch (error) {
-    console.error("Error in getProfile:", error);
-    return handleError(res, 500, error.message);
-  }
 };
 
 exports.updateProfile = async (req, res) => {
-  try {
-    const updateProfileSchema = Joi.object({
-      first_name: Joi.string().required(),
-      last_name: Joi.string().required(),
-      mobile_number: Joi.string().required(),
-    });
+    try {
+        const updateProfileSchema = Joi.object({
+            full_name: Joi.string().required(),
+        });
 
-    const { error, value } = updateProfileSchema.validate(req.body);
-    if (error) {
-      return handleError(res, 400, error.details[0].message);
+        const { error, value } = updateProfileSchema.validate(req.body);
+        if (error) {
+            return handleError(res, 400, error.details[0].message);
+        }
+
+        const { full_name } = value;
+        const adminReq = req.admin;
+        const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
+
+        if (!admin) {
+            return handleError(res, 404, "Admin Not Found");
+        }
+        let profile_image = admin.profile_image;
+        if (req.file) {
+            profile_image = req.file.filename;
+        }
+        console.log(profile_image);
+
+        await db.query(
+            `UPDATE tbl_admin SET full_name = ?, profile_image = ? WHERE id = ?`,
+            [full_name, profile_image, adminReq.id]
+        );
+
+        return handleSuccess(res, 200, "Profile updated successfully");
+    } catch (error) {
+        console.error("Error in updateProfile:", error);
+        return handleError(res, 500, error.message);
     }
-
-    const { first_name, last_name, mobile_number } = value;
-    const adminReq = req.admin;
-    const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
-
-    if (!admin) {
-      return handleError(res, 404, "Admin Not Found");
-    }
-
-    // Update profile image if provided
-    let profile_image = admin.profile_image;
-    if (req.file) {
-      profile_image = req.file.filename;
-    }
-
-    // Execute update query
-    await db.query(
-      `UPDATE tbl_admin SET first_name = ?, last_name = ?, mobile_number = ?, profile_image = ? WHERE id = ?`,
-      [first_name, last_name, mobile_number, profile_image, adminReq.id]
-    );
-
-    return handleSuccess(res, 200, "Profile updated successfully");
-  } catch (error) {
-    console.error("Error in updateProfile:", error);
-    return handleError(res, 500, error.message);
-  }
 };
+
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword || newPassword.length < 8) {
+            return handleError(res, 400, "Current password and new password are required, and new password must be at least 8 characters long.");
+        }
+        const admin = req.admin;
+        if (!admin) {
+            return handleError(res, 404, "Admin Not Found");
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, admin.password);
+        if (!isMatch) {
+            return handleError(res, 400, "Current password is incorrect");
+        }
+
+        if (admin.show_password === newPassword) {
+            return handleError(res, 400, "Password cannot be the same as the previous password.");
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.query('UPDATE tbl_admin SET password = ?, show_password = ? WHERE id = ?', [hashedPassword, newPassword, admin.id]);
+
+        return handleSuccess(res, 200, "Password changed successfully");
+    } catch (error) {
+        console.error("Error in changePassword controller:", error);
+        return handleError(res, 500, error.message);
+    }
+};
+
+exports.dashboard_data = async (req, res) => {
+    try {
+        const publicChatGroupRef = collection(db_firebase, "publicChatGroup");
+        const privateChatGroupRef = collection(db_firebase, "privateChatGroup");
+        const publicChatDocs = await getDocs(publicChatGroupRef);
+        const privateChatDocs = await getDocs(privateChatGroupRef);
+        const publicChatCount = publicChatDocs.size;
+        const privateChatCount = privateChatDocs.size;
+        const totalChatGroupCount = publicChatCount + privateChatCount;
+        const publicChats = publicChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const privateChats = privateChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        const users = await db.query('SELECT * FROM users');
+        const userCount = users.length || 0;
+
+        const pro_users = await db.query(`
+            SELECT *
+            FROM user_subscription
+            WHERE subscription_id != '1'
+              AND expired_at > NOW()
+              AND sub_status = 1
+            GROUP BY user_id
+        `);
+        const pro_user_count = pro_users.length || 0;
+
+
+        const data = {
+            pro_user_count,
+            userCount,
+            totalChatGroupCount,
+            publicChatGroupCount: publicChatCount,
+            privateChatGroupCount: privateChatCount,
+            // publicChatGroup: publicChats,
+            // privateChatGroup: privateChats
+        };
+        return handleSuccess(res, 200, "Chat group data and count retrieved successfully", data);
+    } catch (error) {
+        return handleError(res, 500, error.message);
+    }
+};
+
 
 
 

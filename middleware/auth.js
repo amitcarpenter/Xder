@@ -50,7 +50,7 @@ const auth = async (req, res, next) => {
   }
 };
 
-exports.authenticateAdmin = async (req, res, next) => {
+const authenticateAdmin = async (req, res, next) => {
     try {
         const authorizationHeader = req.headers['authorization'];
         if (!authorizationHeader) {
@@ -67,7 +67,8 @@ exports.authenticateAdmin = async (req, res, next) => {
         } catch (err) {
             return handleError(res, 401, "Unauthorized: Invalid token");
         }
-        const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [decodedToken.adminId]);
+        const [admin] = await db.query(`SELECT * FROM tbl_admin WHERE id = ${decodedToken.id}`);
+        console.log(admin)
         if (!admin) {
             return handleError(res, 404, "Admin Not Found");
         }
@@ -81,4 +82,6 @@ exports.authenticateAdmin = async (req, res, next) => {
 };
 
 
+
 module.exports = auth;
+module.exports = authenticateAdmin;
