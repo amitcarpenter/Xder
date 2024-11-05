@@ -14,5 +14,9 @@ const router = express.Router();
 
 router.post("/register", authControllers.registerAdmin);
 router.post("/login", authControllers.loginAdmin);
+router.post("/forgot-password", authControllers.forgot_password);
+router.get("/reset-password", authControllers.render_forgot_password_page);
+router.post("/reset-password", authControllers.reset_password);
+router.get("/success-reset", authControllers.render_success_reset);
 
 module.exports = router;

@@ -2,11 +2,9 @@ const db = require("../../utils/database");
 
 module.exports = {
     fetchAdminByEmail: async (email) => {
-        const query = `SELECT * FROM tbl_admin WHERE email = ?`;
         try {
-            const result = await db.query(query, [email]);
-            console.log(result);
-            return result ? result : null;
+            const result = await db.query(`SELECT * FROM tbl_admin WHERE email = ?`, [email]);
+            return result.length > 0 ? result[0] : null;
         } catch (error) {
             console.error("Database query error:", error);
             return null;

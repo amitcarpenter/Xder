@@ -1,12 +1,22 @@
-const bcrypt = require('bcrypt');
 const Joi = require('joi');
 require("dotenv").config();
+const ejs = require("ejs");
+const path = require("path");
+const bcrypt = require('bcrypt');
+const crypto = require("crypto");
+const db = require("../../utils/database");
+const jwt = require("jsonwebtoken");
+const sendEmail = require("../../utils/emailService");
 const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
+
+
 const saltRounds = 10;
 
 const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = process.env.JWT_EXPIRY
+const image_logo = process.env.LOGO_URL
+const APP_URL = process.env.APP_URL
 
 
 exports.registerAdmin = async (req, res) => {
@@ -29,7 +39,6 @@ exports.registerAdmin = async (req, res) => {
         if (existingAdmin) {
             return handleError(res, 400, `An account with this email (${email}) already exists. Please log in.`);
         }
-
         const hash = await bcrypt.hash(password, saltRounds);
         const admin = {
             email,
@@ -40,15 +49,12 @@ exports.registerAdmin = async (req, res) => {
         const create_admin = await registerAdmin(admin);
         if (create_admin) {
             return handleSuccess(res, 200, `Admin Created Successfully`, create_admin);
-
-
         }
     } catch (error) {
         console.error(error);
         return handleError(res, 500, error.message);
     }
 };
-
 
 exports.loginAdmin = async (req, res) => {
     try {
@@ -70,10 +76,173 @@ exports.loginAdmin = async (req, res) => {
         const token = jwt.sign({ id: existingAdmin.id, email: existingAdmin.email }, JWT_SECRET, {
             expiresIn: JWT_EXPIRY
         });
-        return handleSuccess(res, 200, "Login successful", token);
+        return res.status(200).json({
+            success: true,
+            status: 200,
+            message: "Login Successful",
+            token: token
+        })
     } catch (error) {
         console.error(error);
         return handleError(res, 500, "Internal server error.");
     }
 };
+
+exports.render_forgot_password_page = (req, res) => {
+    try {
+        return res.render("resetPasswordAdmin.ejs");
+    } catch (error) {
+        return handleError(res, 500, error.message)
+    }
+};
+
+exports.forgot_password = async (req, res) => {
+    try {
+        const forgotPasswordSchema = Joi.object({
+            email: Joi.string().email().required(),
+        });
+        const { error, value } = forgotPasswordSchema.validate(req.body);
+        if (error) {
+            return handleError(res, 400, error.details[0].message);
+        }
+        const { email } = value;
+        const [admin] = await db.query(`SELECT * FROM tbl_admin WHERE email = ?`, [email]);
+        if (!admin) {
+            return handleError(res, 404, "Admin Not Found");
+        }
+
+        if (admin.is_verified === false) {
+            return handleError(res, 400, "Please Verify your email first");
+        }
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetTokenExpiry = new Date(Date.now() + 3600000);
+        await db.query(
+            `UPDATE tbl_admin SET reset_password_token = ?, reset_password_token_expiry = ? WHERE email = ?`,
+            [resetToken, resetTokenExpiry, email]
+        );
+        const resetLink = `${req.protocol}://${req.get("host")}/admin/reset-password?token=${resetToken}`;
+        const emailTemplatePath = path.resolve(__dirname, "../../views/forgetPassword.ejs");
+        const emailHtml = await ejs.renderFile(emailTemplatePath, { resetLink, image_logo });
+        const emailOptions = {
+            to: email,
+            subject: "Password Reset Request",
+            html: emailHtml,
+        };
+        await sendEmail(emailOptions);
+        return handleSuccess(res, 200, `Password reset link sent to your email (${email}).`);
+    } catch (error) {
+        console.error("Error in forgot password controller:", error);
+        return handleError(res, 500, error.message);
+    }
+};
+
+exports.reset_password = async (req, res) => {
+    try {
+        const resetPasswordSchema = Joi.object({
+            token: Joi.string().required(),
+            newPassword: Joi.string().min(8).required().messages({
+                "string.min": "Password must be at least 8 characters long",
+                "any.required": "New password is required",
+            }),
+        });
+        const { error, value } = resetPasswordSchema.validate(req.body);
+        if (error) {
+            return handleError(res, 400, error.details[0].message);
+        }
+        const { token, newPassword } = value;
+        const [admin] = await db.query(
+            `SELECT * FROM tbl_admin WHERE reset_password_token = ? AND reset_password_token_expiry > ?`,
+            [token, new Date()]
+        );
+        if (!admin) {
+            return handleError(res, 400, "Invalid or expired token");
+        }
+        if (admin.show_password === newPassword) {
+            return handleError(res, 400, "Password cannot be the same as the previous password.");
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        const updateResult = await db.query(
+            `UPDATE tbl_admin SET password = ?, show_password = ?, reset_password_token = NULL, reset_password_token_expiry = NULL WHERE id = ?`,
+            [hashedPassword, newPassword, admin.id]
+        );
+
+        if (updateResult.affectedRows > 0) {
+            return handleSuccess(res, 200, "Password reset successfully.");
+        } else {
+            return handleError(res, 500, "Failed to reset password.");
+        }
+    } catch (error) {
+        console.error("Error in reset password controller:", error);
+        return handleError(res, 500, error.message);
+    }
+};
+
+exports.render_success_reset = (req, res) => {
+    return res.render("successReset.ejs")
+}
+
+exports.getProfile = async (req, res) => {
+  try {
+    const adminReq = req.admin; 
+    const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
+    if (!admin) {
+      return handleError(res, 404, "Admin Not Found");
+    }
+    if (admin.profile_image && !admin.profile_image.startsWith("http")) {
+      admin.profile_image = `${APP_URL}${admin.profile_image}`;
+    }
+    return handleSuccess(res, 200, "Admin profile fetched successfully", admin);
+  } catch (error) {
+    console.error("Error in getProfile:", error);
+    return handleError(res, 500, error.message);
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const updateProfileSchema = Joi.object({
+      first_name: Joi.string().required(),
+      last_name: Joi.string().required(),
+      mobile_number: Joi.string().required(),
+    });
+
+    const { error, value } = updateProfileSchema.validate(req.body);
+    if (error) {
+      return handleError(res, 400, error.details[0].message);
+    }
+
+    const { first_name, last_name, mobile_number } = value;
+    const adminReq = req.admin;
+    const [admin] = await db.query('SELECT * FROM tbl_admin WHERE id = ?', [adminReq.id]);
+
+    if (!admin) {
+      return handleError(res, 404, "Admin Not Found");
+    }
+
+    // Update profile image if provided
+    let profile_image = admin.profile_image;
+    if (req.file) {
+      profile_image = req.file.filename;
+    }
+
+    // Execute update query
+    await db.query(
+      `UPDATE tbl_admin SET first_name = ?, last_name = ?, mobile_number = ?, profile_image = ? WHERE id = ?`,
+      [first_name, last_name, mobile_number, profile_image, adminReq.id]
+    );
+
+    return handleSuccess(res, 200, "Profile updated successfully");
+  } catch (error) {
+    console.error("Error in updateProfile:", error);
+    return handleError(res, 500, error.message);
+  }
+};
+
+
+
+
+
 
