@@ -30,6 +30,7 @@ router.get("/dashboard-data", authenticateAdmin, authControllers.dashboard_data)
 
 //================================= User ====================================
 router.get("/get-all-users", authenticateAdmin, userControllers.get_all_users);
+router.post("/user-block-unblock", authenticateAdmin, userControllers.block_unblock_user);
 
 
 

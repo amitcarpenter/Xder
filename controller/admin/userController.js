@@ -35,4 +35,44 @@ exports.get_all_users = async (req, res) => {
     }
 };
 
+exports.get_all_users = async (req, res) => {
+    try {
+        const users = await db.query('SELECT * FROM users ORDER BY created_at DESC');
+        const updatedUsers = users.map(user => {
+            if (user.profile_image && !user.profile_image.startsWith("http") && !user.profile_image.startsWith("No image")) {
+                user.profile_image = `${process.env.APP_URL}${user.profile_image}`;
+            }
+            return user;
+        });
+        return handleSuccess(res, 200, "User data retrieved successfully", updatedUsers);
+    } catch (error) {
+        return handleError(res, 500, error.message);
+    }
+};
+
+exports.block_unblock_user = async (req, res) => {
+    try {
+        const blockUserSchema = Joi.object({
+            user_id: Joi.number().required(),
+            block_status: Joi.boolean().required(),
+        });
+        const { error, value } = blockUserSchema.validate(req.body);
+        if (error) return joiErrorHandle(res, error);
+        const { user_id, block_status } = value;
+        const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
+        if (!user) {
+            return handleError(res, 404, "User Not Found");
+        }
+        await db.query(
+            `UPDATE users SET is_blocked = ? WHERE id = ?`,
+            [block_status ? 1 : 0, user_id]
+        );
+        const message = block_status ? "User blocked successfully" : "User unblocked successfully";
+        return handleSuccess(res, 200, message);
+    } catch (error) {
+        return handleError(res, 500, error.message);
+    }
+};
+
+
 

@@ -2,7 +2,7 @@ const cors = require("cors");
 const http = require("http");
 const cron = require('node-cron')
 const express = require("express");
-const user = require("./routes/users");
+const api = require("./routes/api");
 const bodyParser = require("body-parser");
 const moment = require('moment-timezone');
 const admin_router = require("./routes/admin");
@@ -19,19 +19,14 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(
-  express.urlencoded({
-    extended: true,
-  })
-);
+app.use(express.urlencoded({ extended: true, }));
 app.use(express.static("public"));
 app.use('/', express.static(path.join(__dirname, 'public/profile')));
 
 
 app.use(bodyParser.json());
 
-app.use("/", user);
-// app.use(user);
+app.use("/", api);
 app.use("/admin", admin_router);
 app.use("/firebase", firebase_router);
 app.use("/", subscription);

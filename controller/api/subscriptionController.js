@@ -1,9 +1,9 @@
 const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const path = require("path");
-const config = require("../config");
-const { Allsubscription, AllsubscriptionUser, userCurrentSubscription,Checksubscription_by_id, Addsubscription, ChecksubscriptionUser, Allsubsdata } = require("../models/subscription");
-const { getData,updateData } = require('../models/common')
+const config = require("../../config");
+const { Allsubscription, AllsubscriptionUser, userCurrentSubscription,Checksubscription_by_id, Addsubscription, ChecksubscriptionUser, Allsubsdata } = require("../../models/subscription");
+const { getData,updateData } = require('../../models/common')
 const baseurl = config.base_url;
 const moment = require('moment');
 //const {Allsubscription} = require('../models/users');

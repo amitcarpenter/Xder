@@ -12,11 +12,11 @@ var FCM = require("fcm-node");
 const fs = require("fs");
 const axios = require("axios");
 require("moment-timezone");
-const config = require("../config");
-const logError = require('../logger/errorHandler'); // Import the logError function
-const { ChecksubscriptionDates, fetch_subscription_plan, get_subscription_plan_by_id } = require('../models/subscription')
+const config = require("../../config.js");
+const logError = require('../../logger/errorHandler.js'); // Import the logError function
+const { ChecksubscriptionDates, fetch_subscription_plan, get_subscription_plan_by_id } = require('../../models/subscription.js')
 const pdf = require('html-pdf');
-const userFcm = require('../utils/firebaseAdminUser.js');
+const userFcm = require('../../utils/firebaseAdminUser.js');
 
 const {
   registerUser,
@@ -87,8 +87,8 @@ const {
   getUniqueUserIds,
   checkAlbumRequest,
   checkAlbumRequestNotification,
-  cancelAlbumRequestNotification ,
-  all_group_notifications,getUsers_by_ids} = require("../models/users");
+  cancelAlbumRequestNotification,
+  all_group_notifications, getUsers_by_ids } = require("../../models/users.js");
 
 const {
   insertData,
@@ -100,9 +100,10 @@ const {
   filterTags,
   insertInvoiceData,
   get_invoice_detailby_id
-} = require("../models/common");
+} = require("../../models/common.js");
 const { Console, count } = require("console");
 const e = require("express");
+const { handleError } = require("../../utils/responseHandler.js");
 
 const baseurl = config.base_url;
 const Fcm_serverKey = config.fcm_serverKey;
@@ -580,6 +581,11 @@ exports.loginUser = async (req, res) => {
                     const result1 = await updateData("users", where, data);
                   }
                   const data1 = await fetchUserByEmail(email);
+                  if (data1.length > 0 && data1[0].is_blocked == 1) {
+                    return handleError(res, 400, "You are blocked by admin");
+                  }
+
+
                   return res.json({
                     status: 200,
                     success: true,
@@ -629,7 +635,6 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-
 exports.social_login = async (req, res) => {
   try {
     const { email, social_id, name, fcm_token } = req.body;
@@ -674,6 +679,9 @@ exports.social_login = async (req, res) => {
           // { expiresIn: "1d" }
         );
 
+        if (data.length > 0 && data[0].is_blocked == 1) {
+          return handleError(res, 400, "You are blocked by admin");
+        }
         return res.json({
           success: true,
           message: " login successfully ",
@@ -727,7 +735,6 @@ exports.social_login = async (req, res) => {
     });
   }
 };
-
 
 exports.loginUser_with_phone = async (req, res) => {
   try {
@@ -804,6 +811,9 @@ exports.loginUser_with_phone = async (req, res) => {
                     `where phone_number= ${phone_number}`
                   );
 
+                  if (check_phone_number.length > 0 && check_phone_number[0].is_blocked == 1) {
+                    return handleError(res, 400, "You are blocked by admin");
+                  }
                   return res.json({
                     status: 200,
                     success: true,
@@ -1036,13 +1046,13 @@ exports.forgotPassword_otp_match_phone_number = async (req, res) => {
             success: true,
             OTP: otp,
             message: " OTP match successfully",
-            status:200
+            status: 200
           });
         } else {
           return res.json({
             success: true,
             message: " Invalid OTP ",
-            status:400
+            status: 400
           });
         }
       } else {
@@ -1091,13 +1101,13 @@ exports.forgotPassword_otp_match_email = async (req, res) => {
           const update_OTP = await update_otp_by_email(email, otp);
           return res.json({
             success: true,
-            status:200,
+            status: 200,
             message: " OTP match successfully",
           });
         } else {
           return res.json({
             success: true,
-            status:400,
+            status: 400,
             message: " Invalid OTP ",
           });
         }
@@ -3494,7 +3504,7 @@ exports.group_notification = async (req, res) => {
           },
         };
 
-        return new Promise(async(resolve) => {
+        return new Promise(async (resolve) => {
           const response = await userFcm.messaging().send(message);
           const sendNotification = {
             sender_id: user_id,
@@ -3508,12 +3518,12 @@ exports.group_notification = async (req, res) => {
           };
           await addnotification(sendNotification);
           resolve(response);
-         
+
         });
       }));
 
       // Now, after all promises are resolved, send the final response
-     return res.json({
+      return res.json({
         message: "Notifications sent successfully",
         success: true,
         status: 200,
@@ -4255,7 +4265,7 @@ exports.users_nearby = async (req, res) => {
     const decoded = jwt.decode(token);
     const user_id = decoded.data.id;
     const nearbyRange = 10000; // Distance in meters to consider as "nearby"
-    
+
     // Fetch the logged-in user's details
     const check_user = await fetchUserById(user_id);
     if (check_user.length === 0) {
@@ -4269,7 +4279,7 @@ exports.users_nearby = async (req, res) => {
     const userLongitude = check_user[0]?.longitude;
     const userCity = check_user[0]?.city;
 
-    console.log(">>>>>>>>>>userCity",userCity)
+    console.log(">>>>>>>>>>userCity", userCity)
 
     let NearLocation = [];
 
@@ -4282,7 +4292,7 @@ exports.users_nearby = async (req, res) => {
         if (item.profile_image !== "No image") {
           item.profile_image = baseurl + "/profile/" + item.profile_image;
         }
-        console.log("+++++++++++++",item.city)
+        console.log("+++++++++++++", item.city)
         // Fetch the user's show settings
         const settingshow_me = await getData("setting_show_me", `where user_id=${item.id}`);
         item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false;
@@ -4297,18 +4307,18 @@ exports.users_nearby = async (req, res) => {
 
           if (disvalue.distanceValue <= nearbyRange) {
             item.distance = disvalue.distance;
-            item.distanceValue = disvalue.distanceValue; 
+            item.distanceValue = disvalue.distanceValue;
             NearLocation.push(item);
           } else {
             item.distance = disvalue.distance;
           }
-        } 
+        }
         if (item.city && item.city === userCity && !NearLocation.includes(item)) {
           console.log("<><><<<<><>><><><<<>");
           console.log(item.city);
 
-          item.distanceValue = Number.MAX_SAFE_INTEGER; 
-          
+          item.distanceValue = Number.MAX_SAFE_INTEGER;
+
 
           // If lat/long are null, check if they are in the same city
           item.distance = ""; // You can set a specific value to indicate same city
@@ -5300,7 +5310,7 @@ exports.send_notification = async (req, res) => {
           success: true,
           status: 200
         });
-        
+
       } else {
         return res.json({
           success: false,
@@ -5469,7 +5479,7 @@ exports.get_user_by_id = async (req, res) => {
     })
   );
   const result = schema.validate(req.body);
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>",req.body)
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", req.body)
 
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
@@ -6825,7 +6835,7 @@ exports.markAllSeen = async (req, res) => {
 
 exports.newEditProfile = async (req, res) => {
   try {
-    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link,CountryCode } = req.body;
+    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link, CountryCode } = req.body;
     const schema = Joi.alternatives(Joi.object({
       name: Joi.string().max(15).optional(),
       username: Joi.string().optional(),
@@ -6846,7 +6856,7 @@ exports.newEditProfile = async (req, res) => {
       twitter_link: Joi.string().optional(),
       linkedIn_link: Joi.string().optional(),
       sub_gender: Joi.string().optional(),
-      CountryCode:Joi.string().optional()
+      CountryCode: Joi.string().optional()
 
     }))
     const result = schema.validate(req.body);
@@ -6920,7 +6930,7 @@ exports.newEditProfile = async (req, res) => {
           age: get_age ? get_age : 0,
           profile_image: req.file && req.file.filename ? req.file.filename : userInfo[0].profile_image,
           sub_gender: sub_gender ? sub_gender : userInfo[0].sub_gender,
-          CountryCode:CountryCode ? CountryCode : userInfo[0].CountryCode
+          CountryCode: CountryCode ? CountryCode : userInfo[0].CountryCode
         };
 
         console.log(user);
@@ -6949,7 +6959,7 @@ exports.newEditProfile = async (req, res) => {
 
 exports.newComplete_Profile = async (req, res) => {
   try {
-    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link, complete_profile_status,CountryCode } = req.body;
+    const { name, username, DOB, about_me, country, city, tags, looking_for, relationship_type, sexual_orientation, gender, sub_gender, pronouns, height, ethnicity, twitter_link, instagram_link, facebook_link, linkedIn_link, complete_profile_status, CountryCode } = req.body;
     const schema = Joi.alternatives(Joi.object({
       name: Joi.string().max(15).required(),
       username: Joi.string().required(),
@@ -7047,7 +7057,7 @@ exports.newComplete_Profile = async (req, res) => {
           facebook_link: facebook_link ? facebook_link : null,
           linkedIn_link: linkedIn_link ? linkedIn_link : null,
           complete_profile_status: parseInt(complete_profile_status),
-          CountryCode:CountryCode ? CountryCode : null
+          CountryCode: CountryCode ? CountryCode : null
 
         };
         const result = await newCompleteUserById(user, user_id);
@@ -7210,7 +7220,7 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
     baseQuery += " AND id IN (?)";
     queryParams.push([...chatted_userIds]);
   }
-  if (keysLength===0) {
+  if (keysLength === 0) {
     console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa')
     baseQuery += " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
   }
@@ -7292,7 +7302,7 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
     for (let i = 0; i < searchValues.length; i++) {
       const searchTerm = searchValues[i];
       baseQuery += `(username LIKE ? OR name LIKE ? OR country LIKE ?  OR city LIKE ? OR FIND_IN_SET(?, tags))`;
-      queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`,searchTerm);
+      queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, searchTerm);
       if (i !== searchValues.length - 1) {
         baseQuery += ' OR ';
       }
@@ -7311,7 +7321,7 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   baseQuery += ` ORDER BY id DESC LIMIT ? `;
   queryParams.push(effectiveLimit);
 
-  console.log(">>>>>>>>",baseQuery)
+  console.log(">>>>>>>>", baseQuery)
 
   return { query: baseQuery, params: queryParams };
 }
@@ -7344,7 +7354,7 @@ exports.new_get_all_users = async (req, res) => {
         page: Joi.number().optional(),
         limit: Joi.number().optional(),
         data: Joi.string().optional(),
-        onlyRecent : Joi.number().optional()
+        onlyRecent: Joi.number().optional()
       })
     );
     console.log("bodyishere+++++", req.body);
