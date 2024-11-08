@@ -1,6 +1,7 @@
-const { collection, getDocs } = require("firebase/firestore");
+const { collection, doc, deleteDoc, getDocs, getDoc, updateDoc } = require("firebase/firestore");
 const { db } = require('../../config/firebase');
-const { handleSuccess, handleError } = require('../../utils/responseHandler');
+const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
+const Joi = require("joi");
 
 
 exports.getAllFirebaseUsers = async (req, res) => {
@@ -13,7 +14,6 @@ exports.getAllFirebaseUsers = async (req, res) => {
         return handleError(res, 500, "Failed to retrieve user data");
     }
 };
-
 
 exports.getChatGroups = async (req, res) => {
     try {
@@ -36,6 +36,46 @@ exports.getChatGroups = async (req, res) => {
     }
 };
 
+exports.removeUserFromChatGroup = async (req, res) => {
+    try {
+        const schema = Joi.object({
+            groupId: Joi.string().required(),
+            userId: Joi.string().required(),
+            groupType: Joi.string().valid('public', 'private').required()
+        });
 
+        const { error, value } = schema.validate(req.body);
+        if (error) {
+            return handleError(res, 400, error.details[0].message);
+        }
 
+        const { groupId, userId, groupType } = value;
+
+        const chatGroupRef = collection(db, groupType === "public" ? "publicChatGroup" : "privateChatGroup");
+        const groupDocRef = doc(chatGroupRef, groupId);
+
+        const groupDocSnapshot = await getDoc(groupDocRef);
+        if (!groupDocSnapshot.exists()) {
+            return handleError(res, 404, "Group not found");
+        }
+
+        const groupData = groupDocSnapshot.data();
+        const members = groupData.member || [];
+
+        const userIndex = members.findIndex(member => member.id === parseInt(userId));
+        if (userIndex === -1) {
+            return handleError(res, 404, "User not found in this group");
+        }
+        const updatedMembers = members.filter(member => member.id !== parseInt(userId));
+        await updateDoc(groupDocRef, {
+            member: updatedMembers
+        });
+        const userDocRef = doc(collection(db, "user"), userId);
+        await deleteDoc(userDocRef);
+        return handleSuccess(res, 200, `User Deleted Successfully`);
+    } catch (error) {
+        console.error("Error removing user from chat group:", error);
+        return handleError(res, 500, error.message);
+    }
+};
 

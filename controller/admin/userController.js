@@ -22,29 +22,61 @@ const APP_URL = process.env.APP_URL
 
 exports.get_all_users = async (req, res) => {
     try {
-        const users = await db.query('SELECT * FROM users ORDER BY created_at DESC');
+        const users = await db.query('SELECT * FROM users WHERE is_delete != 1 ORDER BY created_at DESC');
         const updatedUsers = users.map(user => {
             if (user.profile_image && !user.profile_image.startsWith("http") && !user.profile_image.startsWith("No image")) {
                 user.profile_image = `${process.env.APP_URL}${user.profile_image}`;
             }
             return user;
         });
-        return handleSuccess(res, 200, "User data retrieved successfully", updatedUsers);
+        return handleSuccess(res, 200, "User retrieved successfully", updatedUsers);
     } catch (error) {
         return handleError(res, 500, error.message);
     }
 };
 
-exports.get_all_users = async (req, res) => {
+exports.get_all_filtered_users = async (req, res) => {
     try {
-        const users = await db.query('SELECT * FROM users ORDER BY created_at DESC');
+        const { country, city, gender, is_blocked, search } = req.query;
+        let query = 'SELECT * FROM users WHERE is_delete != 1';
+        const queryParams = [];
+
+        if (country && country.trim()) {
+            query += ' AND country = ?';
+            queryParams.push(country);
+        }
+
+        if (city && city.trim()) {
+            query += ' AND city = ?';
+            queryParams.push(city);
+        }
+
+        if (gender && gender.trim()) {
+            query += ' AND gender = ?';
+            queryParams.push(gender);
+        }
+
+        if (typeof is_blocked !== 'undefined' && is_blocked !== '') {
+            query += ' AND is_blocked = ?';
+            queryParams.push(is_blocked ? 1 : 0);
+        }
+
+        if (search && search.trim()) {
+            query += ' AND (name LIKE ? OR username LIKE ? OR city LIKE ? OR country LIKE ? OR gender LIKE ?)';
+            queryParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        query += ' ORDER BY created_at DESC';
+
+        const users = await db.query(query, queryParams);
         const updatedUsers = users.map(user => {
             if (user.profile_image && !user.profile_image.startsWith("http") && !user.profile_image.startsWith("No image")) {
                 user.profile_image = `${process.env.APP_URL}${user.profile_image}`;
             }
             return user;
         });
-        return handleSuccess(res, 200, "User data retrieved successfully", updatedUsers);
+
+        return handleSuccess(res, 200, "User retrieved successfully", updatedUsers);
     } catch (error) {
         return handleError(res, 500, error.message);
     }
@@ -74,5 +106,22 @@ exports.block_unblock_user = async (req, res) => {
     }
 };
 
+exports.delete_user = async (req, res) => {
+    try {
+        const blockUserSchema = Joi.object({
+            user_id: Joi.number().required(),
+        });
+        const { error, value } = blockUserSchema.validate(req.body);
+        if (error) return joiErrorHandle(res, error);
+        const { user_id, block_status } = value;
+        const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
+        if (!user) return handleError(res, 404, "User Not Found");
+        await db.query(`UPDATE users SET is_delete = 1 WHERE id = ?`, [user_id]);
+        const message = "User Deleted Successfully";
+        return handleSuccess(res, 200, message);
+    } catch (error) {
+        return handleError(res, 500, error.message);
+    }
+};
 
 

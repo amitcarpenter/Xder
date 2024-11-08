@@ -19,6 +19,7 @@ router.get("/get-all-firebase-users", authenticateAdmin, firebaseControllers.get
 
 //================================= Group ====================================
 router.get("/get-all-firebase-groups", authenticateAdmin, firebaseControllers.getChatGroups);
+router.post("/remove-user-from-group", authenticateAdmin, firebaseControllers.removeUserFromChatGroup);
 
 
 module.exports = router;
