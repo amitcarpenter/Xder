@@ -38,14 +38,16 @@ exports.uploadVerificationImage = async (req, res) => {
 exports.getUsersWithVerificationImage = async (req, res) => {
     try {
         const query = `
-            SELECT u.*, 
-                   GROUP_CONCAT(pi.image) AS profile_images
-            FROM users u
-            LEFT JOIN profile_images pi ON u.id = pi.user_id
-            WHERE u.verification_image IS NOT NULL 
-              AND u.verification_image != ''
-            GROUP BY u.id;
-        `;
+                SELECT u.*, 
+                    GROUP_CONCAT(pi.image) AS profile_images
+                FROM users u
+                LEFT JOIN profile_images pi ON u.id = pi.user_id
+                WHERE u.verification_image IS NOT NULL 
+                AND u.verification_image != ''
+                AND u.is_verified = 2
+                GROUP BY u.id
+                ORDER BY u.created_at DESC;
+                `;
 
         const result = await pool.query(query);
 
