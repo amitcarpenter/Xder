@@ -23,14 +23,10 @@ const APP_URL = process.env.APP_URL
 exports.get_all_report = async (req, res) => {
     try {
         const query = `
-            SELECT reports.*, 
-                sender.id AS sender_id, sender.name AS sender_name, sender.profile_image AS sender_profile_image,
-                receiver.id AS receiver_id, receiver.name AS receiver_name, receiver.profile_image AS receiver_profile_image
-            FROM reports
-            LEFT JOIN users AS sender
-                ON sender.id = reports.sender_id
-            LEFT JOIN users AS receiver
-                ON receiver.id = reports.receiver_id;
+            SELECT s.*, u.*, sp.*
+            FROM reports r
+            LEFT JOIN users u ON s.user_id = u.id
+            LEFT JOIN subscription_plan sp ON s.subscription_id = sp.id
         `;
 
         const reports = await db.query(query);

@@ -5933,8 +5933,24 @@ exports.submit_report = async (req, res) => {
         success: false,
       });
     } else {
+
+
       const userInfo = await fetchUserBy_Id(sender_id);
       if (userInfo.length !== 0) {
+
+        const existingReportQuery = `
+               SELECT * FROM reports 
+               WHERE sender_id = ? AND reciver_id = ? AND group_id = ?;
+           `;
+        const existingReport = await pool.query(existingReportQuery, [sender_id, reciver_id || 0, group_id || 0]);
+
+        if (existingReport.length > 0) {
+          return res.status(400).json({
+            message: "You have already submitted a report for this user.",
+            success: false,
+            status: 400
+          });
+        }
 
         let report_info = {
           reciver_id: reciver_id ? reciver_id : 0,
@@ -5963,6 +5979,7 @@ exports.submit_report = async (req, res) => {
           success: false,
         });
       }
+
     }
   } catch (err) {
     console.log(err);

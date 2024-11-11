@@ -1,5 +1,3 @@
-// controllers/adminNotificationController.js
-const { error } = require('winston');
 const pool = require('../../utils/database');
 const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
 const Joi = require('joi');
@@ -95,18 +93,23 @@ exports.updateNotification = async (req, res) => {
         const { error } = notificationSchema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
 
+        const { notification_id, notification_title, notification_message, notification_scheduled_time } = req.body;
+
         const query_get_notification = 'SELECT * FROM admin_notifications WHERE notification_id = ?;';
         const result_get_notification = await pool.query(query_get_notification, [notification_id]);
-        console.log(result_get_notification)
 
-        const { notification_id, notification_title, notification_message, notification_scheduled_time } = req.body;
-        let notification_image = result_get_notification.notification_image;
+        if (result_get_notification.length === 0) {
+            return handleError(res, 404, 'Notification not found.');
+        }
+
+        let notification_image = result_get_notification[0].notification_image;
+
         if (req.file) {
             notification_image = req.file.filename;
         }
         const query = `
             UPDATE admin_notifications
-            SET notification_image = COALESCE(?, notification_image), 
+            SET notification_image = ?, 
                 notification_title = ?, 
                 notification_message = ?, 
                 notification_scheduled_time = ?, 
@@ -114,14 +117,12 @@ exports.updateNotification = async (req, res) => {
             WHERE notification_id = ?;
         `;
         const values = [notification_image || null, notification_title, notification_message, notification_scheduled_time, notification_id];
+
         const result = await pool.query(query, values);
-
-
-        if (result.rows.length === 0) {
+        if (result.affectedRows === 0) {
             return handleError(res, 404, 'Notification not found.');
         }
-
-        return handleSuccess(res, 200, 'Notification updated successfully.', result);
+        return handleSuccess(res, 200, 'Notification updated successfully.');
     } catch (error) {
         return handleError(res, 500, error.message);
     }
@@ -133,7 +134,7 @@ exports.deleteNotification = async (req, res) => {
         const query = 'DELETE FROM admin_notifications WHERE notification_id = ? RETURNING *;';
         const result = await pool.query(query, [notification_id]);
 
-        if (result.rows.length === 0) {
+        if (result.length === 0) {
             return handleError(res, 404, 'Notification not found.');
         }
         handleSuccess(res, 200, 'Notification deleted successfully.');

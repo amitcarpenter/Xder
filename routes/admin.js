@@ -11,6 +11,8 @@ const authControllers = require("../controller/admin/authController");
 const userControllers = require("../controller/admin/userController");
 const reportControllers = require("../controller/admin/reportController");
 const notificationControllers = require("../controller/admin/notificationController");
+const subscriptionControllers = require("../controller/admin/subscriptionController");
+const verificationControllers = require("../controller/admin/verificationController");
 
 
 const router = express.Router();
@@ -47,6 +49,14 @@ router.get('/get-notification/:notification_id', authenticateAdmin, notification
 router.put('/update-notification', authenticateAdmin, uploadFile, notificationControllers.updateNotification);
 router.delete('/delete-notification/:notification_id', authenticateAdmin, notificationControllers.deleteNotification);
 
+
+//================================= Subscription ====================================
+router.get('/get-all-subscriptions', authenticateAdmin, subscriptionControllers.getAllSubscriptions);
+
+
+//================================= Verifaction ====================================
+router.get('/get-verification-data', authenticateAdmin, verificationControllers.getUsersWithVerificationImage);
+router.post('/verify-user', authenticateAdmin, verificationControllers.verifyUser);
 
 
 module.exports = router;

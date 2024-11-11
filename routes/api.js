@@ -1,9 +1,20 @@
 const express = require("express");
-const userController = require("../controller/api/userController");
 const auth = require("../middleware/auth");
 const upload_profile = require("../middleware/upload_profile");
 const upload_albums = require("../middleware/upload_albums");
 const upload_group = require("../middleware/upload_group");
+
+
+//==================== Import Controllers =========================
+const userController = require("../controller/api/userController");
+const verificationControllers = require("../controller/api/verificationController");
+const { uploadFile } = require("../middleware/multer");
+
+
+
+
+
+
 
 const router = express.Router();
 
@@ -223,7 +234,14 @@ router.post('/createInvoice', auth, userController.createInvoice);
 
 router.post("/getAllGroupRequests", userController.getAllGroupRequest);
 
-router.post('/getUserWithIds',userController.get_users_by_ids)
+router.post('/getUserWithIds', userController.get_users_by_ids)
+
+
+
+
+//==================================== Verification ===================================
+router.post('/upload-verification-image', uploadFile, verificationControllers.uploadVerificationImage)
+
 
 
 module.exports = router;
