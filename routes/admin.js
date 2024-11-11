@@ -42,10 +42,10 @@ router.get("/get-all-reports", authenticateAdmin, reportControllers.get_all_repo
 
 //================================= Notification ====================================
 router.post('/create-notification', authenticateAdmin, uploadFile, notificationControllers.createNotification);
-// router.get('/notifications', notificationControllers.getAllNotifications);
-// router.get('/notifications/:notification_id', notificationControllers.getNotificationById);
-// router.put('/notifications/:notification_id', notificationControllers.updateNotification);
-// router.delete('/notifications/:notification_id', notificationControllers.deleteNotification);
+router.get('/get-all-notifications', authenticateAdmin, notificationControllers.getAllNotifications);
+router.get('/get-notification/:notification_id', authenticateAdmin, notificationControllers.getNotificationById);
+router.put('/update-notification', authenticateAdmin, uploadFile, notificationControllers.updateNotification);
+router.delete('/delete-notification/:notification_id', authenticateAdmin, notificationControllers.deleteNotification);
 
 
 
