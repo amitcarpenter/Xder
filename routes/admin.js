@@ -10,6 +10,7 @@ const upload_group = require("../middleware/upload_group");
 const authControllers = require("../controller/admin/authController");
 const userControllers = require("../controller/admin/userController");
 const reportControllers = require("../controller/admin/reportController");
+const notificationControllers = require("../controller/admin/notificationController");
 
 
 const router = express.Router();
@@ -38,6 +39,13 @@ router.delete("/delete-user", authenticateAdmin, userControllers.delete_user);
 //================================= Report ====================================
 router.get("/get-all-reports", authenticateAdmin, reportControllers.get_all_report);
 
+
+//================================= Notification ====================================
+router.post('/create-notification', authenticateAdmin, uploadFile, notificationControllers.createNotification);
+// router.get('/notifications', notificationControllers.getAllNotifications);
+// router.get('/notifications/:notification_id', notificationControllers.getNotificationById);
+// router.put('/notifications/:notification_id', notificationControllers.updateNotification);
+// router.delete('/notifications/:notification_id', notificationControllers.deleteNotification);
 
 
 
