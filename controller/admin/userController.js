@@ -106,6 +106,25 @@ exports.block_unblock_user = async (req, res) => {
     }
 };
 
+// exports.delete_user = async (req, res) => {
+//     try {
+//         const blockUserSchema = Joi.object({
+//             user_id: Joi.number().required(),
+//         });
+//         const { error, value } = blockUserSchema.validate(req.body);
+//         if (error) return joiErrorHandle(res, error);
+//         const { user_id, block_status } = value;
+//         const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
+//         if (!user) return handleError(res, 404, "User Not Found");
+//         await db.query(`UPDATE users SET is_delete = 1 WHERE id = ?`, [user_id]);
+//         const message = "User Deleted Successfully";
+//         return handleSuccess(res, 200, message);
+//     } catch (error) {
+//         return handleError(res, 500, error.message);
+//     }
+// };
+
+
 exports.delete_user = async (req, res) => {
     try {
         const blockUserSchema = Joi.object({
@@ -113,15 +132,16 @@ exports.delete_user = async (req, res) => {
         });
         const { error, value } = blockUserSchema.validate(req.body);
         if (error) return joiErrorHandle(res, error);
-        const { user_id, block_status } = value;
+
+        const { user_id } = value;
         const [user] = await db.query('SELECT * FROM users WHERE id = ?', [user_id]);
         if (!user) return handleError(res, 404, "User Not Found");
-        await db.query(`UPDATE users SET is_delete = 1 WHERE id = ?`, [user_id]);
+
+        await db.query('DELETE FROM users WHERE id = ?', [user_id]);
         const message = "User Deleted Successfully";
         return handleSuccess(res, 200, message);
     } catch (error) {
         return handleError(res, 500, error.message);
     }
 };
-
 

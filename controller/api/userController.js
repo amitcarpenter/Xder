@@ -5666,8 +5666,13 @@ exports.get_block_list = async (req, res) => {
 
       await Promise.all(
         get__block__list.map(async (item) => {
-
           const user_info = await getData("users", `where id= ${item.block_id}`);
+          const profileimage = await profileimages(user_id);
+          if (profileimage?.length > 0) {
+            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
+          } else {
+            item.images = [];
+          }
 
           if (user_info.length != 0) {
 
@@ -5675,7 +5680,6 @@ exports.get_block_list = async (req, res) => {
               // item.profile_image = baseurl + "/profile/" + item.profile_image;
               user_info[0].profile_image = baseurl + "/profile/" + user_info[0].profile_image;
             }
-
 
             item.block_user_info = user_info[0]
           } else {
@@ -5730,7 +5734,7 @@ exports.get_block_by_id = async (req, res) => {
         success: true,
         status: 200,
         messgae: "list successfully fetched!",
-        data: get__block__list
+        data: get__block__list[0]
       })
     } else {
       return res.json({
