@@ -5573,7 +5573,6 @@ exports.get_user_by_id = async (req, res) => {
       });
     }
     else {
-      // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
       return res.json({
         status: 404,
         success: false,
@@ -5729,12 +5728,14 @@ exports.get_block_by_id = async (req, res) => {
     });
   } else {
     const get__block__list = await get_block_user_status(user_id, block_id)
+    const _blockTo = await get_block_user_status(block_id, user_id)
     if (get__block__list.length !== 0) {
       return res.json({
         success: true,
         status: 200,
         messgae: "list successfully fetched!",
-        data: get__block__list[0]
+        blockBy: get__block__list[0] || null,
+        blockTo: _blockTo[0] || null
       })
     } else {
       return res.json({
