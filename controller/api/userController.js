@@ -17,6 +17,7 @@ const logError = require('../../logger/errorHandler.js'); // Import the logError
 const { ChecksubscriptionDates, fetch_subscription_plan, get_subscription_plan_by_id } = require('../../models/subscription.js')
 const pdf = require('html-pdf');
 const userFcm = require('../../utils/firebaseAdminUser.js');
+const pool = require('../../utils/database');
 
 const {
   registerUser,
