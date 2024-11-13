@@ -1,5 +1,5 @@
 const express = require("express");
-const authenticateAdmin = require("../middleware/auth");
+const authenticateAdmin = require("../middleware/adminAuth");
 const upload_profile = require("../middleware/upload_profile");
 const upload_albums = require("../middleware/upload_albums");
 const { uploadFile } = require("../middleware/multer");

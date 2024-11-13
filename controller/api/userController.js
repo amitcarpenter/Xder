@@ -109,6 +109,8 @@ const baseurl = config.base_url;
 const Fcm_serverKey = config.fcm_serverKey;
 const googledistance_key = config.googledistance_key;
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -567,7 +569,7 @@ exports.loginUser = async (req, res) => {
                     id: data[0].id,
                   },
                 },
-                "SecretKey"
+                JWT_SECRET
                 // { expiresIn: "1d" }
               );
               bcrypt.genSalt(saltRounds, async function (err, salt) {
@@ -675,7 +677,7 @@ exports.social_login = async (req, res) => {
               id: data[0].id,
             },
           },
-          "SecretKey"
+          JWT_SECRET
           // { expiresIn: "1d" }
         );
 
@@ -712,7 +714,7 @@ exports.social_login = async (req, res) => {
               id: user_id,
             },
           },
-          "SecretKey"
+          JWT_SECRET
           // { expiresIn: "1d" }
         );
         const data1 = await fetchUserByEmail(email);
@@ -787,8 +789,7 @@ exports.loginUser_with_phone = async (req, res) => {
                     id: check_phone_number[0].id,
                   },
                 },
-                "SecretKey",
-
+                JWT_SECRET
               );
               bcrypt.genSalt(saltRounds, async function (err, salt) {
                 bcrypt.hash(token, salt, async function (err, hash) {
