@@ -437,7 +437,5 @@ exports.subscription_history = async (req, res) => {
 
 
 //=============================== Subscription Function ===================================
-exports.active_offer_subscription = async (plan_name, plan_type, plan_days, user_id, ) => {
-
-
+exports.active_offer_subscription = async (plan_name, plan_type, plan_days, user_id, ) => {F
 }
