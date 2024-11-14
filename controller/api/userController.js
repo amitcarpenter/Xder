@@ -361,7 +361,7 @@ exports.signUp = async (req, res) => {
 
     await sendEmail(emailOptions);
     const saved_user = await registerUser(new_user);
-    return handleSuccess(res, 201, `Verification link sent successfully to your email (${email}). Please verify your account.`);
+    return handleSuccess(res, 200, `Verification link sent successfully to your email (${email}). Please verify your account.`);
   } catch (error) {
     return handleError(res, 500, error.message)
   };
@@ -563,7 +563,6 @@ exports.loginUser = async (req, res) => {
                   },
                 },
                 JWT_SECRET
-                // { expiresIn: "1d" }
               );
               bcrypt.genSalt(saltRounds, async function (err, salt) {
                 bcrypt.hash(token, salt, async function (err, hash) {
@@ -579,7 +578,6 @@ exports.loginUser = async (req, res) => {
                   if (data1.length > 0 && data1[0].is_blocked == 1) {
                     return handleError(res, 400, "You are blocked by admin");
                   }
-
 
                   return res.json({
                     status: 200,
@@ -6093,51 +6091,75 @@ exports.incognito_mode = async (req, res) => {
 };
 
 exports.privacyPolicy_english_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/English_dark/privacy.html')
+  const filePath = path.join(__dirname, '..', 'view', 'English_dark', 'privacy.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/English_dark/privacy.html')
 });
 
 exports.terms_condition_english_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/English_dark/terms-condition.html');
+  const filePath = path.join(__dirname, '..', 'view', 'English_dark', 'terms-condition.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/English_dark/terms-condition.html');
 });
 
 exports.privacyPolicy_french_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/French_dark/politique-de-confidentialite.html')
+  const filePath = path.join(__dirname, '..', 'view', 'French_dark', 'politique-de-confidentialite.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/French_dark/politique-de-confidentialite.html')
 });
 
 exports.terms_condition_french_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/French_dark/termes-et-conditions.html');
+  const filePath = path.join(__dirname, '..', 'view', 'French_dark', 'termes-et-conditions.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/French_dark/termes-et-conditions.html');
 });
 
 exports.privacyPolicy_spanish_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/Spanish_dark/politica-de-privacidad.html')
+  const filePath = path.join(__dirname, '..', 'view', 'Spanish_dark', 'politica-de-privacidad.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/Spanish_dark/politica-de-privacidad.html')
 });
 
 exports.terms_condition_spanish_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/Spanish_dark/terminos-y-condiciones.html');
+  const filePath = path.join(__dirname, '..', 'view', 'Spanish_dark', 'terminos-y-condiciones.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/Spanish_dark/terminos-y-condiciones.html');
 });
 
 exports.terms_condition_spanish_light = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/Spanish_ligth/terminos-y-condiciones.html')
+  const filePath = path.join(__dirname, '..', 'view', 'Spanish_ligth', 'terminos-y-condiciones.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/Spanish_ligth/terminos-y-condiciones.html')
 });
 
 exports.privacyPolicy_spanish_light = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/Spanish_ligth/politica-de-privacidad.html');
+  const filePath = path.join(__dirname, '..', 'view', 'Spanish_ligth', 'politica-de-privacidad.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/Spanish_ligth/politica-de-privacidad.html');
 });
 
 exports.privacyPolicy_english_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/English_ligth/privacy.html')
+  const filePath = path.join(__dirname, '..', 'view', 'English_ligth', 'privacy.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/English_ligth/privacy.html')
 });
 
 exports.terms_condition_english_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/English_ligth/terms-condition.html');
+  const filePath = path.join(__dirname, '..', 'view', 'English_ligth', 'terms-condition.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/English_ligth/terms-condition.html');
 });
 
 exports.privacyPolicy_french_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/French_ligth/politique-de-confidentialite.html')
+  const filePath = path.join(__dirname, '..', 'view', 'French_ligth', 'politique-de-confidentialite.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/French_ligth/politique-de-confidentialite.html')
 });
 
 exports.terms_condition_french_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/../view/French_ligth/termes-et-conditions.html');
+  const filePath = path.join(__dirname, '..', 'view', 'French_ligth', 'termes-et-conditions.html');
+  return res.sendFile(filePath)
+  // res.sendFile(__dirname + '/../view/French_ligth/termes-et-conditions.html');
 });
 
 exports.Updatelatlong = (async (req, res) => {

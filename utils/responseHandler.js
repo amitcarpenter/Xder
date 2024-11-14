@@ -1,6 +1,6 @@
 
 const handleError = (res, statusCode, message) => {
-    return res.status(statusCode).send({
+    return res.status(200).send({
       success: false,
       status: statusCode,
       message: message
@@ -8,7 +8,7 @@ const handleError = (res, statusCode, message) => {
   };
   
   const handleSuccess = (res, statusCode, message, ...data) => {
-    return res.status(statusCode).json({
+    return res.status(200).json({
       success: true,
       status: statusCode,
       message: message,
@@ -17,7 +17,7 @@ const handleError = (res, statusCode, message) => {
   };
   
   const joiErrorHandle = (res, error) => {
-    return res.status(400).send({
+    return res.status(200).send({
       success: false,
       status: 400,
       message: error.details[0].message
