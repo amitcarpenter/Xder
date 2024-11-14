@@ -514,12 +514,12 @@ exports.verifyUserEmail = async (req, res) => {
         const caddShowme = addShowme(setting);
 
         if (result.affectedRows) {
-          res.sendFile(__dirname + "/view/verify.html");
+          res.sendFile(__dirname + "/../view/verify.html");
         } else {
-          res.sendFile(__dirname + "/view/notverify.html");
+          res.sendFile(__dirname + "/../view/notverify.html");
         }
       } else {
-        res.sendFile(__dirname + "/view/notverify.html");
+        res.sendFile(__dirname + "/../view/notverify.html");
       }
     }
   } catch (error) {
@@ -1199,11 +1199,11 @@ exports.verifyPassword = async (req, res) => {
       if (result.length !== 0) {
         localStorage.setItem("vertoken", JSON.stringify(token));
 
-        res.render(path.join(__dirname, "/view/", "forgetPassword.ejs"), {
+        res.render(path.join(__dirname, "/../view/", "forgetPassword.ejs"), {
           msg: "",
         });
       } else {
-        res.render(path.join(__dirname, "/view/", "forgetPassword.ejs"), {
+        res.render(path.join(__dirname, "/../view/", "forgetPassword.ejs"), {
           msg: "This User is not Registered",
         });
       }
@@ -1239,7 +1239,7 @@ exports.changePassword = async (req, res) => {
     const result = schema.validate({ password, confirm_password });
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
-      res.render(path.join(__dirname + "/view/", "forgetPassword.ejs"), {
+      res.render(path.join(__dirname + "/../view/", "forgetPassword.ejs"), {
         message: result.error.details[0].message,
         error: message,
         missingParams: result.error.details[0].message,
@@ -1255,11 +1255,11 @@ exports.changePassword = async (req, res) => {
           const result2 = await updatePassword(hash, token);
 
           if (result2) {
-            res.sendFile(path.join(__dirname + "/view/message.html"), {
+            res.sendFile(path.join(__dirname + "/../view/message.html"), {
               msg: "",
             });
           } else {
-            res.render(path.join(__dirname, "/view/", "forgetPassword.ejs"), {
+            res.render(path.join(__dirname, "/../view/", "forgetPassword.ejs"), {
               msg: "Internal Error Occured, Please contact Support.",
             });
           }
@@ -1271,14 +1271,14 @@ exports.changePassword = async (req, res) => {
           });
         }
       } else {
-        res.render(path.join(__dirname, "/view/", "forgetPassword.ejs"), {
+        res.render(path.join(__dirname, "/../view/", "forgetPassword.ejs"), {
           msg: "Password and Confirm Password do not match",
         });
       }
     }
   } catch (error) {
     console.log(error);
-    res.render(path.join(__dirname, "/view/", "forgetPassword.ejs"), {
+    res.render(path.join(__dirname, "/../view/", "forgetPassword.ejs"), {
       msg: "Internal server error",
     });
   }
@@ -5367,7 +5367,7 @@ exports.changePasswordbefore = async (req, res) => {
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
-      res.render(path.join(__dirname + "/view/", "forgetPassword.ejs"), {
+      res.render(path.join(__dirname + "/../view/", "forgetPassword.ejs"), {
         message: result.error.details[0].message,
         error: message,
         missingParams: result.error.details[0].message,
@@ -6103,51 +6103,51 @@ exports.incognito_mode = async (req, res) => {
 };
 
 exports.privacyPolicy_english_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/English_dark/privacy.html')
+  res.sendFile(__dirname + '/../view/English_dark/privacy.html')
 });
 
 exports.terms_condition_english_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/English_dark/terms-condition.html');
+  res.sendFile(__dirname + '/../view/English_dark/terms-condition.html');
 });
 
 exports.privacyPolicy_french_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/French_dark/politique-de-confidentialite.html')
+  res.sendFile(__dirname + '/../view/French_dark/politique-de-confidentialite.html')
 });
 
 exports.terms_condition_french_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/French_dark/termes-et-conditions.html');
+  res.sendFile(__dirname + '/../view/French_dark/termes-et-conditions.html');
 });
 
 exports.privacyPolicy_spanish_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/Spanish_dark/politica-de-privacidad.html')
+  res.sendFile(__dirname + '/../view/Spanish_dark/politica-de-privacidad.html')
 });
 
 exports.terms_condition_spanish_dark = (async (req, res) => {
-  res.sendFile(__dirname + '/view/Spanish_dark/terminos-y-condiciones.html');
+  res.sendFile(__dirname + '/../view/Spanish_dark/terminos-y-condiciones.html');
 });
 
 exports.terms_condition_spanish_light = (async (req, res) => {
-  res.sendFile(__dirname + '/view/Spanish_ligth/terminos-y-condiciones.html')
+  res.sendFile(__dirname + '/../view/Spanish_ligth/terminos-y-condiciones.html')
 });
 
 exports.privacyPolicy_spanish_light = (async (req, res) => {
-  res.sendFile(__dirname + '/view/Spanish_ligth/politica-de-privacidad.html');
+  res.sendFile(__dirname + '/../view/Spanish_ligth/politica-de-privacidad.html');
 });
 
 exports.privacyPolicy_english_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/view/English_ligth/privacy.html')
+  res.sendFile(__dirname + '/../view/English_ligth/privacy.html')
 });
 
 exports.terms_condition_english_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/view/English_ligth/terms-condition.html');
+  res.sendFile(__dirname + '/../view/English_ligth/terms-condition.html');
 });
 
 exports.privacyPolicy_french_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/view/French_ligth/politique-de-confidentialite.html')
+  res.sendFile(__dirname + '/../view/French_ligth/politique-de-confidentialite.html')
 });
 
 exports.terms_condition_french_ligth = (async (req, res) => {
-  res.sendFile(__dirname + '/view/French_ligth/termes-et-conditions.html');
+  res.sendFile(__dirname + '/../view/French_ligth/termes-et-conditions.html');
 });
 
 exports.Updatelatlong = (async (req, res) => {
