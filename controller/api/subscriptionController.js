@@ -298,13 +298,10 @@ exports.ChecksubscriptionUser = async (req, res) => {
     const currentDate = moment();
 
     if (user_info != 0) {
-
       const checksubs = await ChecksubscriptionUser(user_id);
-
       let array = [];
       let array1 = [];
       if (checksubs.length > 0) {
-
         await Promise.all(
           checksubs.map(async (item, i) => {
             const excurdate = currentDate.format('YYYY-MM-DD');
@@ -437,5 +434,6 @@ exports.subscription_history = async (req, res) => {
 
 
 //=============================== Subscription Function ===================================
-exports.active_offer_subscription = async (plan_name, plan_type, plan_days, user_id, ) => {F
+exports.active_offer_subscription = async (plan_name, plan_type, plan_days, user_id,) => {
+  F
 }

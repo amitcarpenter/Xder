@@ -44,7 +44,7 @@ router.get("/new_users", auth, userController.new_users);
 
 router.get("/users_nearby", auth, userController.users_nearby);
 
-router.get("/verifyUser/:id", userController.verifyUserEmail);
+router.get("/verifyUserEmail", userController.verifyUserEmail);
 
 router.post("/Add_favorites", auth, userController.Add_favorites);
 

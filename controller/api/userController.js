@@ -143,7 +143,7 @@ const saltRounds = 10;
 
 
 const generateVerificationLink = (token, baseUrl) => {
-  return `${baseUrl}/api/verify-email?token=${token}`;
+  return `${baseUrl}/verifyUserEmail?token=${token}`;
 };
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -360,8 +360,8 @@ exports.signUp = async (req, res) => {
     };
 
     await sendEmail(emailOptions);
-    const saved_user = await registerUser(user);
-    return handleSuccess(res, 201, `Verification link sent successfully to your email (${lower_email}). Please verify your account.`, saved_user);
+    const saved_user = await registerUser(new_user);
+    return handleSuccess(res, 201, `Verification link sent successfully to your email (${email}). Please verify your account.`);
   } catch (error) {
     return handleError(res, 500, error.message)
   };
@@ -428,52 +428,95 @@ exports.verifyUser = async (req, res) => {
   }
 };
 
+// exports.verifyUserEmail = async (req, res) => {
+//   try {
+//     const act_token = req.query.token;
+//     console.log(act_token)
+//     const token = generateToken();
+//     if (!act_token) {
+//       const message = result.error.details.map((i) => i.message).join(",");
+//       return res.json({
+//         message: result.error.details[0].message,
+//         error: message,
+//         missingParams: result.error.details[0].message,
+//         status: 400,
+//         success: false,
+//       });
+//     } else {
+//       const data = await fetchUserByActToken(act_token);
+//       if (data.length !== 0) {
+//         let datas = {
+//           act_token: "",
+//           status: true,
+//         };
+//         const hash = await bcrypt.hash(token, saltRounds);
+//         const result = await updateUserByActToken(
+//           hash,
+//           datas.act_token,
+//           data[0]?.id
+//         );
+
+//         let setting = {
+//           explore: 1, distance: 1, view_me: 0, user_id: data[0]?.id
+//         }
+//         const caddShowme = addShowme(setting);
+
+//         if (result.affectedRows) {
+//           return res.sendFile(__dirname + "/../view/verify.html");
+//         } else {
+//           return res.sendFile(__dirname + "/../view/notverify.html");
+//         }
+//       } else {
+//         return res.sendFile(__dirname + "/../view/notverify.html");
+//       }
+//     }
+//   } catch (error) {
+//     return res.render("404.ejs");
+//   }
+// };
+
+
 exports.verifyUserEmail = async (req, res) => {
   try {
-    const act_token = req.params.id;
-    const token = generateToken();
+    const act_token = req.query.token;
+    console.log("Received Activation Token:", act_token);
+
     if (!act_token) {
-      const message = result.error.details.map((i) => i.message).join(",");
-      return res.json({
-        message: result.error.details[0].message,
-        error: message,
-        missingParams: result.error.details[0].message,
+      return res.status(400).json({
+        message: "Token is missing",
+        error: "Activation token is required",
         status: 400,
         success: false,
       });
-    } else {
-      const data = await fetchUserByActToken(act_token);
-      if (data.length !== 0) {
-        let datas = {
-          act_token: "",
-          status: true,
-        };
-        const hash = await bcrypt.hash(token, saltRounds);
-        const result = await updateUserByActToken(
-          hash,
-          datas.act_token,
-          data[0]?.id
-        );
-
-        let setting = {
-          explore: 1, distance: 1, view_me: 0, user_id: data[0]?.id
-        }
-        const caddShowme = addShowme(setting);
-
-        if (result.affectedRows) {
-          res.sendFile(__dirname + "/../view/verify.html");
-        } else {
-          res.sendFile(__dirname + "/../view/notverify.html");
-        }
-      } else {
-        res.sendFile(__dirname + "/../view/notverify.html");
-      }
     }
+    const data = await fetchUserByActToken(act_token);
+    if (data.length == 0) {
+      return res.render("sessionExpire.ejs")
+    }
+    const token = generateToken();
+    const hash = await bcrypt.hash(token, saltRounds);
+
+    let updateData = {
+      act_token: "",
+      status: true,
+    };
+
+    const result = await updateUserByActToken(
+      hash,
+      updateData.act_token,
+      data[0]?.id
+    );
+    let setting = {
+      explore: 1,
+      distance: 1,
+      view_me: 0,
+      user_id: data[0]?.id,
+    };
+    await addShowme(setting);
+    return res.render("successRegister.ejs")
   } catch (error) {
-    console.log(error);
-    res.send(`<div class="container">
-        <p>404 Error, Page Not Found</p>
-        </div> `);
+    console.error("Error in verifyUserEmail:", error);
+    return res.status(500).render("404.ejs");
   }
 };
 
