@@ -5,7 +5,7 @@ const db = require('../utils/database');
 
 require("dotenv").config();
 
-
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticateAdmin = async (req, res, next) => {
     try {

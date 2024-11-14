@@ -105,6 +105,7 @@ const {
 const { Console, count } = require("console");
 const e = require("express");
 const { handleError } = require("../../utils/responseHandler.js");
+// const { transporter } = require("../../utils/helper.js");
 
 const baseurl = config.base_url;
 const Fcm_serverKey = config.fcm_serverKey;
@@ -266,7 +267,6 @@ async function checkSubscriptionDetail(user_id) {
 
 
 var transporter = nodemailer.createTransport({
-  // service: 'gmail',
   host: "smtp.gmail.com",
   port: 587,
   // secure: true,
@@ -276,12 +276,14 @@ var transporter = nodemailer.createTransport({
   },
 });
 
+console.log(path.resolve(__dirname + "/../view/"))
+
 const handlebarOptions = {
   viewEngine: {
-    partialsDir: path.resolve(__dirname + "/view/"),
+    partialsDir: path.resolve(__dirname + "/../view/"),
     defaultLayout: false,
   },
-  viewPath: path.resolve(__dirname + "/view/"),
+  viewPath: path.resolve(__dirname + "/../view/"),
 };
 
 transporter.use("compile", hbs(handlebarOptions));
@@ -5668,7 +5670,7 @@ exports.get_block_list = async (req, res) => {
       await Promise.all(
         get__block__list.map(async (item) => {
           const user_info = await getData("users", `where id= ${item.block_id}`);
-          const profileimage = await profileimages(user_id);
+          const profileimage = await profileimages(item.block_id);
           if (profileimage?.length > 0) {
             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
