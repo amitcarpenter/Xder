@@ -13,11 +13,14 @@ const fs = require("fs");
 const axios = require("axios");
 require("moment-timezone");
 const config = require("../../config.js");
-const logError = require('../../logger/errorHandler.js'); // Import the logError function
+const logError = require('../../logger/errorHandler.js');
 const { ChecksubscriptionDates, fetch_subscription_plan, get_subscription_plan_by_id } = require('../../models/subscription.js')
 const pdf = require('html-pdf');
 const userFcm = require('../../utils/firebaseAdminUser.js');
 const pool = require('../../utils/database');
+const ejs = require("ejs")
+require("dotenv").config();
+
 
 const {
   registerUser,
@@ -104,16 +107,44 @@ const {
 } = require("../../models/common.js");
 const { Console, count } = require("console");
 const e = require("express");
-const { handleError } = require("../../utils/responseHandler.js");
-// const { transporter } = require("../../utils/helper.js");
+const { handleError, handleSuccess, joiErrorHandle } = require("../../utils/responseHandler.js");
+const { sendEmail } = require("../../utils/emailService.js");
+
+let image_logo = process.env.LOGO_URL
+
+
+var transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  // secure: true,
+  auth: {
+    user: "xderdating@gmail.com",
+    pass: "yhhjfpkzxyfbxvnb",
+  },
+});
+
+const handlebarOptions = {
+  viewEngine: {
+    partialsDir: path.resolve(__dirname + "/../view/"),
+    defaultLayout: false,
+  },
+  viewPath: path.resolve(__dirname + "/../view/"),
+};
+
+transporter.use("compile", hbs(handlebarOptions));
+
 
 const baseurl = config.base_url;
 const Fcm_serverKey = config.fcm_serverKey;
 const googledistance_key = config.googledistance_key;
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const saltRounds = 10;
 
 
+const generateVerificationLink = (token, baseUrl) => {
+  return `${baseUrl}/api/verify-email?token=${token}`;
+};
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in kilometers
@@ -126,7 +157,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const distance = R * c; // Distance in kilometers
   return distance;
 }
-// Function to convert degrees to radians
+
 function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
@@ -134,7 +165,6 @@ function deg2rad(deg) {
 function generateRandomFiveDigitNumber() {
   return Math.floor(10000 + Math.random() * 90000);
 }
-
 
 function distanceShow(units, origins, destinations) {
   return new Promise((resolve, reject) => {
@@ -168,7 +198,6 @@ function distanceShow(units, origins, destinations) {
       });
   });
 }
-
 
 function calculateAge(dateString) {
   const [day, month, year] = dateString.split('/').map(Number);
@@ -205,8 +234,6 @@ function generateRandomString(length) {
   return result;
 }
 
-const saltRounds = 10;
-
 const complexityOptions = {
   min: 8,
   max: 250,
@@ -239,7 +266,6 @@ function generateOTP(length = 8) {
   return OTP;
 }
 
-
 async function checkSubscriptionDetail(user_id) {
   try {
     const currentDate = moment();
@@ -265,34 +291,9 @@ async function checkSubscriptionDetail(user_id) {
   }
 }
 
-
-var transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  // secure: true,
-  auth: {
-    user: "xderdating@gmail.com",
-    pass: "yhhjfpkzxyfbxvnb",
-  },
-});
-
-console.log(path.resolve(__dirname + "/../view/"))
-
-const handlebarOptions = {
-  viewEngine: {
-    partialsDir: path.resolve(__dirname + "/../view/"),
-    defaultLayout: false,
-  },
-  viewPath: path.resolve(__dirname + "/../view/"),
-};
-
-transporter.use("compile", hbs(handlebarOptions));
-
 exports.signUp = async (req, res) => {
   try {
-    const { email, password, confirm_password, phone_number } = req.body;
-    const act_token = generateRandomString(8);
-    const schema = Joi.alternatives(
+    const signup_schema = Joi.alternatives(
       Joi.object({
         email: [
           Joi.string()
@@ -302,7 +303,6 @@ exports.signUp = async (req, res) => {
             .lowercase()
             .required(),
         ],
-        // password: passwordComplexity(complexityOptions),
         password: Joi.string().min(8).max(15).required().messages({
           "any.required": "{{#label}} is required!!",
           "string.empty": "can't be empty!!",
@@ -318,107 +318,54 @@ exports.signUp = async (req, res) => {
         phone_number: [Joi.number().empty().required()],
       })
     );
-    const result = schema.validate(req.body);
-    if (result.error) {
-      const message = result.error.details.map((i) => i.message).join(",");
-      return res.json({
-        message: result.error.details[0].message,
-        error: message,
-        missingParams: result.error.details[0].message,
-        status: 400,
-        success: false,
-      });
-    } else {
-      const data = await fetchUserByEmail(email);
-      const check_phone_number = await getData(
-        "users",
-        `where phone_number= ${phone_number}`
-      );
-      if (data.length !== 0) {
-        return res.json({
-          success: false,
-          message:
-            "Already have account with this " + email + " email , Please Login",
-          status: 400,
-        });
-      }
-      if (check_phone_number.length !== 0) {
-        return res.json({
-          success: false,
-          message:
-            "Already have account with this " +
-            phone_number +
-            " phone_number , Please Login",
-          status: 400,
-        });
-      } else {
-        var otp = generateOTP();
-        if (!result.error) {
-          let mailOptions = {
-            from: "xderdating@gmail.com",
-            to: email,
-            subject: "Activate Account",
-            template: "signupemail",
-            context: {
-              href_url: baseurl + `/verifyUser/` + `${act_token}`,
-              image_logo: baseurl + `/image/logo.png`,
-              // msg: `Please click below link to activate your account.`
-            },
-          };
-          transporter.sendMail(mailOptions, async function (error, info) {
-            if (error) {
-              return res.json({
-                success: false,
-                status: 400,
-                message: "Mail Not delivered",
-              });
-            } else {
-              const hash = await bcrypt.hash(password, saltRounds);
-              const user = {
-                email: email,
-                password: hash,
-                show_password: password,
-                phone_number: phone_number,
-                act_token: act_token,
-                username: generateRandomString(8),
-              };
-              if (confirm_password == password) {
-                const create_user = await registerUser(user);
-                return res.json({
-                  success: true,
-                  message:
-                    "A verification link has been sent to your email . please confirm your account by click on the link " +
-                    `${email}`,
-                  status: 200,
-                });
-              } else {
-                return res.json({
-                  success: true,
-                  message: "Password and confirm password don't match ",
-                  status: 200,
-                });
-              }
-            }
-          });
-        } else {
-          return res.json({
-            message: "user add failed",
-            status: 400,
-            success: false,
-          });
-        }
-      }
+    const { error, value } = signup_schema.validate(req.body);
+    if (error) return joiErrorHandle(res, error);
+
+    const { email, password, confirm_password, phone_number } = req.body;
+
+    const data = await fetchUserByEmail(email);
+    const check_phone_number = await getData(
+      "users",
+      `where phone_number= ${phone_number}`
+    );
+
+    if (data.length !== 0) {
+      return handleError(res, 400, `Already have account with this (${email}) email , Please Login`)
+    };
+
+    if (check_phone_number.length !== 0) {
+      return handleError(res, 400, `Already have account with this (${phone_number}) phone number , Please Login`)
+
     }
+    const hashed_password = await bcrypt.hash(password, saltRounds);
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const new_user = {
+      email: email,
+      password: hashed_password,
+      show_password: password,
+      phone_number: phone_number,
+      act_token: verifyToken,
+      username: generateRandomString(8),
+    };
+
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const verificationLink = generateVerificationLink(verifyToken, baseUrl);
+    const emailTemplatePath = path.resolve(__dirname, '../../views/verifyAccount.ejs');
+    const emailHtml = await ejs.renderFile(emailTemplatePath, { verificationLink, image_logo });
+
+    const emailOptions = {
+      to: email,
+      subject: "Verify Your Email Address",
+      html: emailHtml
+    };
+
+    await sendEmail(emailOptions);
+    const saved_user = await registerUser(user);
+    return handleSuccess(res, 201, `Verification link sent successfully to your email (${lower_email}). Please verify your account.`, saved_user);
   } catch (error) {
-    console.log(error);
-    return res.json({
-      success: false,
-      message: "Internal server error",
-      status: 500,
-      error: error,
-    });
-  }
-};
+    return handleError(res, 500, error.message)
+  };
+}
 
 exports.verifyUser = async (req, res) => {
   try {

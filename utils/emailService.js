@@ -16,23 +16,26 @@ const transporter = nodemailer.createTransport({
 });
 
 
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async (emailOptions) => {
+    console.log(emailOptions);
+    console.log(emailOptions.to);
+
     const mailOptions = {
         from: EMAIL_USER,
-        to,
-        subject,
-        html,
+        to: emailOptions.to,
+        subject: emailOptions.subject,
+        html: emailOptions.html,
     };
+
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Email sent to ${to}`);
+        console.log(`Email sent to ${emailOptions.to}`); // Corrected to use emailOptions.to
     } catch (error) {
-        console.error('Error sending email:', error);
-        throw new Error('Error sending email');
+        console.error("Error sending email:", error);
+        throw new Error("Error sending email");
     }
 };
 
-// module.exports = sendEmail;
 
 
-module.exports = { transporter }
+module.exports = { transporter, sendEmail }
