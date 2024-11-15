@@ -7519,6 +7519,8 @@ exports.new_get_all_users = async (req, res) => {
 
         })
       );
+
+
       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
       } else if (has_album != "" && has_album != undefined && has_album != "0") {
@@ -7526,7 +7528,6 @@ exports.new_get_all_users = async (req, res) => {
       } else {
         all_users = all_users;
       }
-
 
       if (all_users.length > 0) {
         const viewd_count = await fetchVisitsInPast24Hours(user_id);
@@ -7542,6 +7543,19 @@ exports.new_get_all_users = async (req, res) => {
           })
           all_users = final_users
         }
+
+        //===================== Change ==================
+
+        all_users = all_users.filter(user => user.distance !== "").sort((a, b) => {
+          if (a.distance < b.distance) return -1;
+          if (a.distance > b.distance) return 1;
+          return 0;
+        });
+
+        // const usersWithNoDistance = all_users.filter(user => user.distance === "");
+        // all_users = [...all_users, ...usersWithNoDistance];
+
+        //===================== Change ==================
 
         // console.log("++++++++++++", all_users)
         return res.json({
@@ -8396,7 +8410,7 @@ exports.getAllGroupRequest = async (req, res) => {
 }
 
 exports.get_users_by_ids = async (req, res) => {
-  const { user_ids } = req.body; // Expecting 'user_ids' to be a comma-separated string like "11,12,13"
+  const { user_ids } = req.body;
   console.log("Received user_ids:", user_ids);
 
   const schema = Joi.object({
