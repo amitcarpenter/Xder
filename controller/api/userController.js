@@ -6315,23 +6315,15 @@ exports.group_notification_mode = async (req, res) => {
       });
     } else {
       const check_user = await fetchUserById(user_id);
-
-
       if (check_user.length != 0) {
-
-
         if (group_notification_status == 1) {
-
           if (check_user[0].group_notification == 1) {
-
             return res.status(200).json({
               message: " group_notification is already ON ",
               success: true,
               status: 200,
             });
-
           } else {
-
             const Update_incognito_status = await update_group_notification_status(user_id, group_notification_status)
 
             return res.status(200).json({
@@ -6339,21 +6331,16 @@ exports.group_notification_mode = async (req, res) => {
               success: true,
               status: 200,
             });
-
           }
         } else if (group_notification_status == 0) {
-
           if (check_user[0].group_notification == 0) {
             return res.status(200).json({
               message: " group_notification mode is already OFF ",
               success: true,
               status: 200,
             });
-
           } else {
-
             const Update_incognito_status = await update_group_notification_status(user_id, group_notification_status)
-
             return res.status(200).json({
               message: " group_notification mode  OFF ",
               success: true,
