@@ -3452,9 +3452,7 @@ exports.delete_User = async (req, res) => {
 
 exports.group_notification = async (req, res) => {
   try {
-
     const { user_id, id, group_name, group_id, public } = req.body;
-
     const schema = Joi.alternatives(
       Joi.object({
         id: Joi.array().items(Joi.number().required()).required(),
@@ -3477,11 +3475,8 @@ exports.group_notification = async (req, res) => {
     } else {
       const serverKey = Fcm_serverKey;
       const fcm = new FCM(serverKey);
-
-      // Fetch user data outside the loop if it's the same for all iterations
       const userData = await fetchUserBy_Id(user_id);
 
-      // Use Promise.all to wait for all asynchronous operations to complete
       await Promise.all(id.map(async (id_1) => {
         const userFcm1 = await fetch_fcm(id_1);
         const message = {
@@ -3505,16 +3500,14 @@ exports.group_notification = async (req, res) => {
             group_name: group_name,
             public: public,
             body: `Invited you in group`,
-
             notification_type: 1,
+            user_id: user_id
           };
           await addnotification(sendNotification);
           resolve(response);
-
         });
       }));
 
-      // Now, after all promises are resolved, send the final response
       return res.json({
         message: "Notifications sent successfully",
         success: true,
@@ -3535,7 +3528,6 @@ exports.group_notification = async (req, res) => {
 
 exports.addProfileimages = async (req, res) => {
   try {
-
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
@@ -3546,7 +3538,6 @@ exports.addProfileimages = async (req, res) => {
     let images = [];
     let baseurlimage = ['1'];
     if (check_user.length != 0) {
-
       if (req.files) {
         const file = req.files;
         if (file.length <= 5) {
