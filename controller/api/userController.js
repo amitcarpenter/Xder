@@ -631,6 +631,7 @@ exports.loginUser = async (req, res) => {
 exports.social_login = async (req, res) => {
   try {
     const { email, social_id, name, fcm_token } = req.body;
+  
     const schema = Joi.alternatives(
       Joi.object({
         email: [
@@ -660,7 +661,7 @@ exports.social_login = async (req, res) => {
     } else {
       const data = await fetchUserByEmail(email);
       if (data.length !== 0) {
-        const toke = jwt.sign(
+        const token = jwt.sign(
           {
             data: {
               id: data[0].id,
@@ -673,9 +674,9 @@ exports.social_login = async (req, res) => {
         }
         return res.json({
           success: true,
-          message: " login successfully ",
+          message: " Login Successfully ",
           status: 200,
-          Jwt_token: toke,
+          Jwt_token: token,
           user_info: data[0]
         });
       } else {
@@ -3467,8 +3468,8 @@ exports.group_notification = async (req, res) => {
         success: false,
       });
     } else {
-      const serverKey = Fcm_serverKey;
-      const fcm = new FCM(serverKey);
+      // const serverKey = Fcm_serverKey;
+      // const fcm = new FCM(serverKey);
       const userData = await fetchUserBy_Id(user_id);
 
       await Promise.all(id.map(async (id_1) => {
@@ -4147,7 +4148,6 @@ exports.new_users = async (req, res) => {
     const check_user = await Get_user_info(user_id);
 
     const get_all_new_users = await Get_new_users(user_id)
-    // Checking if the user is already in the database
     if (get_all_new_users.length != 0) {
       await Promise.all(
         get_all_new_users.map(async (item) => {
@@ -5897,7 +5897,7 @@ exports.submit_report = async (req, res) => {
     } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
-        group_id: [Joi.number().empty().optional()],
+        group_id: [Joi.string().empty().optional()],
         comment: [Joi.string().empty().required()],
         sender_id: [Joi.number().empty().required()],
         reciver_id: [Joi.number().empty().optional()],

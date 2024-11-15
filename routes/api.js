@@ -21,25 +21,15 @@ const router = express.Router();
 router.post("/signUp", userController.signUp);
 router.post("/social_login", userController.social_login);
 router.post("/loginUser", userController.loginUser);
-
 router.post("/get_all_users", auth, userController.new_get_all_users);
-
 router.post("/get_tag", userController.get_tag);
-
 router.post("/add_tag", userController.add_tag);
-
 router.post("/get_all_users_1", auth, userController.get_all_users_1);
-
 router.post("/profile_visit", auth, userController.profile_visit);
-
 router.post("/loginUser_with_phone", userController.loginUser_with_phone);
-
 router.post("/verifyUser", userController.verifyUser);
-
-router.post("/submit_report", userController.submit_report);
-
+router.post("/submit_report", userController.submit_report); //////
 router.get("/new_users", auth, userController.new_users);
-
 router.get("/users_nearby", auth, userController.users_nearby);
 
 router.get("/verifyUserEmail", userController.verifyUserEmail);
