@@ -659,9 +659,7 @@ exports.social_login = async (req, res) => {
       });
     } else {
       const data = await fetchUserByEmail(email);
-
       if (data.length !== 0) {
-
         const toke = jwt.sign(
           {
             data: {
@@ -669,9 +667,7 @@ exports.social_login = async (req, res) => {
             },
           },
           JWT_SECRET
-          // { expiresIn: "1d" }
         );
-
         if (data.length > 0 && data[0].is_blocked == 1) {
           return handleError(res, 400, "You are blocked by admin");
         }
@@ -683,7 +679,6 @@ exports.social_login = async (req, res) => {
           user_info: data[0]
         });
       } else {
-
         const user = {
           email: email,
           social_id: social_id,
@@ -699,20 +694,19 @@ exports.social_login = async (req, res) => {
         }
         const caddShowme = addShowme(setting);
         const user_id = create_user.insertId;
-        const toke = jwt.sign(
+        const token = jwt.sign(
           {
             data: {
               id: user_id,
             },
           },
           JWT_SECRET
-          // { expiresIn: "1d" }
         );
         const data1 = await fetchUserByEmail(email);
         return res.json({
           success: true,
           message: " Successfully ",
-          Jwt_token: toke,
+          Jwt_token: token,
           status: 200,
           user_info: data1[0]
         });

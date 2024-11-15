@@ -32,5 +32,4 @@ const sendEmail = async (emailOptions) => {
     }
 };
 
-
 module.exports = { transporter, sendEmail }
