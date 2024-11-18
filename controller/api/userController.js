@@ -4882,12 +4882,11 @@ exports.send_notification = async (req, res) => {
                     sender_id: sender_id,
                     reciver_id: token.id,
                     group_id: 0,
-                    group_name: group_name,
+                    group_name: "",
                     request_status: 3,
-                    body: data[0].username + " requested to add in the group!",
-                    notification_type: "group_request",
+                    body: data[0].username + " requested to invite for albumb!",
+                    notification_type: "album_request",
                   };
-
                   const result1 = await addnotification(send_notification);
                   resolve(response);
                 });
