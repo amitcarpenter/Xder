@@ -631,7 +631,7 @@ exports.loginUser = async (req, res) => {
 exports.social_login = async (req, res) => {
   try {
     const { email, social_id, name, fcm_token } = req.body;
-  
+
     const schema = Joi.alternatives(
       Joi.object({
         email: [
@@ -1759,7 +1759,6 @@ exports.get_all_users_1 = async (req, res) => {
   }
 };
 
-
 exports.get_all_users = async (req, res) => {
   try {
     const { age1, age2, search, body_type, relationship_status,
@@ -2006,122 +2005,77 @@ exports.Add_favorites = async (req, res) => {
 exports.my_favorite_users_list = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    const token_1 = authHeader;
-    const token = token_1.replace("Bearer ", "");
+    const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
     const user_id = decoded.data.id;
 
     const check_user = await getData("users", `where id= ${user_id}`);
-    let array = [];
-    if (check_user.length != 0) {
-      const my_favorite_users = await my_all_favorite_user(user_id);
-      console.log("?????????????", my_favorite_users)
-      await Promise.all(
-        my_favorite_users.map(async (item) => {
-          let where = "";
-          if (req.body.online_status == '1') {
-            // where = ` AND online_status = '1' AND incognito_mode = 0 `;
-            where = ` AND online_status = 1 AND incognito_mode = 0 `;
-          }
-          var user_info = await getData("users", `where id= ${item.favorite_user_id} ${where}`);
 
-          if (user_info[0]?.latitude != null && user_info[0]?.latitude != "" && user_info[0]?.latitude != undefined && user_info[0]?.longitude != null && user_info[0]?.longitude != "" && user_info[0]?.longitude != undefined) {
-            const unit = 'metric';
-            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
-            const destination = user_info[0]?.latitude + ',' + user_info[0]?.longitude;
-            try {
-              const disvalue = await distanceShow(unit, origin, destination);
-              item.distance = disvalue.distance;
-              const settingshow_me = await getData("setting_show_me", `where user_id= ${item.favorite_user_id}`);
-              user_info?.map(async (userinfo) => {
-                userinfo.distance = disvalue.distance;
-                userinfo.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
-              });
-            } catch (error) {
-              item.distance = ""
-              console.error('Error in yourAsyncFunction:', error);
-              // Handle errors as needed
-            }
-          } else {
-            item.distance = ""
-          }
-          console.log("userinfo", user_info)
-          user_info?.map(async (userinfo) => {
-            if (userinfo.profile_image != "No image") {
-              userinfo.profile_image = baseurl + "/profile/" + userinfo.profile_image;
-
-            } else {
-              userinfo.profile_image = "";
-            }
-
-
-            userinfo.admin = false
-            userinfo.favorites_user = "Y"
-
-            // if (userinfo.latitude != null && userinfo.latitude != "" && userinfo.longitude != null && userinfo.longitude != "") {
-            //   const unit = 'metric';
-            //   const origin = check_user[0]?.latitude+','+ check_user[0]?.longitude;
-            //   const destination = userinfo.latitude+'%2C'+userinfo.longitude;
-            //   try {
-            //     const disvalue = await distanceShow(unit, origin, destination);
-            //     userinfo.distance = disvalue;
-            //   } catch (error) {
-            //     userinfo.distance = "0"
-            //     console.error('Error in yourAsyncFunction:', error);
-            //     // Handle errors as needed
-            //   }
-            //   // const distance = calculateDistance(check_user[0]?.latitude, check_user[0]?.longitude, userinfo.latitude, userinfo.longitude);
-
-            //   // if (distance.toFixed(2) != "NaN") {
-            //   //   userinfo.distance = distance.toFixed(2)
-            //   // } else {
-            //   //   userinfo.distance = "0";
-            //   // }
-            // } else {
-            //   userinfo.distance = "0"
-            // }
-
-          });
-          console.log("userid", user_info[0].id)
-          const profileimage = await profileimages(user_info[0].id);
-          console.log("profileimage++==", profileimage)
-          if (profileimage?.length > 0) {
-
-            user_info[0].images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
-          } else {
-            user_info[0].images = [];
-          }
-
-
-          item.favorite_user_info = user_info;
-          item.select = false
-
-
-          if (user_info.length > 0) {
-            item.online_status = user_info[0].online_status;
-            array.push(item);
-          }
-        })
-      );
-      console.log("{{{{{{{{{{{{{{{{", array)
+    if (check_user.length === 0) {
       return res.json({
-        message: "successfull",
-        success: true,
-        status: 200,
-        my_favorite_users: array,
-      });
-    } else {
-      return res.json({
-        message: "User not found ",
+        message: "User not found",
         success: false,
         status: 400,
       });
     }
+
+    const my_favorite_users = await my_all_favorite_user(user_id);
+    const array = [];
+
+    for (const item of my_favorite_users) {
+      let where = req.body.online_status === '1' ? ` AND online_status = 1 AND incognito_mode = 0` : '';
+      const user_info = await getData("users", `where id= ${item.favorite_user_id} ${where}`);
+
+      if (user_info.length > 0) {
+        const user = user_info[0];
+
+        if (user.latitude && user.longitude) {
+          const origin = `${check_user[0]?.latitude},${check_user[0]?.longitude}`;
+          const destination = `${user.latitude},${user.longitude}`;
+          try {
+            const disvalue = await distanceShow('metric', origin, destination);
+            item.distance = disvalue.distance;
+
+            const settingshow_me = await getData("setting_show_me", `where user_id= ${item.favorite_user_id}`);
+            user.distance = disvalue.distance;
+            user.distance_status = settingshow_me[0]?.distance === 1;
+
+          } catch (error) {
+            item.distance = "";
+            console.error('Error calculating distance:', error);
+          }
+        } else {
+          item.distance = "";
+        }
+
+        user.profile_image = user.profile_image !== "No image" ? `${baseurl}/profile/${user.profile_image}` : "";
+        user.admin = false;
+        user.favorites_user = "Y";
+
+        const profileimage = await profileimages(user.id);
+        user.images = profileimage.map(imageObj => imageObj.image ? `${baseurl}/profile/${imageObj.image}` : "") || [];
+
+        item.favorite_user_info = user;
+        item.select = false;
+        if (user.online_status !== undefined) {
+          item.online_status = user.online_status;
+          array.push(item);
+        }
+      }
+    }
+    array.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
+    return res.json({
+      message: "Successful",
+      success: true,
+      status: 200,
+      my_favorite_users: array,
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -2767,7 +2721,6 @@ exports.uploadAlbum = async (req, res) => {
 
 exports.myAlbumbyId = async (req, res) => {
   try {
-
     const { album_id } = req.body;
     const schema = Joi.alternatives(
       Joi.object({
@@ -2793,11 +2746,6 @@ exports.myAlbumbyId = async (req, res) => {
       const user_id = decoded.data.id;
 
       const user_info = await getData("users", `where id= ${user_id}`);
-
-      var arraydata = { 'is_plus': '1' };
-
-
-
       if (user_info != 0) {
         const my_album = await myAlbumbyId(user_id, album_id);
 
@@ -2814,8 +2762,7 @@ exports.myAlbumbyId = async (req, res) => {
             const share_count = await shared_to_count('albums_sharing', user_id, album_id);
             if (albumphotos.length > 0) {
               item.album_images = albumphotos;
-              item.album_images.unshift(arraydata);
-              item.total_photos = albumphotos.length - 1;
+              item.total_photos = albumphotos.length;
               item.share_count = share_count[0]?.share_to_count;
             } else {
               item.total_photos = 0;
@@ -2842,12 +2789,13 @@ exports.myAlbumbyId = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.json({
-      success: false,
-      message: "Internal server error",
-      status: 500,
-      error: error,
-    });
+    // return res.json({
+    //   success: false,
+    //   message: "Internal server error",
+    //   status: 500,
+    //   error: error,
+    // });
+    return handleError(res, 500, error.message)
   }
 };
 
@@ -3059,7 +3007,6 @@ exports.AlbumShare = async (req, res) => {
 
 
         if (array.length > 0) {
-
           return res.json({
             status: 200,
             success: true,
@@ -7340,12 +7287,10 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
 
 exports.new_get_all_users = async (req, res) => {
   try {
-    console.log("<<<<<", req.body)
     const { looking_for, relationship_type,
       sexual_orientation, gender,
       ethnicity, age1, age2, online, app_verify, has_photo, has_album, all_chatted_userIds, havent_chatted_userIds, search, data,
       onlyRecent } = req.body
-
     const schema = Joi.alternatives(
       Joi.object({
         looking_for: Joi.string().optional(),
@@ -7372,7 +7317,6 @@ exports.new_get_all_users = async (req, res) => {
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
-
       return res.json({
         message: result.error.details[0].message,
         error: message,
@@ -7380,11 +7324,7 @@ exports.new_get_all_users = async (req, res) => {
         status: 400,
         success: false,
       });
-
-
     } else {
-
-
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -7411,21 +7351,12 @@ exports.new_get_all_users = async (req, res) => {
       if (all_chatted_userIds) {
         chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item));
       }
-
       const subscriptionStatus = await checkSubscriptionDetail(user_id);
 
       const subscription_id = subscriptionStatus.id
 
-      console.log("++++++++++++++>", subscriptionStatus.id)
-      // const { query, params } = buildSelectQuery(user_id, req.body, userIds);
-
       const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
-      console.log("====>", query, params);
-
       let all_users = await selectUsersByFilters(query, params);
-
-      // console.log(all_users, "all_users")
-
       await Promise.all(
         all_users.map(async (item) => {
           let birthdate = item.DOB;
@@ -7449,13 +7380,11 @@ exports.new_get_all_users = async (req, res) => {
             } catch (error) {
               console.log("<<<<<<>>>>><>>,errorsssss")
               console.error('Error in yourAsyncFunction:', error);
-              // Handle errors as needed
             }
           } else {
             item.distance = ""
           }
           if (item.profile_image != "No image") {
-            // item.profile_image = baseurl + "/profile/" + item.profile_image;
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           }
           const profileimage = await profileimages(item.id);
@@ -7518,25 +7447,35 @@ exports.new_get_all_users = async (req, res) => {
         }
 
         //===================== Change ==================
+        const usersWithDistance = all_users
+          .filter((user) => user.distance)
+          .map((user) => {
+            const distance = user.distance.trim();
+            let distanceInMeters;
+            if (distance.endsWith("km")) {
+              distanceInMeters = parseFloat(distance.replace("km", "")) * 1000;
+            } else if (distance.endsWith("m")) {
+              distanceInMeters = parseFloat(distance.replace("m", ""));
+            } else {
+              distanceInMeters = Infinity;
+            }
 
-        all_users = all_users.filter(user => user.distance !== "").sort((a, b) => {
-          if (a.distance < b.distance) return -1;
-          if (a.distance > b.distance) return 1;
-          return 0;
-        });
+            return { ...user, distanceInMeters };
+          })
+          .sort((a, b) => a.distanceInMeters - b.distanceInMeters);
 
-        // const usersWithNoDistance = all_users.filter(user => user.distance === "");
-        // all_users = [...all_users, ...usersWithNoDistance];
+        const usersWithoutDistance = all_users.filter((user) => !user.distance);
+        const sortedUsers = [...usersWithDistance, ...usersWithoutDistance];
 
         //===================== Change ==================
 
-        // console.log("++++++++++++", all_users)
+
         return res.json({
           message: "all users ",
           status: 200,
           success: true,
           total: all_users.length,
-          all_users: all_users,
+          all_users: sortedUsers,
           profile_length: profile_length,
           viewed_count: viewd_count ? viewd_count.length : 0,
           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,

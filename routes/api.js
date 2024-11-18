@@ -31,9 +31,7 @@ router.post("/verifyUser", userController.verifyUser);
 router.post("/submit_report", userController.submit_report); //////
 router.get("/new_users", auth, userController.new_users);
 router.get("/users_nearby", auth, userController.users_nearby);
-
 router.get("/verifyUserEmail", userController.verifyUserEmail);
-
 router.post("/Add_favorites", auth, userController.Add_favorites);
 
 router.post("/my_favorite_users_list", auth, userController.my_favorite_users_list);

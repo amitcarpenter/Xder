@@ -6,82 +6,107 @@ const { Allsubscription, AllsubscriptionUser, userCurrentSubscription, Checksubs
 const { getData, updateData } = require('../../models/common')
 const baseurl = config.base_url;
 const moment = require('moment');
-//const {Allsubscription} = require('../models/users');
+
 
 exports.Allsubscription = async (req, res) => {
   try {
     const { subscription_type } = req.body;
-    const schema = Joi.alternatives(
-      Joi.object({
-        subscription_type: [Joi.string().empty().required()],
-      })
-    );
+    const schema = Joi.object({
+      subscription_type: Joi.string().required().empty().messages({
+        "string.base": "Subscription type must be a string.",
+        "string.empty": "Subscription type is required.",
+        "any.required": "Subscription type is required.",
+      }),
+    });
+
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
-      return res.json({
+      return res.status(400).json({
         message: result.error.details[0].message,
         error: message,
         missingParams: result.error.details[0].message,
         status: 400,
         success: false,
       });
-    } else {
-      const currentDate = moment();
-      const authHeader = req.headers.authorization;
-      // console.log("authHeader>>>>>>>", authHeader)
-      const token_1 = authHeader;
-      const token = token_1.replace("Bearer ", "");
-
-      // console.log(">>>>>>>>>>>", token);
-      const decoded = jwt.decode(token);
-      const user_id = decoded.data.id;
-
-      const user_info = await getData("users", `where id= ${user_id}`);
-
-      if (user_info != 0) {
-        const subs = await Allsubscription(subscription_type);
-
-        await Promise.all(
-          subs.map(async (item, i) => {
-            const subs = await AllsubscriptionUser(user_id, item.id);
-            const excurdate = currentDate.format('YYYY-MM-DD');
-            if (subs.length > 0) {
-              if (subs[0].expired_at == excurdate) {
-                item.expired = 1
-              } else {
-                item.expired = 0
-              }
-              item.is_subscription = 1
-            } else {
-              item.is_subscription = 0
-              item.expired = 0
-            }
-
-            item.select = false
-          })
-        );
-        return res.json({
-          status: 200,
-          success: true,
-          message: "Subscription Found Successfully!",
-          subscription: subs,
-        });
-      } else {
-        return res.json({
-          status: 400,
-          success: false,
-          message: "User Not Found",
-        });
-      }
     }
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: "Authorization header is missing",
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    if (!decoded || !decoded.data || !decoded.data.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+    const userId = decoded.data.id;
+    const userInfo = await getData("users", `WHERE id=${userId}`);
+    if (!userInfo || userInfo.length === 0) {
+      return res.json({
+        status: 404,
+        success: false,
+        message: "User not found",
+      });
+    }
+    const subscriptions = await Allsubscription(subscription_type);
+
+    await Promise.all(
+      subscriptions.map(async (subscription) => {
+        const userSubs = await AllsubscriptionUser(userId, subscription.id);
+        if (userSubs.length > 0) {
+          const startDate = userSubs[0].start_date
+            ? moment(userSubs[0].start_date).format("YYYY-MM-DD")
+            : null;
+          const endDate = userSubs[0].expired_at
+            ? moment(userSubs[0].expired_at).format("YYYY-MM-DD")
+            : null;
+
+          const isActive =
+            startDate &&
+            endDate &&
+            currentDate >= startDate &&
+            currentDate <= endDate;
+          const isUpcoming = !startDate && !endDate;
+
+          if (isActive || isUpcoming) {
+            subscription.select = false;
+            subscription.is_subscription = 1;
+            subscription.expired = isActive ? 0 : 1;
+          } else {
+            subscription.select = false;
+            subscription.is_subscription = 0;
+            subscription.expired = 1;
+          }
+        } else {
+          subscription.select = false;
+          subscription.is_subscription = 0;
+          subscription.expired = 0;
+        }
+      })
+    );
+
+    return res.json({
+      status: 200,
+      success: true,
+      message: "Subscription Found Successfully!",
+      subscription: subscriptions,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Error in Allsubscription:", error);
     return res.json({
       success: false,
       message: "Internal server error",
       status: 500,
-      error: error,
+      error: error.message,
     });
   }
 };
@@ -155,7 +180,7 @@ exports.AddsubscriptionPlan = async (req, res) => {
         if (checksubs.length > 0) {
           return res.json({
             status: 400,
-            success: true,
+            success: false,
             message: "You have already Purchase this Subscription!",
           });
 
@@ -257,7 +282,6 @@ exports.activatePlan = async (req, res) => {
             status: 200,
             success: true,
             message: "Subscription Activated Successfully!",
-            //  subscription: subs,
           });
         } else {
           return res.json({
@@ -289,80 +313,92 @@ exports.activatePlan = async (req, res) => {
 exports.ChecksubscriptionUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    const token_1 = authHeader;
-    const token = token_1.replace("Bearer ", "");
-    const decoded = jwt.decode(token);
-    const user_id = decoded.data.id;
-
-    const user_info = await getData("users", `where id= ${user_id}`);
-    const currentDate = moment();
-
-    if (user_info != 0) {
-      const checksubs = await ChecksubscriptionUser(user_id);
-      let array = [];
-      let array1 = [];
-      if (checksubs.length > 0) {
-        await Promise.all(
-          checksubs.map(async (item, i) => {
-            const excurdate = currentDate.format('YYYY-MM-DD');
-            const start_date = moment(item.start_date);
-            const start_dated = start_date.format('YYYY-MM-DD');
-            if (start_dated <= excurdate && item.expired_at >= excurdate) {
-              item.expired = 0;
-              array.push(item);
-            } else if (item.expired_at == excurdate) {
-              item.expired = 1
-            } else {
-              item.expired = 0
-            }
-
-            if (item.sub_status != 1) {
-              array1.push(item)
-            }
-
-          })
-        );
-
-        return res.json({
-          status: 200,
-          success: true,
-          message: "Subscription fetch Successfully!",
-          subscription: array1,
-          current_subscription: array
-        });
-      } else {
-        let subscription = await Allsubscription(0);
-        if (subscription.length > 0) {
-          await Promise.all(
-            subscription.map(async (item, i) => {
-              item.expired = 0;
-              item.sub_status = 1;
-            }));
-        }
-        return res.json({
-          status: 200,
-          success: true,
-          message: "Free Subscription fetch Successfully!",
-          subscription: [],
-          current_subscription: subscription
-        });
-      }
-
-    } else {
+    if (!authHeader) {
       return res.json({
-        status: 400,
         success: false,
-        message: "User Not Found",
+        message: "Authorization header is missing",
       });
     }
 
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+
+    if (!decoded || !decoded.data || !decoded.data.id) {
+      return res.json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+
+    const userId = decoded.data.id;
+    const userInfo = await getData("users", `WHERE id=${userId}`);
+    if (!userInfo || userInfo.length === 0) {
+      return res.json({
+        status: 404,
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const subscriptions = await ChecksubscriptionUser(userId);
+    const currentDate = moment().format("YYYY-MM-DD");
+    let activeSubscriptions = [];
+    let expiredSubscriptions = [];
+    let upcomingPlans = [];
+
+    subscriptions.forEach((sub) => {
+      const hasDates = sub.start_date && sub.expired_at;
+      if (hasDates) {
+        const isWithinValidity =
+          moment(sub.start_date).format("YYYY-MM-DD") <= currentDate &&
+          moment(sub.expired_at).format("YYYY-MM-DD") >= currentDate;
+
+        if (isWithinValidity && sub.sub_status === 1) {
+          sub.expired = 0;
+          activeSubscriptions.push(sub);
+        } else {
+          sub.expired = 1;
+          expiredSubscriptions.push(sub);
+        }
+      } else {
+        sub.expired = 0;
+        upcomingPlans.push(sub);
+      }
+    });
+
+    if (activeSubscriptions.length > 0) {
+      return res.json({
+        status: 200,
+        success: true,
+        message: "Subscription fetched successfully!",
+        current_subscription: activeSubscriptions,
+        expired_subscription: expiredSubscriptions,
+        upcoming_plans: upcomingPlans,
+      });
+    }
+
+    const freeSubscriptions = await Allsubscription(0);
+    const newFreeSubscription = freeSubscriptions.map((sub) => ({
+      ...sub,
+      expired: 0,
+      sub_status: 1,
+    }));
+
+    return res.json({
+      status: 200,
+      success: true,
+      message: "Free subscription activated and fetched successfully!",
+      current_subscription: newFreeSubscription,
+      expired_subscription: expiredSubscriptions,
+      upcoming_plans: upcomingPlans,
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Error in checkSubscriptionUser:", error);
     return res.json({
       success: false,
-      message: "Internal server error",
       status: 500,
-      error: error,
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
