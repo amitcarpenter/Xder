@@ -43,8 +43,6 @@ router.post("/offline_status", auth, userController.offline_status);
 router.post("/email_change", auth, userController.email_change);
 
 router.post("/incognito_mode", userController.incognito_mode);
-
-
 router.post("/change_Password_after_login", auth, userController.change_Password_after_login);
 
 router.post(

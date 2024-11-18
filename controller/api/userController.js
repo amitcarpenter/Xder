@@ -105,7 +105,7 @@ const {
   insertInvoiceData,
   get_invoice_detailby_id
 } = require("../../models/common.js");
-const { Console, count } = require("console");
+const { Console, count, error } = require("console");
 const e = require("express");
 const { handleError, handleSuccess, joiErrorHandle } = require("../../utils/responseHandler.js");
 const { sendEmail } = require("../../utils/emailService.js");
@@ -4526,54 +4526,33 @@ exports.send_notification = async (req, res) => {
       });
     } else {
       if (notification_type == 'visit') {
-
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-
         const Get_fcm = await fetch_fcm(reciver_id);
-
         let where = "WHERE sender_id = '" + sender_id + "' AND reciver_id = '" + reciver_id + "' AND notification_type='visit' ";
         const checkvisit = await getSelectedColumn("`notifications`", where, "*");
-
-        console.log("check Visit", checkvisit);
-        console.log("Get_fcm[0].dont_disturb", Get_fcm[0].dont_disturb)
-
         if (checkvisit.length == 0 && Get_fcm[0].dont_disturb == 1) {
-          console.log("here it is")
           let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
             sender_id: sender_id,
             reciver_id: reciver_id,
             body: "visit profile",
-            // username: data[0].username,
-            // profile_image: 'http://64.225.88.156:5000/profile/' + data[0].profile_image,
             notification_type: "visit",
           };
-
-          const result = await addnotification(send_notification);
-
+          await addnotification(send_notification);
           return res.json({
-            message: "notification send successfull",
-            Response: [],
+            message: "Visit Notification send successfully",
             success: true,
             status: 200
           });
-
         } else if (checkvisit.length > 0) {
           return res.json({
             message: "Already visit",
-            Response: [],
             success: true,
             status: 200
           });
-        }
-
-        else if (checkvisit.length == 0 && Get_fcm[0].dont_disturb != 1) {
-
+        } else if (checkvisit.length == 0 && Get_fcm[0].dont_disturb != 1) {
           const message = {
             token: Get_fcm[0].fcm_token,
             notification: {
@@ -4613,19 +4592,11 @@ exports.send_notification = async (req, res) => {
           });
         }
 
-      }
-      else if (notification_type == 'group_request') {
-
-
-        let array = [];
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'group_request') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: "Group Request",
@@ -4637,16 +4608,13 @@ exports.send_notification = async (req, res) => {
             screen: 'group request',
           },
         };
-
-        // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
                 if (token.dont_disturb == 1) {
-                  return; // Return early to skip processing for this token
+                  return;
                 }
-
                 await new Promise(async (resolve, reject) => {
                   const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
                   const send_notification = {
@@ -4659,47 +4627,32 @@ exports.send_notification = async (req, res) => {
                     body: data[0].username + " requested to add in the group!",
                     notification_type: "group_request",
                   };
-
                   const result1 = await addnotification(send_notification);
                   resolve(response);
-                  console.log('Successfully sent message:', response);
                 });
               }
               catch (error) {
                 console.error("Error sending notification to:", token.id, error);
               }
             }));
-            // Send response after sending notifications
             return res.json({
-              message: "Notifications sent successfully to all users",
+              message: "Group Request sent successfully",
               success: true,
-              Response: [],
               status: 200
             });
           } catch (error) {
-            console.error("Error sending notifications:", error);
-            res.status(500).json({
-              message: "Error sending notifications",
+            return res.status(500).json({
+              message: error.message,
               success: false,
               status: 500
             });
           }
         };
-
         await sendNotifications();
-
-
-      }
-      else if (notification_type == 'request_accept') {
-
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'request_accept') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-
         const Get_fcm = await fetch_fcm(reciver_id);
-
         if (Get_fcm[0].dont_disturb_mode == 1) {
           let user_id = sender_id
           const send_notification = {
@@ -4711,24 +4664,19 @@ exports.send_notification = async (req, res) => {
             body: data[0].username + " accepted your request to add in the group!",
             notification_type: "request_accept",
           };
-
-          const result = await addnotification(send_notification);
-          //notification_id
+          await addnotification(send_notification);
           return res.json({
-            message: "notification send successfull",
+            message: "Request Accept notification send successfully",
             success: true,
             status: 200
           });
-
         }
-
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "group request",
             body: data[0].username + " accepted your request to add in the group!",
           },
-
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
@@ -4746,41 +4694,26 @@ exports.send_notification = async (req, res) => {
           body: data[0].username + " accepted your request to add in the group!",
           notification_type: "request_accept",
         };
-
         if (notification_id) {
           const updatenoti = await updateReqnotification(notification_id, 1)
         }
-
-
         const result = await addnotification(send_notification);
-        //notification_id
-
-
         try {
           const response = await userFcm.messaging().send(message);
-          console.log('Successfully sent message:', response);
         } catch (error) {
           console.error('Error sending message:', error);
         }
         return res.json({
-          message: "notification send successfull",
+          message: "Request Accept Notification send successfully",
           success: true,
           status: 200
         });
 
-      }
-      else if (notification_type == 'request_reject') {
-
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'request_reject') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-
         const Get_fcm = await fetch_fcm(reciver_id);
-
         if (Get_fcm[0].dont_disturb == 1) {
-
           let user_id = sender_id
           const send_notification = {
             user_id: reciver_id,
@@ -4794,30 +4727,24 @@ exports.send_notification = async (req, res) => {
           if (notification_id) {
             const updatenoti = await updateReqnotification(notification_id, 2)
           }
-
-          const result = await addnotification(send_notification);
-
+          await addnotification(send_notification);
           return res.json({
-            message: "notification send successfull",
+            message: "Request Reject Notification send successfully",
             success: true,
             status: 200
           });
-
-
         }
-
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
             title: "group request",
             body: data[0].username + " rejected your request to add in the group!",
           },
-
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "request_reject",
-            screen: 'group request',
+            screen: 'request reject',
           },
         };
 
@@ -4851,22 +4778,15 @@ exports.send_notification = async (req, res) => {
         });
 
 
-      }
-      else if (notification_type == 'chat') {
-
-        let array = [];
-        const serverKey = Fcm_serverKey
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'chat') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: title,
             body: body,
-
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4875,13 +4795,12 @@ exports.send_notification = async (req, res) => {
             screen: 'chat',
           },
         };
-        // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
                 if (token.dont_disturb == 1 || token.chat_notification == 0) {
-                  return; // Return early to skip processing for this token
+                  return;
                 }
                 await new Promise(async (resolve, reject) => {
                   const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
@@ -4892,13 +4811,13 @@ exports.send_notification = async (req, res) => {
               }
             }));
             return res.json({
-              message: "Notifications sent successfully to all users",
+              message: "Chat Notifications sent successfully",
               success: true,
               status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
-            res.status(500).json({
+            return res.status(500).json({
               message: "Error sending notifications",
               success: false,
               status: 500
@@ -4906,17 +4825,11 @@ exports.send_notification = async (req, res) => {
           }
         };
         await sendNotifications();
-      }
-      else if (notification_type == 'chatGroup') {
-
-        let array = [];
-        const serverKey = Fcm_serverKey
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'chatGroup') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: title,
@@ -4925,17 +4838,16 @@ exports.send_notification = async (req, res) => {
           data: {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
-            notification_type: "chat",
-            screen: 'chat',
+            notification_type: "chatGroup",
+            screen: 'chatGroup',
           },
         };
-        // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
                 if (token.dont_disturb == 1 || token.group_notification == 0) {
-                  return; // Return early to skip processing for this token
+                  return;
                 }
                 await new Promise(async (resolve, reject) => {
                   const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
@@ -4945,33 +4857,25 @@ exports.send_notification = async (req, res) => {
                 console.error("Error sending notification to:", token.id, error);
               }
             }));
-            // Send response after sending notifications
             return res.json({
-              message: "Notifications sent successfully to all users",
+              message: "Group Chat Notifications sent successfully",
               success: true,
               status: 200
             });
           } catch (error) {
-            console.error("Error sending notifications:", error);
-            res.status(500).json({
-              message: "Error sending notifications",
+            return res.json({
+              message: error.message,
               success: false,
               status: 500
             });
           }
         };
         await sendNotifications();
-      }
-      else if (notification_type == 'chatTap') {
-
-        let array = [];
-        const serverKey = Fcm_serverKey
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'chatTap') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: title,
@@ -4981,10 +4885,9 @@ exports.send_notification = async (req, res) => {
             sender_id: `${sender_id}`,
             reciver_id: `${reciver_id}`,
             notification_type: "chatTap",
-            screen: 'chat',
+            screen: 'chatTap',
           },
         };
-        // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
@@ -5000,34 +4903,26 @@ exports.send_notification = async (req, res) => {
                 console.error("Error sending notification to:", token.id, error);
               }
             }));
-            // Send response after sending notifications
             return res.json({
-              message: "Notifications sent successfully to all users",
+              message: "chat Tap Notifications sent successfully",
               success: true,
               status: 200
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
             return res.status(500).json({
-              message: "Error sending notifications",
+              message: error.message,
               success: false,
               status: 500
             });
           }
         };
         await sendNotifications();
-      }
-      else if (notification_type == 'album_request') {
-
-        let array = [];
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'album_request') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-        let reciver_id1 = reciver_id.replace(/\[|\]/g, '');
+        let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        // const Get_fcm = await fetch_fcm(reciver_id);
         const message = {
           notification: {
             title: "Album Request",
@@ -5039,24 +4934,20 @@ exports.send_notification = async (req, res) => {
             screen: 'album request',
           },
         };
-
-        // Send notification to each FCM token
         const sendNotifications = async () => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
                 if (token.dont_disturb == 1) {
-                  return; // Return early to skip processing for this token
+                  return;
                 }
-
                 await new Promise(async (resolve, reject) => {
-
                   const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
                   const send_notification = {
                     user_id: token.id,
                     sender_id: sender_id,
                     reciver_id: token.id,
-                    group_id: group_id,
+                    group_id: 0,
                     group_name: group_name,
                     request_status: 3,
                     body: data[0].username + " requested to add in the group!",
@@ -5065,14 +4956,13 @@ exports.send_notification = async (req, res) => {
 
                   const result1 = await addnotification(send_notification);
                   resolve(response);
-                  console.log('Successfully sent message:', response);
                 });
               } catch (error) {
                 console.error("Error sending notification to:", token.id, error);
               }
             }));
             return res.json({
-              message: "Notifications sent successfully to all users",
+              message: "Album Request Notifications sent successfully",
               success: true,
               status: 200
             });
@@ -5085,18 +4975,11 @@ exports.send_notification = async (req, res) => {
             });
           }
         };
-
         await sendNotifications();
-      }
-      else if (notification_type == 'album_accept') {
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'album_accept') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-
         const Get_fcm = await fetch_fcm(reciver_id);
-
         if (Get_fcm[0].dont_disturb_mode == 1) {
           let user_id = sender_id
           const send_notification = {
@@ -5107,9 +4990,7 @@ exports.send_notification = async (req, res) => {
             body: data[0].username + " accepted your request to view the albums!",
             notification_type: "album_accept",
           };
-
           const result = await addnotification(send_notification);
-          //notification_id
           return res.json({
             message: "notification send successfull",
             success: true,
@@ -5117,11 +4998,10 @@ exports.send_notification = async (req, res) => {
           });
 
         }
-
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "Album request",
+            title: "Album Request Accepted",
             body: data[0].username + " accepted your request to view the album!",
           },
 
@@ -5134,7 +5014,6 @@ exports.send_notification = async (req, res) => {
         };
         try {
           const response = await userFcm.messaging().send(message);
-          console.log('Successfully sent message:', response);
         } catch (error) {
           console.error('Error sending message:', error);
         }
@@ -5151,28 +5030,16 @@ exports.send_notification = async (req, res) => {
         if (notification_id) {
           const updatenoti = await updateAlbumRequestNotification(notification_id, 1)
         }
-
-
         const result = await addnotification(send_notification);
-        //notification_id
         return res.json({
           message: "notification send successfull",
-          Response: response,
           success: true,
           status: 200
         });
-
-
-      }
-      else if (notification_type == 'album_reject') {
-        const serverKey = Fcm_serverKey
-
-        const fcm = new FCM(serverKey);
+      } else if (notification_type == 'album_reject') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
-
         const Get_fcm = await fetch_fcm(reciver_id);
-
         if (Get_fcm[0].dont_disturb_mode == 1) {
           let user_id = sender_id
           const send_notification = {
@@ -5183,9 +5050,7 @@ exports.send_notification = async (req, res) => {
             body: data[0].username + " rejected your request to view their album!",
             notification_type: "album_reject",
           };
-
           const result = await addnotification(send_notification);
-          //notification_id
           return res.json({
             message: "notification send successfull",
             success: true,
@@ -5193,11 +5058,10 @@ exports.send_notification = async (req, res) => {
           });
 
         }
-
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "Album request",
+            title: "Album Request Rejected",
             body: data[0].username + " rejected your request to view the album!",
           },
 
@@ -5223,38 +5087,34 @@ exports.send_notification = async (req, res) => {
           body: data[0].username + " rejected your request to view the album!",
           notification_type: "album_reject",
         };
-
         if (notification_id) {
           const updatenoti = await updateAlbumRequestNotification(notification_id, 2)
         }
-
-
         const result = await addnotification(send_notification);
         return res.json({
           message: "notification send successfull",
           success: true,
           status: 200
         });
-
       } else {
         return res.json({
           success: false,
-          message: " Invalid notification_type",
-          error: err,
+          message: " Invalid notification type",
           status: 500,
         });
       }
     }
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
     return res.json({
       success: false,
-      message: "Internal server error",
-      error: err,
+      message: error.message,
+      error: error,
       status: 500,
     });
   }
 };
+
+
 
 exports.changePasswordbefore = async (req, res) => {
   try {
@@ -7357,7 +7217,7 @@ exports.new_get_all_users = async (req, res) => {
 
       const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
       let all_users = await selectUsersByFilters(query, params);
-      await Promise.all(
+      /*await Promise.all(
         all_users.map(async (item) => {
           let birthdate = item.DOB;
           let get_age = calculateAge(birthdate);
@@ -7420,7 +7280,65 @@ exports.new_get_all_users = async (req, res) => {
 
 
         })
-      );
+      );*/
+
+      for (item of all_users) {
+        let birthdate = item.DOB;
+        let get_age = calculateAge(birthdate);
+        item.age = get_age;
+        const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
+        item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
+        item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+
+        if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+          const unit = 'metric';
+          const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+          const destination = item.latitude + ',' + item.longitude;
+          try {
+            const disvalue = await distanceShow(unit, origin, destination);
+            item.distance = disvalue.distance;
+          } catch (error) {
+            console.error('Error in yourAsyncFunction:', error);
+          }
+        } else {
+          item.distance = ""
+        }
+        if (item.profile_image != "No image") {
+          item.profile_image = baseurl + "/profile/" + item.profile_image;
+        }
+        const profileimage = await profileimages(item.id);
+
+        if (profileimage?.length > 0) {
+          item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
+        } else {
+          item.images = [];
+        }
+
+        const favorite_user_id = item.id;
+        const check_favoritesUser = await check_favorites_User(
+          user_id,
+          favorite_user_id
+        );
+
+        if (check_favoritesUser[0].count != 0) {
+          item.favorites_user = "Y";
+        } else {
+          item.favorites_user = "N";
+        }
+        item.select = false;
+        item.admin = false;
+        item.album_id = 0;
+        const My1Albums = await MyAlbums(item.id);
+
+        if (My1Albums.length > 0) {
+          item.album_id = My1Albums[0]?.id;
+          if (has_album != undefined && has_album != "" && has_album != "0") {
+            array.push(item);
+          }
+        }
+
+
+      }
 
 
       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
