@@ -3274,7 +3274,6 @@ exports.delete_User = async (req, res) => {
       })
     );
     const result = schema.validate(req.body);
-
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
       return res.json({
@@ -3287,33 +3286,24 @@ exports.delete_User = async (req, res) => {
     } else {
       const data = await fetchUserById(user_id);
       if (data.length !== 0) {
-
         const match = bcrypt.compareSync(password, data[0]?.password);
         if (match) {
-
           let where = ` where id= '${user_id}'`;
           const delete_user = await deleteData('users', where);
-
           let where1 = ` where user_id= '${user_id}'`;
           const delete_user1 = await deleteData('albums', where1);
           const delete_user2 = await deleteData('albums_photos', where1);
           const delete_user3 = await deleteData('chat_group', where1);
           const delete_user6 = await deleteData('user_subscription', where1);
           const delete_user9 = await deleteData('profile_images', where1);
-
           let where2 = ` where user_id= '${user_id}' OR favorite_user_id = '${user_id}'`;
           const delete_user4 = await deleteData('favorite_users', where2);
-
           let where3 = ` where user_id= '${user_id}' OR visit_user_id = '${user_id}'`;
           const delete_user5 = await deleteData('profile_visit', where3);
-
           let where4 = ` where sender_id= '${user_id}' OR reciver_id = '${user_id}'`;
           const delete_user7 = await deleteData('notifications', where4);
-
           let where5 = ` where user_id= '${user_id}' OR shared_to = '${user_id}'`;
           const delete_user8 = await deleteData('albums_sharing', where5);
-
-
           return res.json({
             status: 200,
             success: true,
@@ -3335,10 +3325,9 @@ exports.delete_User = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
