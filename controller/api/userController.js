@@ -428,54 +428,6 @@ exports.verifyUser = async (req, res) => {
   }
 };
 
-// exports.verifyUserEmail = async (req, res) => {
-//   try {
-//     const act_token = req.query.token;
-//     console.log(act_token)
-//     const token = generateToken();
-//     if (!act_token) {
-//       const message = result.error.details.map((i) => i.message).join(",");
-//       return res.json({
-//         message: result.error.details[0].message,
-//         error: message,
-//         missingParams: result.error.details[0].message,
-//         status: 400,
-//         success: false,
-//       });
-//     } else {
-//       const data = await fetchUserByActToken(act_token);
-//       if (data.length !== 0) {
-//         let datas = {
-//           act_token: "",
-//           status: true,
-//         };
-//         const hash = await bcrypt.hash(token, saltRounds);
-//         const result = await updateUserByActToken(
-//           hash,
-//           datas.act_token,
-//           data[0]?.id
-//         );
-
-//         let setting = {
-//           explore: 1, distance: 1, view_me: 0, user_id: data[0]?.id
-//         }
-//         const caddShowme = addShowme(setting);
-
-//         if (result.affectedRows) {
-//           return res.sendFile(__dirname + "/../view/verify.html");
-//         } else {
-//           return res.sendFile(__dirname + "/../view/notverify.html");
-//         }
-//       } else {
-//         return res.sendFile(__dirname + "/../view/notverify.html");
-//       }
-//     }
-//   } catch (error) {
-//     return res.render("404.ejs");
-//   }
-// };
-
-
 exports.verifyUserEmail = async (req, res) => {
   try {
     const act_token = req.query.token;
@@ -3416,16 +3368,13 @@ exports.group_notification = async (req, res) => {
         success: false,
       });
     } else {
-      // const serverKey = Fcm_serverKey;
-      // const fcm = new FCM(serverKey);
       const userData = await fetchUserBy_Id(user_id);
-
       await Promise.all(id.map(async (id_1) => {
         const userFcm1 = await fetch_fcm(id_1);
         const message = {
           token: userFcm1[0]?.fcm_token,
           notification: {
-            title: "Group_notification",
+            title: "Group Notification",
             body: `${userData[0].username} Invited you in ${group_name} group`,
           },
           data: {
@@ -3433,7 +3382,6 @@ exports.group_notification = async (req, res) => {
             group_name: `${group_name}`,
           },
         };
-
         return new Promise(async (resolve) => {
           const response = await userFcm.messaging().send(message);
           const sendNotification = {
@@ -3450,19 +3398,16 @@ exports.group_notification = async (req, res) => {
           resolve(response);
         });
       }));
-
       return res.json({
-        message: "Notifications sent successfully",
+        message: "Group Notifications sent successfully",
         success: true,
         status: 200,
       });
-
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
-      message: "Internal server error",
+      message: err.message,
       error: err,
       status: 500,
     });
@@ -7173,7 +7118,6 @@ exports.new_get_all_users = async (req, res) => {
         onlyRecent: Joi.number().optional()
       })
     );
-    console.log("bodyishere+++++", req.body);
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -7191,7 +7135,6 @@ exports.new_get_all_users = async (req, res) => {
       const decoded = jwt.decode(token);
       const user_id = decoded.data.id;
       let array = [];
-      let array1 = [];
       var profile_length = "";
       let checksub = await checkSubscriptionDetail(user_id);
       const check_user = await getData("users", `where id= ${user_id}`);
@@ -7212,9 +7155,7 @@ exports.new_get_all_users = async (req, res) => {
         chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item));
       }
       const subscriptionStatus = await checkSubscriptionDetail(user_id);
-
       const subscription_id = subscriptionStatus.id
-
       const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
       let all_users = await selectUsersByFilters(query, params);
       /*await Promise.all(
