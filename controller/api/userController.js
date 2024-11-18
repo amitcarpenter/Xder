@@ -2020,7 +2020,8 @@ exports.my_favorite_users_list = async (req, res) => {
         my_favorite_users.map(async (item) => {
           let where = "";
           if (req.body.online_status == '1') {
-            where = ` AND online_status = '1' AND incognito_mode = 0 `;
+            // where = ` AND online_status = '1' AND incognito_mode = 0 `;
+            where = ` AND online_status = 1 AND incognito_mode = 0 `;
           }
           var user_info = await getData("users", `where id= ${item.favorite_user_id} ${where}`);
 

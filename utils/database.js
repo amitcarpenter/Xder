@@ -1,27 +1,26 @@
 const mysql = require('mysql2');
 const util = require('util');
 
-// var db_config = {
-//   host: 'localhost',
-//   user: 'xder_dating',
-//   password: 'w9cTq4@A68Du',
-//   port: '3306',
-//   database: 'xdar_dating'
-// };
-
 var db_config = {
-  host: 'localhost',
-  user: 'root',
-  password: '',
+  host: '44.199.1.149',
+  user: 'xder_dating',
+  password: 'w9cTq4@A68Du',
   port: '3306',
   database: 'xdar_dating'
 };
+
+// var db_config = {
+//   host: 'localhost',
+//   user: 'root',
+//   password: '',
+//   port: '3306',
+//   database: 'xdar_dating'
+// };
 
 var connection;
 
 function handleDisconnect() {
   connection = mysql.createConnection(db_config);
-
   connection.connect(function (err) {
     if (err) {
       console.log('error when connecting to db:', err);
