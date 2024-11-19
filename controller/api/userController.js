@@ -6561,9 +6561,7 @@ exports.markAllSeen = async (req, res) => {
         success: false,
       });
     } else {
-
       await markAllNotificationAsSeen(user_id);
-
       return res.status(200).json({
         status: 200,
         message: 'Marked As Seen ',
@@ -6704,7 +6702,6 @@ exports.newEditProfile = async (req, res) => {
 
   }
 }
-
 
 exports.newComplete_Profile = async (req, res) => {
   try {
