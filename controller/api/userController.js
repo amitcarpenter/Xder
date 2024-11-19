@@ -190,11 +190,7 @@ function distanceShow(units, origins, destinations) {
 
 function calculateAge(dateString) {
   const [day, month, year] = dateString.split('/').map(Number);
-
-  // Create a Date object using the parsed values
   const birthDate = new Date(year, month - 1, day);
-
-  // Get the current date
   const currentDate = new Date();
 
   // Calculate the difference in years
@@ -6991,7 +6987,7 @@ exports.new_get_all_users = async (req, res) => {
     const { looking_for, relationship_type,
       sexual_orientation, gender,
       ethnicity, age1, age2, online, app_verify, has_photo, has_album, all_chatted_userIds, havent_chatted_userIds, search, data,
-      onlyRecent } = req.body
+      onlyRecent, is_verified } = req.body
     const schema = Joi.alternatives(
       Joi.object({
         looking_for: Joi.string().optional(),
@@ -7001,7 +6997,7 @@ exports.new_get_all_users = async (req, res) => {
         ethnicity: Joi.string().optional(),
         age1: Joi.number().optional(),
         age2: Joi.number().optional(),
-        app_verify: Joi.string().optional(),
+        // app_verify: Joi.string().optional(),
         online: Joi.string().optional(),
         has_photo: Joi.string().optional(),
         has_album: Joi.number().optional(),
@@ -7011,7 +7007,8 @@ exports.new_get_all_users = async (req, res) => {
         page: Joi.number().optional(),
         limit: Joi.number().optional(),
         data: Joi.string().optional(),
-        onlyRecent: Joi.number().optional()
+        onlyRecent: Joi.number().optional(),
+        app_verify: Joi.boolean().optional().allow("").allow(null)
       })
     );
     const result = schema.validate(req.body);
@@ -7150,7 +7147,12 @@ exports.new_get_all_users = async (req, res) => {
         const sortedUsers = [...usersWithDistance, ...usersWithoutDistance];
 
         //===================== Change ==================
-        const filteredSortedUsers = sortedUsers.filter(user => user.view_me !== 0);
+        let filteredSortedUsers = sortedUsers.filter(user => user.view_me !== 0);
+
+        if (app_verify == true) {
+          filteredSortedUsers = filteredSortedUsers.filter(user => user.is_verified == 1);
+        }
+
         return res.json({
           message: "all users ",
           status: 200,

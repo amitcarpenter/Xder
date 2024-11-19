@@ -33,23 +33,13 @@ router.get("/new_users", auth, userController.new_users);
 router.get("/users_nearby", auth, userController.users_nearby);
 router.get("/verifyUserEmail", userController.verifyUserEmail);
 router.post("/Add_favorites", auth, userController.Add_favorites);
-
 router.post("/my_favorite_users_list", auth, userController.my_favorite_users_list);
-
 router.post("/online_status", auth, userController.online_status);
-
 router.post("/offline_status", auth, userController.offline_status);
-
 router.post("/email_change", auth, userController.email_change);
-
 router.post("/incognito_mode", userController.incognito_mode);
 router.post("/change_Password_after_login", auth, userController.change_Password_after_login);
-
-router.post(
-  "/forgotPassword__by_email",
-  userController.forgotPassword__by_email
-);
-
+router.post("/forgotPassword__by_email", userController.forgotPassword__by_email);
 router.post("/forgotPassword_by_phone_number", userController.forgotPassword_by_phone_number);
 router.post("/forgotPassword_otp_match_phone_number", userController.forgotPassword_otp_match_phone_number);
 router.post("/forgotPassword_otp_match_email", userController.forgotPassword_otp_match_email);
@@ -58,103 +48,44 @@ router.post("/changePassword", userController.changePassword);
 router.post("/myProfile", auth, userController.myProfile);
 router.post("/user_info", userController.user_info);
 router.post("/editProfile", auth, upload_profile.array("files"), userController.newEditProfile);
-router.post("/complete_Profile",
-  auth,
-  upload_profile.array("files"),
-  userController.newComplete_Profile
-);
-
-router.post(
-  "/add_Album",
-  auth, upload_albums.array("files"),
-  userController.add_Album
-);
+router.post("/complete_Profile", auth, upload_profile.array("files"), userController.newComplete_Profile);
+router.post("/add_Album", auth, upload_albums.array("files"), userController.add_Album);
 router.post("/myAlbum", auth, userController.myAlbum);
-
 router.post("/deleteAlbum", userController.deleteAlbum);
-
-
 router.post("/deleteAlbumPhotos", userController.deleteAlbumPhotos);
-
 router.post("/AlbumShare", userController.AlbumShare)
-
 router.post("/group_notification", userController.group_notification)
-
 router.post("/Allnotification", userController.Allnotification)
-
 router.post("/get_profile_visit", userController.get_profile_visit)
-
 router.post("/accept_reject_group_invite", userController.accept_reject_group_invite)
-
-
-router.post(
-  "/uploadAlbum",
-  auth,
-  upload_albums.array("files"),
-  userController.uploadAlbum
-);
-
+router.post("/uploadAlbum", auth, upload_albums.array("files"), userController.uploadAlbum);
 router.post("/myAlbumbyId", userController.myAlbumbyId);
-
 router.post("/editAlbum", auth, upload_albums.array("files"), userController.editAlbum);
-//editAlbum
-
 router.post("/myAlbumSharing", auth, userController.myAlbumSharing);
-
 router.post("/myAlbumbyIdsingle", userController.myAlbumbyIdsingle);
-
 router.post("/delete_User", userController.delete_User);
-
 router.post("/Createchatgroup", auth, upload_group.single("file"), userController.Createchatgroup);
-
 router.post("/groupchatByid", auth, userController.groupchatByid);
-
 router.post("/appVerification", auth, upload_profile.single("file"), userController.appVerification);
-
-router.post(
-  "/addProfileimages",
-  auth,
-  upload_profile.array("files"),
-  userController.addProfileimages
-);
-// 
+router.post("/addProfileimages", auth, upload_profile.array("files"), userController.addProfileimages);
 router.post("/changePasswordbefore", userController.changePasswordbefore);
-
 router.post("/get_user", userController.get_user_by_id);
-
 router.post("/allShowme", auth, userController.allShowme);
-
 router.post("/addShowme", auth, userController.addShowme);
-
 router.post("/send_notification", auth, userController.send_notification);
-
 router.get("/privacyPolicy_english_dark", userController.privacyPolicy_english_dark);
-
 router.get("/terms_condition_english_dark", userController.terms_condition_english_dark);
-
 router.get("/privacyPolicy_english_ligth", userController.privacyPolicy_english_ligth);
-
 router.get("/terms_condition_english_ligth", userController.terms_condition_english_ligth);
-
 router.get("/privacyPolicy_french_dark", userController.privacyPolicy_french_dark);
-
 router.get("/terms_condition_french_dark", userController.terms_condition_french_dark);
-
 router.get("/privacyPolicy_french_ligth", userController.privacyPolicy_french_ligth);
-
 router.get("/terms_condition_french_dark", userController.terms_condition_french_ligth);
-
 router.get("/privacyPolicy_spanish_dark", userController.privacyPolicy_spanish_dark);
-
 router.get("/privacyPolicy_spanish_light", userController.privacyPolicy_spanish_light);
-
 router.get("/terms_condition_spanish_dark", userController.terms_condition_spanish_dark);
-
 router.get("/terms_condition_spanish_light", userController.terms_condition_spanish_light);
-
-
 router.get("/maps", userController.maps);
-
 
 router.post("/block_unblock", userController.block_unblock);
 router.post("/get_block_list", userController.get_block_list);
@@ -173,30 +104,18 @@ router.post("/taps_notification_mode", userController.taps_notification_mode);
 router.post("/video_call_notification_mode", userController.video_call_notification_mode);
 router.post("/dont_disturb_mode", userController.dont_disturb_mode);
 
-// /25/4
 
 router.patch("/mark_seen", userController.markAsSeen);
-
 router.post("/getGames", userController.getGames);
-
 router.post("/allSeen", userController.markAllSeen);
-
 router.post('/deleteProfileImage', auth, userController.deleteProfileimage);
-
 router.post('/myAlbumsToShare', userController.get_my_Albums_To_share);
-
 router.post('/shareMyAlbums', userController.shareMyAlbums);
-
 router.post('/getAlbums/:userId', userController.getAllbums);
-
 router.post('/cancelAlbumRequest', auth, userController.cancelAlbumRequest);
-
 router.post('/createInvoice', auth, userController.createInvoice);
-
 router.post("/getAllGroupRequests", userController.getAllGroupRequest);
-
 router.post('/getUserWithIds', userController.get_users_by_ids)
-
 
 
 
