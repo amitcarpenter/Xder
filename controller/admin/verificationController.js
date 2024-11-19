@@ -1,7 +1,20 @@
+const { profileimages } = require('../../models/users');
 const pool = require('../../utils/database');
 const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
 const Joi = require('joi');
+const config = require("../../config.js");
 
+
+const saltRounds = 10;
+
+const JWT_SECRET = process.env.JWT_SECRET
+const JWT_EXPIRY = process.env.JWT_EXPIRY
+const image_logo = process.env.LOGO_URL
+const APP_URL = process.env.APP_URL
+
+const baseurl = config.base_url;
+const Fcm_serverKey = config.fcm_serverKey;
+const googledistance_key = config.googledistance_key;
 
 
 exports.uploadVerificationImage = async (req, res) => {
@@ -38,44 +51,30 @@ exports.uploadVerificationImage = async (req, res) => {
 exports.getUsersWithVerificationImage = async (req, res) => {
     try {
         const query = `
-                SELECT u.*, 
-                    GROUP_CONCAT(pi.image) AS profile_images
-                FROM users u
-                LEFT JOIN profile_images pi ON u.id = pi.user_id
-                WHERE u.verification_image IS NOT NULL 
-                AND u.verification_image != ''
-                AND u.is_verified = 2
-                GROUP BY u.id
-                ORDER BY u.created_at DESC;
-                `;
-
+            SELECT u.* 
+            FROM users u
+            WHERE u.verification_image IS NOT NULL 
+            AND u.verification_image != ''
+            AND u.is_verified = 2
+            GROUP BY u.id
+            ORDER BY u.created_at DESC;
+        `;
         const result = await pool.query(query);
-
-
-
         if (result.length === 0) {
             return handleError(res, 404, 'No users with verification image found.');
         }
-
-        const updatedUsers = result.map(user => {
-            // Update each profile_image URL if needed
-            if (user.profile_images) {
-                user.profile_images = user.profile_images.split(',').map(image => {
-                    if (image && !image.startsWith("http") && image !== "No image") {
-                        return `${process.env.APP_URL}${image}`;
-                    }
-                    return image;
-                });
-            } else {
-                user.profile_images = [];
-            }
+        const updatedUsers = await Promise.all(result.map(async (user) => {
+            const profileImages = await profileimages(user.id);
+            user.images = profileImages?.length > 0
+                ? profileImages.map(imageObj =>
+                    imageObj.image ? `${process.env.APP_URL}/profile/${imageObj.image}` : "")
+                : [];
 
             if (user.verification_image && !user.verification_image.startsWith("http") && user.verification_image !== "No image") {
                 user.verification_image = `${process.env.APP_URL}${user.verification_image}`;
             }
-
             return user;
-        });
+        }));
 
         return handleSuccess(res, 200, 'Users with verification images fetched successfully.', updatedUsers);
     } catch (error) {

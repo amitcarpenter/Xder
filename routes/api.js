@@ -28,7 +28,7 @@ router.post("/get_all_users_1", auth, userController.get_all_users_1);
 router.post("/profile_visit", auth, userController.profile_visit);
 router.post("/loginUser_with_phone", userController.loginUser_with_phone);
 router.post("/verifyUser", userController.verifyUser);
-router.post("/submit_report", userController.submit_report); //////
+router.post("/submit_report", userController.submit_report);
 router.get("/new_users", auth, userController.new_users);
 router.get("/users_nearby", auth, userController.users_nearby);
 router.get("/verifyUserEmail", userController.verifyUserEmail);
@@ -50,38 +50,15 @@ router.post(
   userController.forgotPassword__by_email
 );
 
-router.post(
-  "/forgotPassword_by_phone_number",
-  userController.forgotPassword_by_phone_number
-);
-
-router.post(
-  "/forgotPassword_otp_match_phone_number",
-  userController.forgotPassword_otp_match_phone_number
-);
-
-router.post(
-  "/forgotPassword_otp_match_email",
-  userController.forgotPassword_otp_match_email
-);
-
+router.post("/forgotPassword_by_phone_number", userController.forgotPassword_by_phone_number);
+router.post("/forgotPassword_otp_match_phone_number", userController.forgotPassword_otp_match_phone_number);
+router.post("/forgotPassword_otp_match_email", userController.forgotPassword_otp_match_email);
 router.get("/verifyPassword/:token", userController.verifyPassword);
-
 router.post("/changePassword", userController.changePassword);
-
 router.post("/myProfile", auth, userController.myProfile);
-
 router.post("/user_info", userController.user_info);
-
-router.post(
-  "/editProfile",
-  auth,
-  upload_profile.array("files"),
-  userController.newEditProfile
-);
-
-router.post(
-  "/complete_Profile",
+router.post("/editProfile", auth, upload_profile.array("files"), userController.newEditProfile);
+router.post("/complete_Profile",
   auth,
   upload_profile.array("files"),
   userController.newComplete_Profile

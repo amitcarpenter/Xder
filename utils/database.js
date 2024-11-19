@@ -44,12 +44,12 @@ function handleDisconnect() {
 function makeDb() {
   return {
     query(sql, args) {
-      console.log("db connected localhost");
-      console.log(sql);
+      // console.log("db connected localhost");
+      // console.log(sql);
       return util.promisify(connection.query).call(connection, sql, args);
     },
     close() {
-      console.log("db not connected to localhost");
+      // console.log("db not connected to localhost");
       return util.promisify(connection.end).call(connection);
     }
   }

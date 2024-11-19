@@ -81,9 +81,9 @@ module.exports = {
     ]);
   },
 
-  update_otp_by_email: async (otp,email) => {
+  update_otp_by_email: async (otp, email) => {
     return db.query(`Update users set OTP_forgot= ? where email=?`, [
-      otp,email
+      otp, email
     ]);
   },
 
@@ -136,7 +136,7 @@ module.exports = {
   fetchUserBy_Id: async (id) => {
     return db.query(`select * from users where id= '${id}'`);
   },
-  
+
   fcmToken: async (email, fcm_token) => {
     return db.query(`Update users set fcm_token= '${fcm_token}' where email='${email}'`);
   },
@@ -269,6 +269,7 @@ module.exports = {
       `select * from users where id != '${user_id}' AND  AND complete_profile_status = 1 ${where}  ORDER BY id DESC `
     );
   },
+
   Allsubscription: async (status) => {
     return db.query("select * from subscription_plan where status = ?", [status]);
   },
@@ -696,7 +697,6 @@ module.exports = {
   },
 
   selectUsersByFilters: async (query, params) => {
-
     return db.query(query, params);
   },
 
@@ -787,16 +787,16 @@ module.exports = {
     `);
   },
   checkAlbumRequestNotification: async (sender_id, reciver_id) => {
-    return db.query(`Select * from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`,[sender_id,reciver_id])
+    return db.query(`Select * from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`, [sender_id, reciver_id])
   },
 
   cancelAlbumRequestNotification: async (sender_id, reciver_id) => {
-    return db.query(`Delete from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`,[sender_id,reciver_id])
+    return db.query(`Delete from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`, [sender_id, reciver_id])
   },
   all_group_notifications: async (sender_id) => {
     return db.query(`select * from notifications where sender_id = '${sender_id}'  and notification_type = 'group_request' ORDER BY id DESC `);
   },
-  getUsers_by_ids :async (user_ids) => {
+  getUsers_by_ids: async (user_ids) => {
     const placeholders = user_ids.map(() => '?').join(','); // Create placeholders for SQL query
     return db.query(`SELECT * FROM users WHERE id IN (${placeholders})`, user_ids);
   }

@@ -4098,7 +4098,6 @@ exports.new_users = async (req, res) => {
   }
 };
 
-// distance NearBy
 function calculateHaversine(lat1, lon1, lat2, lon2) {
   const R = 6371000; // Earth radius in meters
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -4123,9 +4122,7 @@ exports.users_nearby = async (req, res) => {
     const token = authHeader.replace("Bearer ", "");
     const decoded = jwt.decode(token);
     const user_id = decoded.data.id;
-    const nearbyRange = 10000; // Distance in meters to consider as "nearby"
-
-    // Fetch the logged-in user's details
+    const nearbyRange = 10000;
     const check_user = await fetchUserById(user_id);
     if (check_user.length === 0) {
       return res.status(404).json({
@@ -4133,37 +4130,25 @@ exports.users_nearby = async (req, res) => {
         message: "User not found",
       });
     }
-
     const userLatitude = check_user[0]?.latitude;
     const userLongitude = check_user[0]?.longitude;
     const userCity = check_user[0]?.city;
-
-    console.log(">>>>>>>>>>userCity", userCity)
-
     let NearLocation = [];
-
-    // Fetch all users who are potentially nearby
     const allUserNearBy = await Get_nearby_users(user_id);
-
     await Promise.all(
       allUserNearBy.map(async (item) => {
-        // Set profile image URL
         if (item.profile_image !== "No image") {
           item.profile_image = baseurl + "/profile/" + item.profile_image;
         }
-        console.log("+++++++++++++", item.city)
-        // Fetch the user's show settings
         const settingshow_me = await getData("setting_show_me", `where user_id=${item.id}`);
         item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false;
         item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false;
 
         if (item.latitude && item.longitude) {
-          // Calculate distance using lat/long
           const unit = 'metric';
           const origin = `${userLatitude},${userLongitude}`;
           const destination = `${item.latitude},${item.longitude}`;
           const disvalue = await distanceShownear(unit, origin, destination);
-
           if (disvalue.distanceValue <= nearbyRange) {
             item.distance = disvalue.distance;
             item.distanceValue = disvalue.distanceValue;
@@ -4173,36 +4158,26 @@ exports.users_nearby = async (req, res) => {
           }
         }
         if (item.city && item.city === userCity && !NearLocation.includes(item)) {
-          console.log("<><><<<<><>><><><<<>");
-          console.log(item.city);
-
           item.distanceValue = Number.MAX_SAFE_INTEGER;
-
-
-          // If lat/long are null, check if they are in the same city
-          item.distance = ""; // You can set a specific value to indicate same city
+          item.distance = "";
           NearLocation.push(item);
         }
-
-        // Add user's additional images if available
         const profileimage = await profileimages(item.id);
         item.images = profileimage?.length > 0 ? profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "") : [];
       })
     );
-    NearLocation.sort((a, b) => a.distanceValue - b.distanceValue);
-
+    NearLocation.sort((a, b) => a.distanceValue - b.distanceValue)
     return res.json({
       success: true,
-      message: "Users nearby fetched successfully!",
+      message: "Nearby Users fetched successfully!",
       status: 200,
       count: NearLocation.length,
       Get_nearby_users: NearLocation,
     });
   } catch (error) {
-    console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -4238,7 +4213,6 @@ function distanceShownear(units, origins, destinations) {
       });
   });
 }
-
 
 exports.maps = async (req, res) => {
   try {
@@ -6456,7 +6430,6 @@ exports.add_tag = async (req, res) => {
   }
 };
 
-// new
 exports.markAsSeen = async (req, res) => {
   try {
     const { user_id, notification_id } = req.body;
@@ -6840,7 +6813,7 @@ exports.newComplete_Profile = async (req, res) => {
 };
 
 function buildSelectQuery(user_id, filters, userIds) {
-  let baseQuery = `SELECT * FROM users WHERE id!=${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`; // Start with a base query
+  let baseQuery = `SELECT * FROM users WHERE id!=${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
   let queryParams = [];
 
   console.log(filters, "filters>>>>>>>>")
@@ -6939,25 +6912,18 @@ function buildSelectQuery(user_id, filters, userIds) {
   return { query: baseQuery, params: queryParams };
 }
 
-
 function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscription_id) {
   let baseQuery = `SELECT * FROM users WHERE id != ${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
   let queryParams = [];
-
-  console.log(filters, "filters>>>>>>>>");
-
   const keysLength = Object.keys(filters).length;
-  console.log(`?????????The object has ${keysLength} keys.`);
-
   let maxProfiles;
   if (subscription_id === 1) {
     maxProfiles = 300;
   } else if (subscription_id >= 2 && subscription_id <= 5) {
     maxProfiles = 600;
   } else if (subscription_id === 6) {
-    maxProfiles = Infinity; // No limit
+    maxProfiles = Infinity; 
   }
-
   if (userIds) {
     baseQuery += " AND id NOT IN (?)";
     queryParams.push([...userIds]);
@@ -7070,8 +7036,7 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   console.log(">>>>>>>>", baseQuery)
 
   return { query: baseQuery, params: queryParams };
-}
-
+};
 
 exports.new_get_all_users = async (req, res) => {
   try {
