@@ -92,7 +92,8 @@ const {
   checkAlbumRequest,
   checkAlbumRequestNotification,
   cancelAlbumRequestNotification,
-  all_group_notifications, getUsers_by_ids } = require("../../models/users.js");
+  all_group_notifications, getUsers_by_ids,
+  delete_album_notification } = require("../../models/users.js");
 
 const {
   insertData,
@@ -169,30 +170,18 @@ function generateRandomFiveDigitNumber() {
 function distanceShow(units, origins, destinations) {
   return new Promise((resolve, reject) => {
     const apiUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=${units}&origins=${origins}&destinations=${destinations}&key=${googledistance_key}`;
-    // console.log("apiUrlapiUrlapiUrlapiUrlapiUrlapiUrl",apiUrl)
     axios.get(apiUrl)
       .then(response => {
-        // Handle the response here
-        // const distance = response.data.rows[0]?.elements[0]?.distance.text;
-        // resolve(distance);
-        // console.log("response is here ", response)
         const distanceObj = response.data.rows[0]?.elements[0];
-        console.log("distanceObj", distanceObj)
         if (distanceObj.distance) {
-          console.log("distanceObj", distanceObj)
           const distanceValue = distanceObj.distance.value;
-          console.log("distanceValue", distanceValue)
-
           const distance = distanceObj.distance.text;
-
           resolve({ distance, distanceValue });
-
         } else {
           resolve("No distance information available");
         }
       })
       .catch(error => {
-        // Handle errors here
         console.error(error);
         reject(error);
       });
@@ -271,7 +260,6 @@ async function checkSubscriptionDetail(user_id) {
     const currentDate = moment();
     let start_date = currentDate.format('YYYY-MM-DD')
     const subscriptionStatus = await ChecksubscriptionDates(user_id);
-    console.log("subscriptionStatus", subscriptionStatus);
     const Freesubscription = await Allsubscription(0);
 
     if (subscriptionStatus.length > 0) {
@@ -461,7 +449,7 @@ exports.verifyUserEmail = async (req, res) => {
     let setting = {
       explore: 1,
       distance: 1,
-      view_me: 0,
+      view_me: 1,
       user_id: data[0]?.id,
     };
     await addShowme(setting);
@@ -642,9 +630,7 @@ exports.social_login = async (req, res) => {
           username: generateRandomString(8),
         };
         const create_user = await registerUser(user);
-        let setting = {
-          explore: 1, distance: 1, view_me: 0, user_id: create_user.insertId
-        }
+        let setting = { explore: 1, distance: 1, view_me: 1, user_id: create_user.insertId }
         const caddShowme = addShowme(setting);
         const user_id = create_user.insertId;
         const token = jwt.sign(
@@ -1764,50 +1750,46 @@ exports.get_all_users = async (req, res) => {
       let all_users = await filter(age1, age2, search, user_id, body_type, relationship_status, looking_for, meet_at, height_1, height_2,
         weight_1, weight_2, online, app_verify, has_photo);
 
-      const settingshow_me = await getData("setting_show_me", `where user_id= ${user_id}`);
 
       await Promise.all(
         all_users.map(async (item) => {
           const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
           item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
-
+          console.log(settingshow_me[0]?.view_me)
+          console.log("@@@@@@@@@@@@@@@@@@@")
+          console.log("@@@@@@@@@@@@@@@@@@@")
+          console.log("@@@@@@@@@@@@@@@@@@@")
+          if (settingshow_me[0]?.view_me == 0) {
+            return
+          }
           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
             const unit = 'metric';
             const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
             const destination = item.latitude + ',' + item.longitude;
-
-            console.log("origin>>>>>>", origin);
-            console.log("dest>>>>>>>", destination);
             try {
               const disvalue = await distanceShow(unit, origin, destination);
-              console.log("disvalye >>>>>>>", disvalue)
               item.distance = disvalue.distance;
             } catch (error) {
               console.error('Error in yourAsyncFunction:', error);
-              // Handle errors as needed
             }
           } else {
             item.distance = ""
           }
           if (item.profile_image != "No image") {
-            // item.profile_image = baseurl + "/profile/" + item.profile_image;
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           }
           const profileimage = await profileimages(item.id);
-
           if (profileimage?.length > 0) {
             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
-
           const favorite_user_id = item.id;
           const check_favoritesUser = await check_favorites_User(
             user_id,
             favorite_user_id
           );
-
           if (check_favoritesUser[0].count != 0) {
             item.favorites_user = "Y";
           } else {
@@ -1823,8 +1805,6 @@ exports.get_all_users = async (req, res) => {
               array.push(item);
             }
           }
-
-
         })
       );
       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
@@ -1838,7 +1818,6 @@ exports.get_all_users = async (req, res) => {
       if (all_users.length != 0) {
         const viewd_count = await fetchVisitsInPast24Hours(user_id);
         const checkViewed = await checkViewedProfile(user_id);
-
         return res.json({
           message: "all users ",
           status: 200,
@@ -1848,8 +1827,6 @@ exports.get_all_users = async (req, res) => {
           profile_length: profile_length,
           viewed_count: viewd_count ? viewd_count.length : 0,
           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
-          // distance_statusss: (settingshow_me[0]?.distance == 1) ? true:false
-
         });
       } else {
         return res.json({
@@ -1858,7 +1835,6 @@ exports.get_all_users = async (req, res) => {
           success: false,
         });
       }
-
     }
   } catch (error) {
     console.log(error);
@@ -1980,6 +1956,9 @@ exports.my_favorite_users_list = async (req, res) => {
 
       if (user_info.length > 0) {
         const user = user_info[0];
+        const settingshow_me = await getData("setting_show_me", `where user_id= ${item.favorite_user_id}`);
+        user.distance_status = settingshow_me[0]?.distance === 1;
+        user.view_me = settingshow_me[0]?.view_me
 
         if (user.latitude && user.longitude) {
           const origin = `${check_user[0]?.latitude},${check_user[0]?.longitude}`;
@@ -1987,10 +1966,7 @@ exports.my_favorite_users_list = async (req, res) => {
           try {
             const disvalue = await distanceShow('metric', origin, destination);
             item.distance = disvalue.distance;
-
-            const settingshow_me = await getData("setting_show_me", `where user_id= ${item.favorite_user_id}`);
             user.distance = disvalue.distance;
-            user.distance_status = settingshow_me[0]?.distance === 1;
 
           } catch (error) {
             item.distance = "";
@@ -2016,15 +1992,15 @@ exports.my_favorite_users_list = async (req, res) => {
       }
     }
     array.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-
+    const filteredSortedUsers = array.filter(user => user.favorite_user_info.view_me !== 0);
     return res.json({
       message: "Successful",
       success: true,
       status: 200,
-      my_favorite_users: array,
+      count: filteredSortedUsers.length,
+      my_favorite_users: filteredSortedUsers,
     });
   } catch (error) {
-    console.error(error);
     return res.json({
       success: false,
       message: error.message,
@@ -3135,8 +3111,6 @@ exports.myAlbumSharing = async (req, res) => {
           item.hasVideo = hasVideo
         })
       );
-      var arraydata = { 'is_plus': '1' };
-      my_album.unshift(arraydata);
       return res.json({
         status: 200,
         success: true,
@@ -3726,7 +3700,6 @@ exports.get_profile_visit = async (req, res) => {
 exports.Allnotification = async (req, res) => {
   try {
     const { user_id } = req.body;
-
     const schema = Joi.alternatives(
       Joi.object({
         user_id: [Joi.number().empty().required()],
@@ -3747,21 +3720,15 @@ exports.Allnotification = async (req, res) => {
       const current_date = currentDate.format('YYYY-MM-DD');
       const notification = await Allnotification(user_id);
       if (notification.length > 0) {
-
         await Promise.all(notification.map(async (item) => {
-
           const owner_info = await Get_user_info(item.sender_id);
-
           item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
-
           const profileimage = await profileimages(item.sender_id);
-
           if (profileimage?.length > 0) {
             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
-
           item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
           const created_at = moment(item.created_at);
           const dateAfter7Days = created_at.add(7, 'days');
@@ -3769,10 +3736,7 @@ exports.Allnotification = async (req, res) => {
           if (current_date == formattedDateAfter7Days) {
             const deleteuser = await deleteNotification(item.id);
           }
-
         }));
-
-
         return res.json({
           success: true,
           message: "Successfully fetch Notification",
@@ -4036,6 +4000,7 @@ exports.new_users = async (req, res) => {
 
           const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+          item.view_me = settingshow_me[0]?.view_me
 
 
           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
@@ -4045,22 +4010,15 @@ exports.new_users = async (req, res) => {
             try {
               const disvalue = await distanceShow(unit, origin, destination);
               item.distance = disvalue.distance;
-              // item.distance_status=true;
             } catch (error) {
               console.error('Error in yourAsyncFunction:', error);
-              // Handle errors as needed
             }
           } else {
             item.distance = "";
-            // item.distance_status=false;
           }
-
-
           if (item.profile_image != "No image") {
-            // item.profile_image = baseurl + "/profile/" + item.profile_image;
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           }
-
           const profileimage = await profileimages(item.id);
 
           if (profileimage?.length > 0) {
@@ -4070,12 +4028,13 @@ exports.new_users = async (req, res) => {
           }
         })
       );
-
+      const filteredSortedUsers = get_all_new_users.filter(user => user.view_me !== 0);
       return res.json({
         success: true,
         message: "Successfully Verified!",
         status: 200,
-        get_all_new_users: get_all_new_users,
+        count: filteredSortedUsers.length,
+        get_all_new_users: filteredSortedUsers,
       });
     } else {
       return res.json({
@@ -4143,6 +4102,7 @@ exports.users_nearby = async (req, res) => {
         const settingshow_me = await getData("setting_show_me", `where user_id=${item.id}`);
         item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false;
         item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false;
+        item.view_me = settingshow_me[0]?.view_me
 
         if (item.latitude && item.longitude) {
           const unit = 'metric';
@@ -4167,12 +4127,13 @@ exports.users_nearby = async (req, res) => {
       })
     );
     NearLocation.sort((a, b) => a.distanceValue - b.distanceValue)
+    const filteredSortedUsers = NearLocation.filter(user => user.view_me !== 0);
     return res.json({
       success: true,
       message: "Nearby Users fetched successfully!",
       status: 200,
-      count: NearLocation.length,
-      Get_nearby_users: NearLocation,
+      count: filteredSortedUsers.length,
+      Get_nearby_users: filteredSortedUsers,
     });
   } catch (error) {
     return res.json({
@@ -4315,15 +4276,12 @@ exports.allShowme = async (req, res) => {
 
 exports.addShowme = async (req, res) => {
   try {
-
     const { explore, distance, view_me } = req.body;
-
     const schema = Joi.alternatives(
       Joi.object({
-        explore: [Joi.string().empty().required()],
-        distance: [Joi.string().empty().required()],
-        view_me: [Joi.string().empty().required()],
-
+        explore: [Joi.string().empty().optional().allow("").allow(null)],
+        distance: [Joi.string().empty().optional().allow("").allow(null)],
+        view_me: [Joi.string().empty().optional().allow("").allow(null)],
       })
     );
     const result = schema.validate(req.body);
@@ -4349,7 +4307,6 @@ exports.addShowme = async (req, res) => {
         let setting = {
           explore: explore, distance: distance, view_me: view_me, user_id: user_id
         }
-
         const settingshow_me = await getData("setting_show_me", `where user_id= ${user_id}`);
         if (view_me == 1) {
           let checksub = await checkSubscriptionDetail(user_id);
@@ -4361,7 +4318,6 @@ exports.addShowme = async (req, res) => {
             });
           }
         }
-
         if (settingshow_me.length > 0) {
           const addsettingshow = updateShowme(explore, distance, view_me, user_id);
           const settingshow_me1 = await getData(
@@ -4439,6 +4395,8 @@ exports.send_notification = async (req, res) => {
         const Get_fcm = await fetch_fcm(reciver_id);
         let where = "WHERE sender_id = '" + sender_id + "' AND reciver_id = '" + reciver_id + "' AND notification_type='visit' ";
         const checkvisit = await getSelectedColumn("`notifications`", where, "*");
+        console.log(Get_fcm[0].dont_disturb)
+        console.log("disturb user data ")
         if (checkvisit.length == 0 && Get_fcm[0].dont_disturb == 1) {
           let user_id = sender_id
           const send_notification = {
@@ -4450,7 +4408,7 @@ exports.send_notification = async (req, res) => {
           };
           await addnotification(send_notification);
           return res.json({
-            message: "Visit Notification send successfully",
+            message: "Visit Notification send successfully Don't Distub Mode",
             success: true,
             status: 200
           });
@@ -4464,7 +4422,7 @@ exports.send_notification = async (req, res) => {
           const message = {
             token: Get_fcm[0].fcm_token,
             notification: {
-              title: "visit profile",
+              title: "profile visit",
               body: data[0].username + " visit your profile",
             },
 
@@ -4486,13 +4444,9 @@ exports.send_notification = async (req, res) => {
             sender_id: sender_id,
             reciver_id: reciver_id,
             body: "visit profile",
-            // username: data[0].username,
-            // profile_image: 'http://64.225.88.156:5000/profile/' + data[0].profile_image,
             notification_type: "visit",
           };
-
           const result = await addnotification(send_notification);
-
           return res.json({
             message: "Notification send successfull",
             success: true,
@@ -4520,11 +4474,7 @@ exports.send_notification = async (req, res) => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
-                if (token.dont_disturb == 1) {
-                  return;
-                }
                 await new Promise(async (resolve, reject) => {
-                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
                   const send_notification = {
                     user_id: token.id,
                     sender_id: sender_id,
@@ -4536,6 +4486,12 @@ exports.send_notification = async (req, res) => {
                     notification_type: "group_request",
                   };
                   const result1 = await addnotification(send_notification);
+                  let response = null
+                  if (token.dont_disturb == 1) {
+                    console.log("Don't disturb user ")
+                  } else {
+                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  }
                   resolve(response);
                 });
               }
@@ -4754,11 +4710,13 @@ exports.send_notification = async (req, res) => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
-                if (token.dont_disturb == 1 || token.group_notification == 0) {
-                  return;
-                }
                 await new Promise(async (resolve, reject) => {
-                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  let response = null
+                  if (token.dont_disturb == 1 || token.group_notification == 0) {
+                    console.log("don't disturb user")
+                  } else {
+                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  }
                   resolve(response)
                 });
               } catch (error) {
@@ -4800,11 +4758,13 @@ exports.send_notification = async (req, res) => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
-                if (token.dont_disturb == 1 || token.taps_notification == 0) {
-                  return;
-                }
                 await new Promise(async (resolve, reject) => {
-                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  let response = null;
+                  if (token.dont_disturb == 1 || token.taps_notification == 0) {
+                    console.log("Don't Disturb User")
+                  } else {
+                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  }
                   resolve(response)
                 });
               } catch (error) {
@@ -4846,11 +4806,8 @@ exports.send_notification = async (req, res) => {
           try {
             await Promise.all(allFcmTokens.map(async (token) => {
               try {
-                if (token.dont_disturb == 1) {
-                  return;
-                }
+
                 await new Promise(async (resolve, reject) => {
-                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
                   const send_notification = {
                     user_id: token.id,
                     sender_id: sender_id,
@@ -4862,6 +4819,12 @@ exports.send_notification = async (req, res) => {
                     notification_type: "album_request",
                   };
                   const result1 = await addnotification(send_notification);
+                  let response = null
+                  if (token.dont_disturb == 1) {
+                    console.log("Don't Disturb User ")
+                  } else {
+                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  }
                   resolve(response);
                 });
               } catch (error) {
@@ -5169,7 +5132,6 @@ exports.get_user_by_id = async (req, res) => {
     })
   );
   const result = schema.validate(req.body);
-  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", req.body)
 
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
@@ -6401,7 +6363,6 @@ exports.add_tag = async (req, res) => {
       const savedData = {
         tag_name: tags_name,
       };
-      console.log(">>>>>>>>>>>>>>>>>>saaaaa", savedData);
       let result = await inserttags(savedData);
       if (result.affectedRows > 0) {
 
@@ -6502,10 +6463,9 @@ exports.getGames = async (req, res) => {
       data: data[0]
     })
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: 200,
-      message: 'Internal Server Error',
+      message: error.message,
       success: false,
       error: error
     })
@@ -6543,10 +6503,9 @@ exports.markAllSeen = async (req, res) => {
 
     }
   } catch (error) {
-    console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -6653,7 +6612,6 @@ exports.newEditProfile = async (req, res) => {
           CountryCode: CountryCode ? CountryCode : userInfo[0].CountryCode
         };
 
-        console.log(user);
         const result = await newUpdateUserById(user, user_id);
         if (result.affectedRows) {
           return res.json({
@@ -6802,10 +6760,9 @@ exports.newComplete_Profile = async (req, res) => {
       }
     }
   } catch (err) {
-    console.log(err);
     return res.json({
       success: false,
-      message: "Internal server error",
+      message: err.message,
       error: err,
       status: 500,
     });
@@ -6815,8 +6772,6 @@ exports.newComplete_Profile = async (req, res) => {
 function buildSelectQuery(user_id, filters, userIds) {
   let baseQuery = `SELECT * FROM users WHERE id!=${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
   let queryParams = [];
-
-  console.log(filters, "filters>>>>>>>>")
   if (userIds) {
     baseQuery += " AND id NOT IN (?)";
     queryParams.push([...userIds]);
@@ -6883,7 +6838,6 @@ function buildSelectQuery(user_id, filters, userIds) {
     queryParams.push(filters.age2);
   }
   if (filters.online !== null && filters.online !== undefined) {
-    console.log("hello>>>>>>>>>>>>")
     baseQuery += " AND online_status = ?";
     queryParams.push(parseInt(filters.online));
   }
@@ -6922,7 +6876,7 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   } else if (subscription_id >= 2 && subscription_id <= 5) {
     maxProfiles = 600;
   } else if (subscription_id === 6) {
-    maxProfiles = Infinity; 
+    maxProfiles = Infinity;
   }
   if (userIds) {
     baseQuery += " AND id NOT IN (?)";
@@ -6933,7 +6887,6 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
     queryParams.push([...chatted_userIds]);
   }
   if (keysLength === 0) {
-    console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa')
     baseQuery += " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
   }
 
@@ -6993,7 +6946,6 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   }
 
   if (filters.online !== null && filters.online !== undefined) {
-    console.log("hello>>>>>>>>>>>>");
     baseQuery += " AND online_status = ?";
     queryParams.push(parseInt(filters.online));
   }
@@ -7022,8 +6974,6 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
     baseQuery += ')';
   }
 
-  // Add ORDER BY clause to sort the results by id in descending order
-
   let effectiveLimit;
   if (maxProfiles === Infinity) {
     effectiveLimit = 100000000;
@@ -7032,11 +6982,9 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   }
   baseQuery += ` ORDER BY id DESC LIMIT ? `;
   queryParams.push(effectiveLimit);
-
-  console.log(">>>>>>>>", baseQuery)
-
   return { query: baseQuery, params: queryParams };
 };
+
 
 exports.new_get_all_users = async (req, res) => {
   try {
@@ -7096,17 +7044,14 @@ exports.new_get_all_users = async (req, res) => {
       }
       let userIds = null;
       let chatted_userIds = null
-      if (havent_chatted_userIds) {
-        userIds = havent_chatted_userIds.split(',').map(item => parseInt(item));
-      }
-      if (all_chatted_userIds) {
-        chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item));
-      }
+      if (havent_chatted_userIds) { userIds = havent_chatted_userIds.split(',').map(item => parseInt(item)); }
+      if (all_chatted_userIds) { chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item)); }
       const subscriptionStatus = await checkSubscriptionDetail(user_id);
       const subscription_id = subscriptionStatus.id
       const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
       let all_users = await selectUsersByFilters(query, params);
-      /*await Promise.all(
+
+      await Promise.all(
         all_users.map(async (item) => {
           let birthdate = item.DOB;
           let get_age = calculateAge(birthdate);
@@ -7114,20 +7059,19 @@ exports.new_get_all_users = async (req, res) => {
           const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
           item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+          item.view_me = settingshow_me[0]?.view_me
+
+
+
 
           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
             const unit = 'metric';
             const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
             const destination = item.latitude + ',' + item.longitude;
-
-            console.log("origin>>>>>>", origin);
-            console.log("dest>>>>>>>", destination);
             try {
               const disvalue = await distanceShow(unit, origin, destination);
-              console.log("disvalye >>>>>>>", disvalue)
               item.distance = disvalue.distance;
             } catch (error) {
-              console.log("<<<<<<>>>>><>>,errorsssss")
               console.error('Error in yourAsyncFunction:', error);
             }
           } else {
@@ -7137,19 +7081,16 @@ exports.new_get_all_users = async (req, res) => {
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           }
           const profileimage = await profileimages(item.id);
-
           if (profileimage?.length > 0) {
             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
           } else {
             item.images = [];
           }
-
           const favorite_user_id = item.id;
           const check_favoritesUser = await check_favorites_User(
             user_id,
             favorite_user_id
           );
-
           if (check_favoritesUser[0].count != 0) {
             item.favorites_user = "Y";
           } else {
@@ -7159,76 +7100,14 @@ exports.new_get_all_users = async (req, res) => {
           item.admin = false;
           item.album_id = 0;
           const My1Albums = await MyAlbums(item.id);
-
           if (My1Albums.length > 0) {
             item.album_id = My1Albums[0]?.id;
             if (has_album != undefined && has_album != "" && has_album != "0") {
               array.push(item);
             }
           }
-
-
         })
-      );*/
-
-      for (item of all_users) {
-        let birthdate = item.DOB;
-        let get_age = calculateAge(birthdate);
-        item.age = get_age;
-        const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
-        item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
-        item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
-
-        if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
-          const unit = 'metric';
-          const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
-          const destination = item.latitude + ',' + item.longitude;
-          try {
-            const disvalue = await distanceShow(unit, origin, destination);
-            item.distance = disvalue.distance;
-          } catch (error) {
-            console.error('Error in yourAsyncFunction:', error);
-          }
-        } else {
-          item.distance = ""
-        }
-        if (item.profile_image != "No image") {
-          item.profile_image = baseurl + "/profile/" + item.profile_image;
-        }
-        const profileimage = await profileimages(item.id);
-
-        if (profileimage?.length > 0) {
-          item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
-        } else {
-          item.images = [];
-        }
-
-        const favorite_user_id = item.id;
-        const check_favoritesUser = await check_favorites_User(
-          user_id,
-          favorite_user_id
-        );
-
-        if (check_favoritesUser[0].count != 0) {
-          item.favorites_user = "Y";
-        } else {
-          item.favorites_user = "N";
-        }
-        item.select = false;
-        item.admin = false;
-        item.album_id = 0;
-        const My1Albums = await MyAlbums(item.id);
-
-        if (My1Albums.length > 0) {
-          item.album_id = My1Albums[0]?.id;
-          if (has_album != undefined && has_album != "" && has_album != "0") {
-            array.push(item);
-          }
-        }
-
-
-      }
-
+      );
 
       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
@@ -7237,7 +7116,6 @@ exports.new_get_all_users = async (req, res) => {
       } else {
         all_users = all_users;
       }
-
       if (all_users.length > 0) {
         const viewd_count = await fetchVisitsInPast24Hours(user_id);
         const checkViewed = await checkViewedProfile(user_id);
@@ -7245,9 +7123,7 @@ exports.new_get_all_users = async (req, res) => {
         let final_users = []
         const userIdsArray = userWithImages[0].user_ids.split(',').map((ele) => parseInt(ele));
         if (has_photo == "1") {
-          console.log("controll_reaches_here")
           final_users = all_users.filter((user) => {
-
             return userIdsArray.includes(user.id)
           })
           all_users = final_users
@@ -7256,7 +7132,7 @@ exports.new_get_all_users = async (req, res) => {
         //===================== Change ==================
         const usersWithDistance = all_users
           .filter((user) => user.distance)
-          .map((user) => {
+          .map(async (user) => {
             const distance = user.distance.trim();
             let distanceInMeters;
             if (distance.endsWith("km")) {
@@ -7266,7 +7142,6 @@ exports.new_get_all_users = async (req, res) => {
             } else {
               distanceInMeters = Infinity;
             }
-
             return { ...user, distanceInMeters };
           })
           .sort((a, b) => a.distanceInMeters - b.distanceInMeters);
@@ -7275,24 +7150,16 @@ exports.new_get_all_users = async (req, res) => {
         const sortedUsers = [...usersWithDistance, ...usersWithoutDistance];
 
         //===================== Change ==================
-
-
+        const filteredSortedUsers = sortedUsers.filter(user => user.view_me !== 0);
         return res.json({
           message: "all users ",
           status: 200,
           success: true,
-          total: all_users.length,
-          all_users: sortedUsers,
+          total: filteredSortedUsers.length,
+          all_users: filteredSortedUsers,
           profile_length: profile_length,
           viewed_count: viewd_count ? viewd_count.length : 0,
           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
-          // userWithImages,
-          // userIdsArray,
-          // final_users,
-          // totalLength:final_users.length,
-          // data:`${has_photo}/here`
-          // distance_statusss: (settingshow_me[0]?.distance == 1) ? true:false
-
         });
       } else {
         return res.json({
@@ -7301,19 +7168,16 @@ exports.new_get_all_users = async (req, res) => {
           success: false,
         });
       }
-
     }
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: error.message,
       status: 500,
       error: error,
     });
   }
 };
-
 
 exports.deleteProfileimage = async (req, res) => {
   try {
@@ -7350,16 +7214,14 @@ exports.deleteProfileimage = async (req, res) => {
       success: true,
     })
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: 200,
-      message: 'Internal Server Error',
+      message: error.message,
       success: false,
       error: error
     })
   }
 };
-
 
 exports.new_add_Album = async (req, res) => {
   try {
@@ -7440,10 +7302,9 @@ exports.new_add_Album = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -7453,8 +7314,6 @@ exports.new_add_Album = async (req, res) => {
 exports.get_my_Albums_To_share = async (req, res) => {
   try {
     const { reciver_id, sender_id } = req.body;
-    //reciver => my albums
-    //sender => the user to share it 
     const schema = Joi.alternatives(
       Joi.object({
         reciver_id: Joi.number().required(),
@@ -7479,42 +7338,28 @@ exports.get_my_Albums_To_share = async (req, res) => {
       const albumImages = await albumsPhotos(reciver_id, album.id);
 
       if (albumImages.length > 0) {
-
         album.count = albumImages.length
-
         album.image = albumImages[0].album_image;
       }
       else {
-
         album.count = 0
-
         album.image = "No image"
       }
-
       const albumShared = await isAlbumShare(album.id, reciver_id, sender_id);
-
       if (albumShared.length > 0) {
         album.isShared = true
-      }
-      else {
-        album.isShared = false
-      }
+      } else { album.isShared = false }
     }))
-
     return res.status(200).json({
       status: 200,
       message: 'My albums to share ',
       success: true,
       myAlbums
     })
-
-
-
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: 200,
-      message: 'Internal Server Error',
+      message: error.message,
       success: false,
       error: error
     })
@@ -7558,12 +7403,10 @@ exports.shareMyAlbums = async (req, res) => {
       message: 'Shared The albums',
       success: true,
     })
-
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: 200,
-      message: 'Internal Server Error',
+      message: error.message,
       success: false,
       error: error
     })
@@ -7574,42 +7417,27 @@ exports.shareMyAlbums = async (req, res) => {
 exports.getAllbums = async (req, res) => {
   try {
     let { userId } = req.params;
-
     userId = parseInt(userId);
-
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
     const decoded = jwt.decode(token);
     const my_user_id = decoded.data.id;
-
     var albumlimit = "";
     const user_info = await getData("users", `where id= ${my_user_id}`);
     let cheksub = await checkSubscriptionDetail(my_user_id);
-
-    console.log("checksub,", cheksub)
-
     if (cheksub) {
       albumlimit = cheksub.album;
     } else {
       albumlimit = "";
     }
-
     albumlimit = parseInt(albumlimit)
-
-
     if (albumlimit === 1) {
       albumlimit = Infinity
     }
-
-    console.log(albumlimit, "albumLimut")
     const latestSharedAlbums = await getLatestSharedAlbums(my_user_id, albumlimit);
-
-    console.log(latestSharedAlbums)
     const latestSharedAlbumIds = latestSharedAlbums.map(row => row.album_id);
     const allSharedAlbums = await getAllSharedAlbums(userId, my_user_id);
-
-    console.log("allSharedAbluns", allSharedAlbums)
     const allSharedAlbumIds = allSharedAlbums.map(row => row.album_id);
     const viewedAlbumIds = allSharedAlbumIds.filter(id => latestSharedAlbumIds.includes(id))
     const blurredAlbumIds = allSharedAlbumIds.filter(id => !viewedAlbumIds.includes(id));
@@ -7648,14 +7476,10 @@ exports.getAllbums = async (req, res) => {
         album.count = 0
         album.image = "No image"
       }
-
       album.hasImage = hasImage;
       album.hasVideo = hasVideo
-
     }))
-
     const blurredAlbumDetails = await getAlbumDetails(blurredAlbumIds);
-
     await Promise.all(blurredAlbumDetails.map(async (album) => {
       const albumImages = await albumsPhotos(album.user_id, album.id);
       let hasImage = false;
@@ -7687,24 +7511,19 @@ exports.getAllbums = async (req, res) => {
         album.count = 0
         album.image = "No image"
       }
-
       album.hasImage = hasImage;
       album.hasVideo = hasVideo
     }))
-
-    res.json({
+    return res.json({
       status: 200,
       success: true,
       viewableAlbums: viewableAlbumDetails,
       blurredAlbums: blurredAlbumDetails,
-
     });
-
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       status: 200,
-      message: 'Internal Server Error',
+      message: error.message,
       success: false,
       error: error
     })
@@ -7713,20 +7532,18 @@ exports.getAllbums = async (req, res) => {
 }
 
 exports.cancelAlbumRequest = async (req, res) => {
-  const { user_id } = req.body;
+  const { user_id, notification_id } = req.body;
   const schema = Joi.alternatives(
     Joi.object({
       user_id: [Joi.number().empty().required()],
+      notification_id: [Joi.number().empty().required()],
     })
   );
   const result = schema.validate(req.body);
-
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
   const token = token_1.replace("Bearer ", "");
   const decoded = jwt.decode(token);
-  const check_user = await getData("users", `where id= ${decoded.data.id}`);
-  const settingshow_me = await getData("setting_show_me", `where user_id= ${decoded.data.id}`);
 
   if (result.error) {
     const message = result.error.details.map((i) => i.message).join(",");
@@ -7739,8 +7556,9 @@ exports.cancelAlbumRequest = async (req, res) => {
     });
   } else {
     const user_detail = await getUser_by_id(user_id);
+    // await cancelAlbumRequestNotification(decoded.data.id, parseInt(user_id))
+    let result_delete_notification = await delete_album_notification(notification_id)
 
-    await cancelAlbumRequestNotification(decoded.data.id, parseInt(user_id))
 
     if (user_detail !== 0) {
       return res.json({
@@ -7750,7 +7568,6 @@ exports.cancelAlbumRequest = async (req, res) => {
       });
     }
     else {
-      // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
       return res.json({
         status: 404,
         success: false,
@@ -7778,7 +7595,6 @@ exports.createInvoice = async (req, res) => {
   // let user_id = 6
   // let plan_id = 2
   let cheksub = await fetch_subscription_plan(user_id, plan_id);
-  console.log('cheksub', cheksub);
   if (cheksub.length > 0) {
     let number_fetch = await generateRandomFiveDigitNumber()
     console.log('number_fetch', `xdar${number_fetch}`);

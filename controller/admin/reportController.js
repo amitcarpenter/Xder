@@ -185,10 +185,8 @@ exports.get_all_report = async (req, res) => {
         const updatedReports = await Promise.all(reports.map(async (report) => {
             const sender_query = 'SELECT * FROM users WHERE id = ?';
             const receiver_query = 'SELECT * FROM users WHERE id = ?';
-
             const [sender] = await db.query(sender_query, [report.sender_id]);
             const [receiver] = await db.query(receiver_query, [report.reciver_id]);
-
             return {
                 ...report,
                 sender,

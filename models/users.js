@@ -799,8 +799,14 @@ module.exports = {
   getUsers_by_ids: async (user_ids) => {
     const placeholders = user_ids.map(() => '?').join(','); // Create placeholders for SQL query
     return db.query(`SELECT * FROM users WHERE id IN (${placeholders})`, user_ids);
-  }
+  },
 
-
+  delete_album_notification: async (notification_id) => {
+    if (!notification_id) {
+      throw new Error("Notification ID is required");
+    }
+    return db.query(`DELETE FROM notifications WHERE id = ?`, [notification_id]);
+  },
+  
 
 }
