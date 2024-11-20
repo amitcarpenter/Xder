@@ -499,7 +499,6 @@ module.exports = {
     return db.query("insert into setting_show_me set ?", [showme]);
   },
 
-
   deleteProfileimages: async (user_id) => {
     return db.query(`DELETE FROM profile_images WHERE id NOT IN (SELECT id FROM (SELECT id FROM profile_images where user_id = '${user_id}' ORDER BY id DESC LIMIT 5) AS last_five) AND user_id = '${user_id}'`);
   },
@@ -514,11 +513,9 @@ module.exports = {
     return db.query(`select * from users ${where} `);
   },
 
-  // kaif code here
   getUser_by_id: async (user_id) => {
     return db.query('SELECT * FROM users WHERE id =?', [user_id])
   },
-
 
   block_unblock: async (user_id, block_id, block_status) => {
     return db.query(`Update block_user set block_status= '${block_status}' where user_id = '${user_id}' and block_id='${block_id}'`);
@@ -797,7 +794,7 @@ module.exports = {
     return db.query(`select * from notifications where sender_id = '${sender_id}'  and notification_type = 'group_request' ORDER BY id DESC `);
   },
   getUsers_by_ids: async (user_ids) => {
-    const placeholders = user_ids.map(() => '?').join(','); // Create placeholders for SQL query
+    const placeholders = user_ids.map(() => '?').join(',');
     return db.query(`SELECT * FROM users WHERE id IN (${placeholders})`, user_ids);
   },
 
@@ -807,6 +804,6 @@ module.exports = {
     }
     return db.query(`DELETE FROM notifications WHERE id = ?`, [notification_id]);
   },
-  
+
 
 }
