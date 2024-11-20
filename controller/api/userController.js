@@ -438,7 +438,7 @@ exports.verifyUserEmail = async (req, res) => {
     let setting = {
       explore: 1,
       distance: 1,
-      view_me: 0,
+      view_me: 1,
       user_id: data[0]?.id,
     };
     await addShowme(setting);
@@ -620,7 +620,7 @@ exports.social_login = async (req, res) => {
           username: generateRandomString(8),
         };
         const create_user = await registerUser(user);
-        let setting = { explore: 1, distance: 1, view_me: 0, user_id: create_user.insertId }
+        let setting = { explore: 1, distance: 1, view_me: 1, user_id: create_user.insertId }
         const caddShowme = addShowme(setting);
         const user_id = create_user.insertId;
         const token = jwt.sign(
@@ -3330,7 +3330,12 @@ exports.group_notification = async (req, res) => {
           },
         };
         return new Promise(async (resolve) => {
-          const response = await userFcm.messaging().send(message);
+          let response = null
+          try {
+            response = await userFcm.messaging().send(message);
+          } catch (error) {
+            console.log(error.message)
+          }
           const sendNotification = {
             sender_id: user_id,
             reciver_id: id_1,
@@ -3560,6 +3565,107 @@ exports.profile_visit = async (req, res) => {
   }
 };
 
+// exports.get_profile_visit = async (req, res) => {
+//   try {
+//     const { user_id } = req.body;
+//     const schema = Joi.alternatives(
+//       Joi.object({
+//         user_id: [Joi.number().empty().required()],
+//       })
+//     );
+//     const result = schema.validate(req.body);
+//     if (result.error) {
+//       const message = result.error.details.map((i) => i.message).join(",");
+//       return res.json({
+//         message: result.error.details[0].message,
+//         error: message,
+//         missingParams: result.error.details[0].message,
+//         status: 400,
+//         success: false,
+//       });
+//     } else {
+//       const user_info = await Get_user_info(user_id);
+//       if (!user_info) {
+//         return res.json({
+//           success: true,
+//           message: "No Data Found",
+//           status: 200,
+//         });
+//       }
+//       const Get_profile_vist = await fetchVisitsInPast24Hours(user_id);
+//       const checkSubscription = await checkSubscriptionDetail(user_id);
+//       await Promise.all(
+//         Get_profile_vist.map(async (item) => {
+//           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+//             const unit = 'metric';
+//             const origin = user_info[0]?.latitude + ',' + user_info[0]?.longitude;
+//             const destination = item.latitude + ',' + item.longitude;
+//             try {
+//               const disvalue = await distanceShow(unit, origin, destination);
+//             } catch (error) {
+//               console.error('Error in yourAsyncFunction:', error);
+//             }
+//           } else {
+//             // item.distance = "0"
+//           }
+//           let visitor_id = item.user_id
+//           const [user_info_second] = await Get_user_info(visitor_id);
+//           console.log(user_info_second)
+//           console.log(visitor_id)
+//           if (!user_info_second) {
+//             item.exclude
+//             return
+//           }
+//           console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+//           console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+//           const profileimage = await profileimages(item.user_id);
+//           if (profileimage?.length > 0) {
+//             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
+//           } else {
+//             item.images = [];
+//           }
+//           // item.visit_user_username = user_info_second.username
+//           item.visit_user_username = "demo"
+//           item.user_profile = user_info_second
+//           // item.visit_user_profile_image = user_info_second.profile_image
+//           item.visit_user_profile_image = "demo"
+//           item.id = item.user_id
+//           item.admin = false
+//           item.isBlockStatus = 0
+//         })
+//       );
+//       if (Get_profile_vist.length > 0) {
+//         const updateprofileview = await update_viewed_profile(user_id);
+//         return res.json({
+//           success: true,
+//           message: "Successfully",
+//           status: 200,
+//           Subscription: checkSubscription.plan_name,
+//           Get_profile_vist: Get_profile_vist,
+//           vist_count: Get_profile_vist ? Get_profile_vist.length : 0
+//         });
+//       }
+//       else {
+//         return res.json({
+//           success: false,
+//           message: "User Not Found",
+//           status: 400,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.json({
+//       success: false,
+//       message: error.message,
+//       status: 500,
+//       error: error,
+//     });
+//   }
+// };
+
+
 exports.get_profile_visit = async (req, res) => {
   try {
     const { user_id } = req.body;
@@ -3578,78 +3684,71 @@ exports.get_profile_visit = async (req, res) => {
         status: 400,
         success: false,
       });
-    } else {
-      const user_info = await Get_user_info(user_id);
+    }
 
-      if (user_info.length > 0) {
-        const Get_profile_vist = await fetchVisitsInPast24Hours(user_id);
-        const checkSubscription = await checkSubscriptionDetail(user_id);
-        await Promise.all(
-          Get_profile_vist.map(async (item) => {
-            if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
-              const unit = 'metric';
-              const origin = user_info[0]?.latitude + ',' + user_info[0]?.longitude;
-              const destination = item.latitude + ',' + item.longitude;
-              try {
-                const disvalue = await distanceShow(unit, origin, destination);
-              } catch (error) {
-                console.error('Error in yourAsyncFunction:', error);
-              }
-              // const distance = calculateDistance(user_info[0]?.latitude, user_info[0]?.longitude, item.latitude, item.longitude);
+    const user_info = await Get_user_info(user_id);
+    if (!user_info) {
+      return res.json({
+        success: true,
+        message: "No Data Found",
+        status: 200,
+      });
+    }
 
-              // if (distance.toFixed(2) != "NaN") {
-              //   item.distance = distance.toFixed(2)
-              // } else {
-              //   item.distance = "0";
-              // }
-            } else {
-              // item.distance = "0"
-            }
-            let visitor_id = item.user_id
-            const user_info = await Get_user_info(visitor_id);
-            if (user_info[0].profile_image != "No image") {
-              // item.profile_image = baseurl + "/profile/" + item.profile_image;
-              user_info[0].profile_image = baseurl + "/profile/" + user_info[0].profile_image;
-            }
-            const profileimage = await profileimages(item.user_id);
+    const Get_profile_vist = await fetchVisitsInPast24Hours(user_id);
+    const checkSubscription = await checkSubscriptionDetail(user_id);
 
-            if (profileimage?.length > 0) {
-              item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
-            } else {
-              item.images = [];
-            }
-            item.visit_user_username = user_info[0].username
-            item.visit_user_profile_image = user_info[0].profile_image
-            item.id = item.user_id
-            item.admin = false
-            item.isBlockStatus = 0
-
-          })
-        );
-        if (Get_profile_vist.length > 0) {
-          const updateprofileview = await update_viewed_profile(user_id);
-          return res.json({
-            success: true,
-            message: "Successfully",
-            status: 200,
-            Subscription: checkSubscription.plan_name,
-            Get_profile_vist: Get_profile_vist,
-            vist_count: Get_profile_vist ? Get_profile_vist.length : 0
-          });
-        } else {
-          return res.json({
-            success: true,
-            message: "No Data Found",
-            status: 200,
-          });
+    const filteredVisits = [];
+    for (const item of Get_profile_vist) {
+      if (item.latitude && item.longitude) {
+        const unit = "metric";
+        const origin = user_info[0]?.latitude + "," + user_info[0]?.longitude;
+        const destination = item.latitude + "," + item.longitude;
+        try {
+          await distanceShow(unit, origin, destination);
+        } catch (error) {
+          console.error("Error in distance calculation:", error);
         }
-      } else {
-        return res.json({
-          success: false,
-          message: "User Not Found",
-          status: 400,
-        });
       }
+
+      const visitor_id = item.user_id;
+      const [user_info_second] = await Get_user_info(visitor_id);
+
+      if (!user_info_second) {
+        continue;
+      }
+
+      const profileimage = await profileimages(item.user_id);
+      item.images = profileimage?.length > 0
+        ? profileimage.map(imageObj => imageObj.image ? baseurl + "/profile/" + imageObj.image : "")
+        : [];
+
+      item.visit_user_username = user_info_second.username
+      item.visit_user_profile_image = user_info_second.profile_image
+      item.id = item.user_id;
+      item.admin = false;
+      item.isBlockStatus = 0;
+
+      // Add processed item to filteredVisits
+      filteredVisits.push(item);
+    }
+
+    if (filteredVisits.length > 0) {
+      await update_viewed_profile(user_id);
+      return res.json({
+        success: true,
+        message: "Successfully",
+        status: 200,
+        Subscription: checkSubscription.plan_name,
+        Get_profile_vist: filteredVisits,
+        vist_count: filteredVisits.length,
+      });
+    } else {
+      return res.json({
+        success: false,
+        message: "User Not Found",
+        status: 400,
+      });
     }
   } catch (error) {
     console.log(error);
@@ -3661,6 +3760,8 @@ exports.get_profile_visit = async (req, res) => {
     });
   }
 };
+
+
 
 exports.Allnotification = async (req, res) => {
   try {
@@ -3967,8 +4068,6 @@ exports.new_users = async (req, res) => {
           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
           item.view_me = settingshow_me[0]?.view_me
           item.explore = settingshow_me[0]?.explore
-
-
           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
             const unit = 'metric';
             const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
@@ -4010,13 +4109,11 @@ exports.new_users = async (req, res) => {
         get_all_new_users: [],
       });
     }
-
-
   } catch (error) {
     console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message:error.message,
       status: 500,
       error: error,
     });
@@ -4273,16 +4370,16 @@ exports.addShowme = async (req, res) => {
           explore: explore, distance: distance, view_me: view_me, user_id: user_id
         }
         const settingshow_me = await getData("setting_show_me", `where user_id= ${user_id}`);
-        if (view_me == 1) {
-          let checksub = await checkSubscriptionDetail(user_id);
-          if (checksub?.id != 6) {
-            return res.json({
-              message: " To use this feature please upgrade to full plan  ",
-              success: false,
-              status: 400,
-            });
-          }
+        // if (view_me == 1) {
+        let checksub = await checkSubscriptionDetail(user_id);
+        if (checksub?.id != 6) {
+          return res.json({
+            message: " To use this feature please upgrade to full plan  ",
+            success: false,
+            status: 400,
+          });
         }
+        // }
         if (settingshow_me.length > 0) {
           const addsettingshow = updateShowme(explore, distance, view_me, user_id);
           const settingshow_me1 = await getData(
@@ -4361,7 +4458,15 @@ exports.send_notification = async (req, res) => {
         let where = "WHERE sender_id = '" + sender_id + "' AND reciver_id = '" + reciver_id + "' AND notification_type='visit' ";
         const checkvisit = await getSelectedColumn("`notifications`", where, "*");
         console.log(Get_fcm[0].dont_disturb)
-        console.log("disturb user data ")
+        const settingshow_me = await getData("setting_show_me", `where user_id= ${sender_id}`);
+        let view_visit_setting = settingshow_me[0].view_me
+        if (view_visit_setting == 0) {
+          return res.json({
+            message: "You are Restrict the Notification System on visit",
+            success: true,
+            status: 200
+          });
+        }
         if (checkvisit.length == 0 && Get_fcm[0].dont_disturb == 1) {
           let user_id = sender_id
           const send_notification = {
@@ -4390,7 +4495,6 @@ exports.send_notification = async (req, res) => {
               title: "profile visit",
               body: data[0].username + " visit your profile",
             },
-
             data: {
               sender_id: `${sender_id}`,
               reciver_id: `${reciver_id}`,
@@ -4398,7 +4502,14 @@ exports.send_notification = async (req, res) => {
             },
           };
           try {
-            const response = await userFcm.messaging().send(message);
+
+            let response = null;
+            try {
+              response = await userFcm.messaging().send(message);
+            } catch (error) {
+              console.error(error.message)
+            }
+
             console.log('Successfully sent message:', response);
           } catch (error) {
             console.error('Error sending message:', error);
@@ -4418,7 +4529,6 @@ exports.send_notification = async (req, res) => {
             status: 200
           });
         }
-
       } else if (notification_type == 'group_request') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
@@ -4455,7 +4565,11 @@ exports.send_notification = async (req, res) => {
                   if (token.dont_disturb == 1) {
                     console.log("Don't disturb user ")
                   } else {
-                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    try {
+                      response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    } catch (error) {
+                      console.error(error.message)
+                    }
                   }
                   resolve(response);
                 });
@@ -4528,7 +4642,12 @@ exports.send_notification = async (req, res) => {
         }
         const result = await addnotification(send_notification);
         try {
-          const response = await userFcm.messaging().send(message);
+          let response = null;
+          try {
+            response = await userFcm.messaging().send(message);
+          } catch (error) {
+            console.error(error.message)
+          }
         } catch (error) {
           console.error('Error sending message:', error);
         }
@@ -4593,8 +4712,9 @@ exports.send_notification = async (req, res) => {
 
         const result = await addnotification(send_notification);
 
+        let response = null;
         try {
-          const response = await userFcm.messaging().send(message);
+          response = await userFcm.messaging().send(message);
           console.log('Successfully sent message:', response);
         } catch (error) {
           console.error('Error sending message:', error);
@@ -4632,7 +4752,13 @@ exports.send_notification = async (req, res) => {
                   return;
                 }
                 await new Promise(async (resolve, reject) => {
-                  const response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+
+                  let response = null;
+                  try {
+                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                  } catch (error) {
+                    console.error(error.message)
+                  }
                   resolve(response)
                 });
               } catch (error) {
@@ -4680,7 +4806,11 @@ exports.send_notification = async (req, res) => {
                   if (token.dont_disturb == 1 || token.group_notification == 0) {
                     console.log("don't disturb user")
                   } else {
-                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    try {
+                      response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    } catch (error) {
+                      console.error(error.message)
+                    }
                   }
                   resolve(response)
                 });
@@ -4728,7 +4858,11 @@ exports.send_notification = async (req, res) => {
                   if (token.dont_disturb == 1 || token.taps_notification == 0) {
                     console.log("Don't Disturb User")
                   } else {
-                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    try {
+                      response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    } catch (error) {
+                      console.error(error.message)
+                    }
                   }
                   resolve(response)
                 });
@@ -4788,7 +4922,11 @@ exports.send_notification = async (req, res) => {
                   if (token.dont_disturb == 1) {
                     console.log("Don't Disturb User ")
                   } else {
-                    response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    try {
+                      response = await userFcm.messaging().send({ ...message, token: token.fcm_token });
+                    } catch (error) {
+                      console.error(error.message)
+                    }
                   }
                   resolve(response);
                 });
@@ -4848,7 +4986,12 @@ exports.send_notification = async (req, res) => {
           },
         };
         try {
-          const response = await userFcm.messaging().send(message);
+          let response = null;
+          try {
+            response = await userFcm.messaging().send(message);
+          } catch (error) {
+            console.error(error.message)
+          }
         } catch (error) {
           console.error('Error sending message:', error);
         }
@@ -4908,7 +5051,12 @@ exports.send_notification = async (req, res) => {
           },
         };
         try {
-          const response = await userFcm.messaging().send(message);
+          let response = null;
+          try {
+            response = await userFcm.messaging().send(message);
+          } catch (error) {
+            console.error(error.message)
+          }
           console.log('Successfully sent message:', response);
         } catch (error) {
           console.error('Error sending message:', error);
@@ -7524,6 +7672,11 @@ exports.getAllbums = async (req, res) => {
 
 exports.cancelAlbumRequest = async (req, res) => {
   const { user_id, notification_id } = req.body;
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  console.log(req.body)
+  console.log("cancel albumb api ")
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   const schema = Joi.alternatives(
     Joi.object({
       user_id: [Joi.number().empty().required()],

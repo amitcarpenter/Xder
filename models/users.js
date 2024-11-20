@@ -21,7 +21,7 @@ module.exports = {
   },
 
   Get_new_users: async (user_id) => {
-    return db.query(`SELECT * FROM users WHERE  id != '${user_id}' AND complete_profile_status = 1 AND verify_user = 1 AND created_at >= CURDATE() - INTERVAL 1 WEEK ORDER BY created_at  `);
+    return db.query(`SELECT * FROM users WHERE  id != '${user_id}' AND complete_profile_status = 1 AND verify_user = 1 AND created_at >= CURDATE() - INTERVAL 1 WEEK ORDER BY created_at DESC  `);
   },
 
   Get_nearby_users: async (user_id) => {
@@ -144,7 +144,7 @@ module.exports = {
     return db.query(`Update users set fcm_token= '${fcm_token}' where phone_number='${phone_number}'`);
   },
   Get_user_info: async (user_id) => {
-    return db.query(`select * from users where id = '${user_id}' AND incognito_mode = 0 `);
+    return db.query(`select * from users where id = '${user_id}' AND incognito_mode = 0`);
   },
   Allnotification: async (reciver_id) => {
     return db.query(`select * from notifications where reciver_id = '${reciver_id}' AND status = 0 ORDER BY id DESC `);
@@ -803,6 +803,19 @@ module.exports = {
       throw new Error("Notification ID is required");
     }
     return db.query(`DELETE FROM notifications WHERE id = ?`, [notification_id]);
+  },
+
+
+  get_profile_visit_data_for_user: async (reciver_id) => {
+    const query = `
+      SELECT * 
+      FROM notifications 
+      WHERE reciver_id = ? 
+        AND status = 0 
+        AND notification_type = 'visit' 
+      ORDER BY id DESC
+    `;
+    return db.query(query, [reciver_id]);
   },
 
 
