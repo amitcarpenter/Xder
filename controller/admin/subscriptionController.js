@@ -1,20 +1,25 @@
+const { base_url } = require('../../config');
+const { profileimages } = require('../../models/users');
 const pool = require('../../utils/database');
 const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
 const Joi = require('joi');
 
-
 // exports.getAllSubscriptions = async (req, res) => {
 //     try {
-//         const query = `
-//             SELECT s.*, u.*, sp.*
-//             FROM user_subscription s
-//             LEFT JOIN users u ON s.user_id = u.id
-//             LEFT JOIN subscription_plan sp ON s.subscription_id = sp.id;
-//         `;
-//         const result = await pool.query(query);
+//         const { plan_name, plan_type } = req.query;
+
+//         let result = await get_user_subscription_data(plan_name, plan_type)
 //         if (result.length === 0) {
 //             return handleError(res, 404, 'No subscriptions found.');
 //         }
+
+//         await Promise.all(
+//             result.map(async (user) => {
+//                 await get_user_data_by_id(user.user_id)
+//                 await get_plan_data_by_id(user.user_id)
+//             })
+//         )
+
 //         return handleSuccess(res, 200, 'Subscriptions fetched successfully.', result);
 //     } catch (error) {
 //         return handleError(res, 500, error.message);
@@ -31,7 +36,6 @@ exports.getAllSubscriptions = async (req, res) => {
             LEFT JOIN users u ON s.user_id = u.id
             LEFT JOIN subscription_plan sp ON s.subscription_id = sp.id
         `;
-
         const conditions = [];
         const values = [];
 
@@ -48,12 +52,24 @@ exports.getAllSubscriptions = async (req, res) => {
             query += " WHERE " + conditions.join(" AND ");
         }
 
-        const [result] = await pool.query(query, values);
+        const result = await pool.query(query, values);
         if (result.length === 0) {
             return handleError(res, 404, 'No subscriptions found.');
         }
-        return handleSuccess(res, 200, 'Subscriptions fetched successfully.', result);
+
+
+        const updated_subscription = await Promise.all(
+            result.map(async (user) => {
+                const profileImages = await profileimages(user.user_id);
+                user.images = profileImages?.length > 0
+                    ? profileImages.map(imageObj => imageObj.image ? `${base_url}/profile/${imageObj.image}` : "")
+                    : [];
+                return user;
+            })
+        );
+        return handleSuccess(res, 200, 'Subscriptions fetched successfully.', updated_subscription);
     } catch (error) {
         return handleError(res, 500, error.message);
     }
 };
+

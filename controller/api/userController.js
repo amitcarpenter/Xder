@@ -5241,7 +5241,6 @@ exports.getGroupRequest = async (req, res) => {
 }
 
 exports.get_user_by_id = async (req, res) => {
-
   const { user_id } = req.body;
   const schema = Joi.alternatives(
     Joi.object({
@@ -5249,7 +5248,6 @@ exports.get_user_by_id = async (req, res) => {
     })
   );
   const result = schema.validate(req.body);
-
   const authHeader = req.headers.authorization;
   const token_1 = authHeader;
   const token = token_1.replace("Bearer ", "");
@@ -5330,9 +5328,6 @@ exports.get_user_by_id = async (req, res) => {
 
         })
       );
-
-
-
       return res.json({
         status: 200,
         success: true,
@@ -6412,15 +6407,11 @@ exports.video_call_notification_mode = async (req, res) => {
 
 exports.get_tag = async (req, res) => {
   try {
-    // Extracting search, limit from query params and language from body
     const { search = '', limit = 20 } = req.query;
     const { language } = req.body;
-
-    // Validate the input
     const schema = Joi.object({
       language: Joi.string().valid('Spanish', 'English', 'French').required(),
     });
-
     const result = schema.validate(req.body);
     if (result.error) {
       const message = result.error.details.map((i) => i.message).join(",");
@@ -6431,8 +6422,6 @@ exports.get_tag = async (req, res) => {
         success: false,
       });
     }
-
-    // Filter the tags based on the search parameter and language
     let search_tag = await filterTags(search, limit, language);
     if (search_tag.length != 0) {
       return res.json({

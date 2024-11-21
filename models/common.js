@@ -20,36 +20,62 @@ module.exports = {
   fetchCount: async (table, where) => {
     return db.query(`select  count(*) as total from ${table} ${where}`);
   },
-  
+
   getSelectedColumn: async (table, where, column) => {
     return db.query(`select ${column} from ${table} ${where}`);
   },
 
-  filterTags : async (search, limit, language) => {    
-    let whereClause = search ? ` WHERE ${language} LIKE '%${search}%'` : '';
-    
+  // filterTags : async (search, limit, language) => {    
+  //   let whereClause = search ? ` WHERE ${language} LIKE '%${search}%'` : '';
+  //   const query = `
+  //     SELECT 
+  //       t.id, 
+  //       t.${language} as tag_name,
+  //       COUNT(u.id) as user_count
+  //     FROM tags_list t
+  //     LEFT JOIN (
+  //       SELECT 
+  //         id, 
+  //         SUBSTRING_INDEX(SUBSTRING_INDEX(tags, ',', numbers.n), ',', -1) as tag 
+  //       FROM users
+  //       INNER JOIN (
+  //         SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 
+  //         UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
+  //       ) numbers ON CHAR_LENGTH(tags) - CHAR_LENGTH(REPLACE(tags, ',', '')) >= numbers.n - 1
+  //     ) u ON t.${language} = u.tag
+  //     ${whereClause}
+  //     GROUP BY t.id, t.${language}
+  //     ORDER BY user_count DESC, t.id DESC
+  //     LIMIT ${limit};
+  //   `;
+
+  //   return db.query(query);
+  // },
+
+
+  filterTags: async (search, limit, language) => {
+    const whereClause = search ? `WHERE t.${language} LIKE '%${search}%'` : '';
     const query = `
       SELECT 
         t.id, 
         t.${language} as tag_name,
-        COUNT(u.id) as user_count
+        COUNT(DISTINCT u.id) as user_count
       FROM tags_list t
       LEFT JOIN (
         SELECT 
           id, 
-          SUBSTRING_INDEX(SUBSTRING_INDEX(tags, ',', numbers.n), ',', -1) as tag 
+          TRIM(LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(tags, ',', numbers.n), ',', -1))) as tag 
         FROM users
         INNER JOIN (
           SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 
           UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10
         ) numbers ON CHAR_LENGTH(tags) - CHAR_LENGTH(REPLACE(tags, ',', '')) >= numbers.n - 1
-      ) u ON t.${language} = u.tag
+      ) u ON LOWER(TRIM(t.${language})) = u.tag
       ${whereClause}
       GROUP BY t.id, t.${language}
       ORDER BY user_count DESC, t.id DESC
       LIMIT ${limit};
     `;
-    
     return db.query(query);
   },
 

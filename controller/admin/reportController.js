@@ -9,6 +9,8 @@ const db = require("../../utils/database");
 const { sendEmail } = require("../../utils/emailService");
 const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
+const { collection, doc, deleteDoc, getDocs, getDoc, updateDoc } = require("firebase/firestore");
+const { db_firebase } = require('../../config/firebase');
 
 
 const saltRounds = 10;
@@ -17,7 +19,6 @@ const JWT_SECRET = process.env.JWT_SECRET
 const JWT_EXPIRY = process.env.JWT_EXPIRY
 const image_logo = process.env.LOGO_URL
 const APP_URL = process.env.APP_URL
-
 
 
 
@@ -177,9 +178,9 @@ const APP_URL = process.env.APP_URL
 // };
 
 
-exports.get_all_report = async (req, res) => {
+exports.get_all_report_user = async (req, res) => {
     try {
-        const get_report_query = 'SELECT * FROM reports';
+        const get_report_query = 'SELECT * FROM reports where reciver_id != 0';
         const reports = await db.query(get_report_query);
 
         const updatedReports = await Promise.all(reports.map(async (report) => {
@@ -196,6 +197,51 @@ exports.get_all_report = async (req, res) => {
 
         return handleSuccess(res, 200, "Reports retrieved successfully", updatedReports);
     } catch (error) {
+        return handleError(res, 500, "Error retrieving reports: " + error.message);
+    }
+};
+
+
+
+const get_group_data_by_id = async (groupId) => {
+    const collectionName = 'privateChatGroup';
+    // const collectionName = 'publicChatGroup';
+    const chatGroupRef = collection(db_firebase, collectionName);
+    const groupQuery = query(chatGroupRef, where("id", "==", groupId));
+    const groupDocs = await getDocs(groupQuery);
+    if (groupDocs.empty) {
+        throw new Error("Chat group not found");
+    }
+
+    return groupDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
+
+exports.get_all_group_reports = async (req, res) => {
+    try {
+        const get_report_query = 'SELECT * FROM reports WHERE group_id != 0';
+        const reports = await db.query(get_report_query);
+        const updatedReports = await Promise.all(reports.map(async (report) => {
+            const sender_query = 'SELECT * FROM users WHERE id = ?';
+            const [sender] = await db.query(sender_query, [report.sender_id]);
+
+            let group_data = null;
+            try {
+                group_data = await get_group_data_by_id(report.group_id);
+            } catch (firebaseError) {
+                console.error("Error fetching group data:", firebaseError.message);
+            }
+
+            return {
+                ...report,
+                sender,
+                group_data
+            };
+        }));
+
+        return handleSuccess(res, 200, "Reports retrieved successfully", updatedReports);
+    } catch (error) {
+        console.error("Error retrieving reports:", error.message);
         return handleError(res, 500, "Error retrieving reports: " + error.message);
     }
 };

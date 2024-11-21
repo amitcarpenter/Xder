@@ -39,7 +39,8 @@ router.post("/user-block-unblock", authenticateAdmin, userControllers.block_unbl
 router.delete("/delete-user", authenticateAdmin, userControllers.delete_user);
 
 //================================= Report ====================================
-router.get("/get-all-reports", authenticateAdmin, reportControllers.get_all_report);
+router.get("/get-all-reports", authenticateAdmin, reportControllers.get_all_report_user);
+router.get("/get-all-group-reports", authenticateAdmin, reportControllers.get_all_group_reports);
 
 
 //================================= Notification ====================================

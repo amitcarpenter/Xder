@@ -750,6 +750,7 @@ module.exports = {
   //   );
   // },
 
+
   getLatestSharedAlbums: async (sharedTo, limit) => {
     let query = 'SELECT album_id, user_id FROM albums_sharing WHERE shared_to = ? ORDER BY created_at DESC';
     const params = [sharedTo];
@@ -758,11 +759,10 @@ module.exports = {
       query += ' LIMIT ?';
       params.push(limit);
     }
-
     return db.query(query, params);
+  },
 
-  }
-  ,
+
   getAllSharedAlbums: async (user_id, sharedTo) => {
     return db.query(
       'SELECT album_id, user_id FROM albums_sharing WHERE user_id =? AND shared_to = ? ORDER BY created_at DESC',
@@ -770,11 +770,14 @@ module.exports = {
     );
   },
 
+
   getAlbumDetails: async (albumIds) => {
     if (albumIds.length === 0) return [];
     return db.query('SELECT * FROM albums WHERE id IN (?)', [albumIds]);
 
   },
+
+
   getUniqueUserIds: async () => {
     return db.query(`
         SELECT 
@@ -783,20 +786,28 @@ module.exports = {
             profile_images
     `);
   },
+
+
   checkAlbumRequestNotification: async (sender_id, reciver_id) => {
     return db.query(`Select * from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`, [sender_id, reciver_id])
   },
 
+
   cancelAlbumRequestNotification: async (sender_id, reciver_id) => {
     return db.query(`Delete from notifications where sender_id=? AND reciver_id=? AND notification_type="album_request"`, [sender_id, reciver_id])
   },
+
+
   all_group_notifications: async (sender_id) => {
     return db.query(`select * from notifications where sender_id = '${sender_id}'  and notification_type = 'group_request' ORDER BY id DESC `);
   },
+
+
   getUsers_by_ids: async (user_ids) => {
     const placeholders = user_ids.map(() => '?').join(',');
     return db.query(`SELECT * FROM users WHERE id IN (${placeholders})`, user_ids);
   },
+
 
   delete_album_notification: async (notification_id) => {
     if (!notification_id) {
@@ -829,6 +840,29 @@ module.exports = {
   get_pro_users_list: async () => {
     const query = `
         SELECT user_id from user_subscription where sub_status = 1;
+    `;
+    return db.query(query);
+  },
+
+  get_user_subscription_data: async (plan_name, plan_type) => {
+    const query = `
+        SELECT user_id from user_subscription where %LIKE$% plan_name= $};
+    `;
+    return db.query(query);
+  },
+
+
+  get_plan_data_by_id: async (plan_id) => {
+    const query = `
+        SELECT * from subscription_plan where id= ${plan_id};
+    `;
+    return db.query(query);
+  },
+
+
+  get_user_data_by_id: async (user_id) => {
+    const query = `
+        SELECT * from users where id= ${user_id};
     `;
     return db.query(query);
   },
