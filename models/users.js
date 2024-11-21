@@ -806,6 +806,14 @@ module.exports = {
   },
 
 
+  delete_album_notification_by_reciver_id: async (sender_id, reciver_id) => {
+    return db.query(
+      `DELETE FROM notifications WHERE sender_id = ? AND reciver_id = ? AND notification_type = 'album_request'`,
+      [sender_id, reciver_id]
+    );
+  },
+
+
   get_profile_visit_data_for_user: async (reciver_id) => {
     const query = `
       SELECT * 

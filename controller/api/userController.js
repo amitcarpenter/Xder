@@ -93,7 +93,8 @@ const {
   checkAlbumRequestNotification,
   cancelAlbumRequestNotification,
   all_group_notifications, getUsers_by_ids,
-  delete_album_notification } = require("../../models/users.js");
+  delete_album_notification,
+  delete_album_notification_by_reciver_id } = require("../../models/users.js");
 
 const {
   insertData,
@@ -4113,7 +4114,7 @@ exports.new_users = async (req, res) => {
     console.log(error);
     return res.json({
       success: false,
-      message:error.message,
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -4886,6 +4887,7 @@ exports.send_notification = async (req, res) => {
         };
         await sendNotifications();
       } else if (notification_type == 'album_request') {
+        let send_notification_id = null
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
@@ -4918,6 +4920,7 @@ exports.send_notification = async (req, res) => {
                     notification_type: "album_request",
                   };
                   const result1 = await addnotification(send_notification);
+                  send_notification_id = result1.insertId
                   let response = null
                   if (token.dont_disturb == 1) {
                     console.log("Don't Disturb User ")
@@ -4937,11 +4940,12 @@ exports.send_notification = async (req, res) => {
             return res.json({
               message: "Album Request Notifications sent successfully",
               success: true,
-              status: 200
+              status: 200,
+              send_notification_id: send_notification_id
             });
           } catch (error) {
             console.error("Error sending notifications:", error);
-            res.status(500).json({
+            return res.status(500).json({
               message: "Error sending notifications",
               success: false,
               status: 500
@@ -7671,16 +7675,16 @@ exports.getAllbums = async (req, res) => {
 }
 
 exports.cancelAlbumRequest = async (req, res) => {
-  const { user_id, notification_id } = req.body;
-  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+  const { user_id, reciver_id } = req.body;
   console.log(req.body)
-  console.log("cancel albumb api ")
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   const schema = Joi.alternatives(
     Joi.object({
       user_id: [Joi.number().empty().required()],
-      notification_id: [Joi.number().empty().required()],
+      // notification_id: [Joi.number().empty().required()],
+      reciver_id: [Joi.number().empty().required()],
     })
   );
   const result = schema.validate(req.body);
@@ -7701,9 +7705,10 @@ exports.cancelAlbumRequest = async (req, res) => {
   } else {
     const user_detail = await getUser_by_id(user_id);
     // await cancelAlbumRequestNotification(decoded.data.id, parseInt(user_id))
-    let result_delete_notification = await delete_album_notification(notification_id)
+    // let result_delete_notification = await delete_album_notification(notification_id)
+    let result_delete_notification = await delete_album_notification_by_reciver_id(user_id, reciver_id)
 
-
+    console.log(result_delete_notification)
     if (user_detail !== 0) {
       return res.json({
         status: 200,
