@@ -64,7 +64,7 @@ app.use("/", subscription);
 // });
 
 app.get("/", (req, res) => {
-  return res.send("Hello World AMIT WORKING");
+  return res.send("Xder Dating App");
 });
 
 let PORT = process.env.PORT
