@@ -560,7 +560,7 @@ exports.loginUser = async (req, res) => {
 
 exports.social_login = async (req, res) => {
   try {
-    const { email, social_id, name, fcm_token } = req.body;
+    const { email, social_id, name, fcm_token, latitude, longitude } = req.body;
 
     const schema = Joi.alternatives(
       Joi.object({
@@ -575,7 +575,8 @@ exports.social_login = async (req, res) => {
         social_id: [Joi.string().empty().required()],
         name: [Joi.string().empty().required()],
         fcm_token: [Joi.string().empty().required()],
-
+        latitude: Joi.string().optional(),
+        longitude: Joi.string().optional()
       })
     );
     const result = schema.validate(req.body);
@@ -599,7 +600,13 @@ exports.social_login = async (req, res) => {
           },
           JWT_SECRET
         );
-        console.log(token, "$$$$$$$$$$$$$$$$$$$$$$$$$4")
+
+        if (latitude && longitude) {
+          let data = ` latitude = '${latitude}' ,longitude = '${longitude}' `;
+          let where = `where email = '${email}'`;
+          const result1 = await updateData("users", where, data);
+        }
+
         if (data.length > 0 && data[0].is_blocked == 1) {
           return handleError(res, 400, "You are blocked by admin");
         }
