@@ -826,5 +826,11 @@ module.exports = {
     return db.query(query, [reciver_id]);
   },
 
+  get_pro_users_list: async () => {
+    const query = `
+        SELECT user_id from user_subscription where sub_status = 1;
+    `;
+    return db.query(query);
+  },
 
 }

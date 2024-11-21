@@ -11,6 +11,7 @@ const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
 const { collection, getDocs } = require("firebase/firestore");
 const { db_firebase } = require('../../config/firebase');
+const { get_pro_users_list } = require('../../models/users');
 
 
 const saltRounds = 10;
@@ -284,24 +285,17 @@ exports.dashboard_data = async (req, res) => {
 
         const users = await db.query('SELECT * FROM users');
         const userCount = users.length || 0;
+        const pro_users = await get_pro_users_list()
 
-        const pro_users = await db.query(`
-            SELECT *
-            FROM user_subscription
-            WHERE subscription_id != '1'
-              AND expired_at > NOW()
-              AND sub_status = 1
-            GROUP BY user_id
-        `);
         const pro_user_count = pro_users.length || 0;
-
-
         const data = {
             pro_user_count,
             userCount,
             totalChatGroupCount,
             publicChatGroupCount: publicChatCount,
             privateChatGroupCount: privateChatCount,
+            // pro_users_count: a1.length,
+            // pro_users: a1
             // publicChatGroup: publicChats,
             // privateChatGroup: privateChats
         };
