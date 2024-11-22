@@ -11,6 +11,8 @@ const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
 const { collection, doc, deleteDoc, getDocs, getDoc, updateDoc } = require("firebase/firestore");
 const { db_firebase } = require('../../config/firebase');
+const { profileimages } = require('../../models/users');
+const { base_url } = require('../../config');
 
 
 const saltRounds = 10;
@@ -188,6 +190,12 @@ exports.get_all_report_user = async (req, res) => {
             const receiver_query = 'SELECT * FROM users WHERE id = ?';
             const [sender] = await db.query(sender_query, [report.sender_id]);
             const [receiver] = await db.query(receiver_query, [report.reciver_id]);
+
+            const profileImages = await profileimages(receiver.id);
+            receiver.images = profileImages?.length > 0
+                ? profileImages.map(imageObj => imageObj.image ? `${base_url}/profile/${imageObj.image}` : "")
+                : [];
+
             return {
                 ...report,
                 sender,

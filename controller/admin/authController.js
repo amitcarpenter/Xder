@@ -283,7 +283,7 @@ exports.dashboard_data = async (req, res) => {
         const publicChats = publicChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const privateChats = privateChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        const users = await db.query('SELECT * FROM users');
+        const users = await db.query('SELECT * FROM users where complete_profile_status = 1');
         const userCount = users.length || 0;
         const pro_users = await get_pro_users_list()
 
