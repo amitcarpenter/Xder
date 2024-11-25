@@ -10,12 +10,6 @@ const userController = require("../controller/api/userController");
 const verificationControllers = require("../controller/api/verificationController");
 const { uploadFile } = require("../middleware/multer");
 
-
-
-
-
-
-
 const router = express.Router();
 
 router.post("/signUp", userController.signUp);

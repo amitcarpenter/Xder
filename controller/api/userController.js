@@ -5215,14 +5215,10 @@ exports.getGroupRequest = async (req, res) => {
       success: false,
     });
   } else {
-
     const notification = await Allnotificationbyuser_id(user_id, group_id);
     if (notification.length > 0) {
-
       await Promise.all(notification.map(async (item) => {
-
         const owner_info = await Get_user_info(item.reciver_id);
-
         item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
         item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
 
@@ -5236,6 +5232,51 @@ exports.getGroupRequest = async (req, res) => {
       });
     } else {
       // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
+      return res.json({
+        status: 404,
+        success: false,
+        message: "User not found",
+        user_info: [],
+      });
+    }
+  }
+
+}
+
+exports.getAllGroupRequest = async (req, res) => {
+  const { user_id } = req.body;
+  const schema = Joi.alternatives(
+    Joi.object({
+      user_id: [Joi.number().empty().required()],
+    })
+  );
+  const result = schema.validate(req.body);
+  if (result.error) {
+    const message = result.error.details.map((i) => i.message).join(",");
+    return res.json({
+      message: result.error.details[0].message,
+      error: message,
+      missingParams: result.error.details[0].message,
+      status: 400,
+      success: false,
+    });
+  } else {
+
+    const notification = await all_group_notifications(user_id);
+    if (notification.length > 0) {
+
+      await Promise.all(notification.map(async (item) => {
+        const owner_info = await Get_user_info(item.reciver_id);
+        item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
+        item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
+      }));
+      return res.json({
+        status: 200,
+        success: true,
+        message: "User fetch successful",
+        user_info: notification,
+      });
+    } else {
       return res.json({
         status: 404,
         success: false,
@@ -8039,55 +8080,7 @@ h1 {
   `;
 }
 
-exports.getAllGroupRequest = async (req, res) => {
-  const { user_id } = req.body;
-  const schema = Joi.alternatives(
-    Joi.object({
-      user_id: [Joi.number().empty().required()],
-    })
-  );
-  const result = schema.validate(req.body);
-  if (result.error) {
-    const message = result.error.details.map((i) => i.message).join(",");
-    return res.json({
-      message: result.error.details[0].message,
-      error: message,
-      missingParams: result.error.details[0].message,
-      status: 400,
-      success: false,
-    });
-  } else {
 
-    const notification = await all_group_notifications(user_id);
-    if (notification.length > 0) {
-
-      await Promise.all(notification.map(async (item) => {
-
-        const owner_info = await Get_user_info(item.reciver_id);
-
-        item.username = owner_info[0]?.username ? owner_info[0]?.username : "";
-        item.profile_image = owner_info[0]?.profile_image ? baseurl + "/profile/" + owner_info[0]?.profile_image : "";
-
-      }));
-
-      return res.json({
-        status: 200,
-        success: true,
-        message: "User fetch successful",
-        user_info: notification,
-      });
-    } else {
-      // Handle the case where user_detail is 0 (assuming it represents an error or no user found)
-      return res.json({
-        status: 404,
-        success: false,
-        message: "User not found",
-        user_info: [],
-      });
-    }
-  }
-
-}
 
 exports.get_users_by_ids = async (req, res) => {
   const { user_ids } = req.body;

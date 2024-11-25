@@ -6,6 +6,7 @@ const { Allsubscription, AllsubscriptionUser, userCurrentSubscription, Checksubs
 const { getData, updateData } = require('../../models/common')
 const baseurl = config.base_url;
 const moment = require('moment');
+const { handleError } = require("../../utils/responseHandler");
 
 
 exports.Allsubscription = async (req, res) => {
@@ -470,6 +471,25 @@ exports.subscription_history = async (req, res) => {
 
 
 //=============================== Subscription Function ===================================
-exports.active_offer_subscription = async (plan_name, plan_type, plan_days, user_id,) => {
-  F
+exports.active_offer_subscription_for_verify = async (user_id) => {
+  try {
+
+    let subscription = {
+      subscription_type: 0,
+      user_id: user_id,
+      subscription_id: 7,
+      expired_at: "",
+      start_date: "",
+      sub_status: 0
+    }
+    const saved_subscription = await Addsubscription(subscription);
+    if (saved_subscription.affectedRows > 0) {
+      console.log("Subscription Added Successfully!")
+    }
+
+  } catch (error) {
+    console.error(error.message)
+  }
 }
+
+
