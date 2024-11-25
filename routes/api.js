@@ -115,6 +115,7 @@ router.post('/getUserWithIds', userController.get_users_by_ids)
 
 //==================================== Verification ===================================
 router.post('/upload-verification-image', uploadFile, verificationControllers.uploadVerificationImage)
+router.post('/update_user_language', uploadFile, userController.update_user_language)
 
 
 

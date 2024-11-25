@@ -867,4 +867,19 @@ module.exports = {
     return db.query(query);
   },
 
+  updateUserLanguage: async (user_id, language) => {
+    console.log(user_id, language)
+    const query = `
+      UPDATE users SET language = "${language}" WHERE id = ${user_id};
+    `;
+    return db.query(query);
+  },
+
+  get_user_language: async (user_id) => {
+    const query = `
+        SELECT language from users where id= ${user_id};
+    `;
+    return db.query(query);
+  },
+
 }

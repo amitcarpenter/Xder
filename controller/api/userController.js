@@ -94,7 +94,9 @@ const {
   cancelAlbumRequestNotification,
   all_group_notifications, getUsers_by_ids,
   delete_album_notification,
-  delete_album_notification_by_reciver_id } = require("../../models/users.js");
+  delete_album_notification_by_reciver_id,
+  updateUserLanguage,
+  get_user_language } = require("../../models/users.js");
 
 const {
   insertData,
@@ -111,6 +113,7 @@ const { Console, count, error } = require("console");
 const e = require("express");
 const { handleError, handleSuccess, joiErrorHandle } = require("../../utils/responseHandler.js");
 const { sendEmail } = require("../../utils/emailService.js");
+const { notification_language_translations } = require("../../utils/notification_messages.js");
 
 let image_logo = process.env.LOGO_URL
 
@@ -4433,6 +4436,13 @@ exports.addShowme = async (req, res) => {
   }
 };
 
+(async () => {
+  let [user_language] = await get_user_language(1)
+  let final_user_language = user_language.language
+  let notification_response = notification_language_translations[final_user_language].Visit
+  console.log(notification_response)
+})()
+
 exports.send_notification = async (req, res) => {
   try {
     const { sender_id, reciver_id, notification_type, group_id, notification_id, group_name, body, title } = req.body;
@@ -4459,6 +4469,12 @@ exports.send_notification = async (req, res) => {
         success: false,
       });
     } else {
+
+      let [user_language] = await get_user_language(reciver_id)
+      let final_user_language = user_language.language
+      let notification_response = notification_language_translations[final_user_language].Visit
+
+
       if (notification_type == 'visit') {
         let id = sender_id
         let data = await fetchUserBy_Id(id);
@@ -4497,11 +4513,13 @@ exports.send_notification = async (req, res) => {
             status: 200
           });
         } else if (checkvisit.length == 0 && Get_fcm[0].dont_disturb != 1) {
+
+
           const message = {
             token: Get_fcm[0].fcm_token,
             notification: {
-              title: "profile visit",
-              body: data[0].username + " visit your profile",
+              title: notification_response.title,
+              body: data[0].username + notification_response.body,
             },
             data: {
               sender_id: `${sender_id}`,
@@ -4542,6 +4560,7 @@ exports.send_notification = async (req, res) => {
         let data = await fetchUserBy_Id(id);
         let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
+        
         const message = {
           notification: {
             title: "Group Request",
@@ -8089,9 +8108,7 @@ exports.get_users_by_ids = async (req, res) => {
   const schema = Joi.object({
     user_ids: Joi.string().required(),
   });
-
   const result = schema.validate(req.body);
-
   if (result.error) {
     const message = result.error.details.map((i) => i.message).join(",");
     return res.status(400).json({
@@ -8101,49 +8118,23 @@ exports.get_users_by_ids = async (req, res) => {
       success: false,
     });
   }
-
-
-  // Parse the user_ids string into an array of numbers
   const userIdsArray = user_ids.split(',').map(id => parseInt(id.trim()));
-
-  // Fetch users by ids using IN clause
   const user_details = await getUsers_by_ids(userIdsArray);
-
   if (user_details.length > 0) {
     await Promise.all(
       user_details.map(async (item) => {
-        // if (item.latitude != null && item.latitude != "" && item.latitude != undefined &&
-        //     item.longitude != null && item.longitude != "" && item.longitude != undefined) {
-        //   const unit = 'metric';
-        //   const origin = `${check_user[0]?.latitude},${check_user[0]?.longitude}`;
-        //   const destination = `${item.latitude},${item.longitude}`;
-        //   try {
-        //     const disvalue = await distanceShow(unit, origin, destination);
-        //     item.distance = disvalue.distance;
-        //   } catch (error) {
-        //     console.error('Error in calculating distance:', error);
-        //     item.distance = "";
-        //   }
-        // } else {
-        //   item.distance = "";
-        // }
-
         const birthdate = item.DOB;
         item.age = calculateAge(birthdate);
-
-        const profileimage = await profileimages(item.id); // Fetch profile images per user
-
+        const profileimage = await profileimages(item.id);
         if (item.profile_image !== "No image") {
           item.profile_image = baseurl + "/profile/" + item.profile_image;
         }
-
         if (profileimage?.length > 0) {
           item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
         } else {
           item.images = [];
         }
 
-        // item.has_album = (await getAlbumsByUserId(item.id)).length > 0;
       })
     );
 
@@ -8162,3 +8153,50 @@ exports.get_users_by_ids = async (req, res) => {
     });
   }
 }
+
+
+exports.update_user_language = async (req, res) => {
+  const { user_id, language } = req.body;
+  console.log("Received data:", { user_id, language });
+  const schema = Joi.object({
+    user_id: Joi.number().integer().required(),
+    language: Joi.string().valid("Spanish", "French", "English").required(),
+  }); s
+  const result = schema.validate(req.body);
+  if (result.error) {
+    const message = result.error.details.map((i) => i.message).join(",");
+    return res.status(400).json({
+      message: result.error.details[0].message,
+      error: message,
+      missingParams: result.error.details[0].message,
+      success: false,
+    });
+  }
+
+  try {
+    const user = await getUser_by_id(user_id);
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        success: false,
+        message: "User not found",
+        user_info: null,
+      });
+    }
+    const updatedUser = await updateUserLanguage(user_id, language);
+    return res.status(200).json({
+      status: 200,
+      success: true,
+      message: "Language updated successfully",
+      user_info: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating language:", error.message);
+    return res.status(500).json({
+      status: 500,
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
