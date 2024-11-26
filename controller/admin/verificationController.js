@@ -4,6 +4,7 @@ const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/resp
 const Joi = require('joi');
 const config = require("../../config.js");
 const { active_offer_subscription_for_verify } = require('../api/subscriptionController.js');
+const { send_notification_on_verify } = require('../api/verificationController.js');
 
 
 const saltRounds = 10;
@@ -101,8 +102,12 @@ exports.verifyUser = async (req, res) => {
             return handleError(res, 404, 'User not found or already verified.');
         }
         await active_offer_subscription_for_verify(user_id)
+        await send_notification_on_verify(user_id)
         return handleSuccess(res, 200, 'User verified successfully.');
     } catch (error) {
         return handleError(res, 500, 'Error updating verification status.');
     }
 };
+
+
+

@@ -799,7 +799,7 @@ module.exports = {
 
 
   all_group_notifications: async (sender_id) => {
-    return db.query(`select * from notifications where sender_id = '${sender_id}'  and notification_type = 'group_request' ORDER BY id DESC `);
+    return db.query(`select * from notifications where sender_id = '${sender_id}'  and notification_type = 'group_request' AND request_status='3' ORDER BY id DESC `);
   },
 
 
@@ -881,5 +881,59 @@ module.exports = {
     `;
     return db.query(query);
   },
+
+
+  // already_check_request_function: async (sender_id, reciver_id1, group_id) => {
+  //   const query = `
+  //       SELECT * from notifications where sender_id= ${sender_id} AND reciver_id = ${reciver_id1} AND  groupt_id = ${group_id};
+  //   `;
+  //   return db.query(query);
+  // },
+
+  already_check_request_function: async (sender_id, reciver_id1, group_id, notification_type) => {
+    const query = `
+        SELECT * FROM notifications 
+        WHERE sender_id = ${sender_id} 
+        AND reciver_id = ${reciver_id1} 
+        AND group_id = '${group_id}'
+        AND notification_type = '${notification_type}';
+    `;
+    return db.query(query);
+  },
+
+
+  update_request_reject: async (sender_id, reciver_id_for_language, group_id, notification_type, request_status) => {
+    console.log(request_status, "!@#$%^#$%^$%^")
+    return db.query(`update notifications set request_status = '${request_status}'  WHERE sender_id = ${sender_id} 
+        AND reciver_id = ${reciver_id_for_language} 
+        AND group_id = '${group_id}' AND notification_type = 'group_request';`);
+  },
+
+
+  delete_notification_request_reject: async (
+    sender_id,
+    reciver_id_for_language,
+    group_id,
+    notification_type = 'group_request',
+  ) => {
+    const query = `
+      DELETE FROM notifications
+      WHERE sender_id = ?
+        AND reciver_id = ?
+        AND group_id = ?
+        AND notification_type = ?;
+    `;
+
+    const values = [sender_id, reciver_id_for_language, group_id, notification_type];
+
+    try {
+      return await db.query(query, values);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  }
+
+
 
 }

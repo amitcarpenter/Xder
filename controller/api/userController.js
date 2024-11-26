@@ -96,7 +96,10 @@ const {
   delete_album_notification,
   delete_album_notification_by_reciver_id,
   updateUserLanguage,
-  get_user_language } = require("../../models/users.js");
+  get_user_language,
+  already_check_request_function,
+  update_request_reject,
+  delete_notification_request_reject } = require("../../models/users.js");
 
 const {
   insertData,
@@ -4438,13 +4441,18 @@ exports.addShowme = async (req, res) => {
   }
 };
 
-// (async () => {
-//   let [user_language] = await get_user_language(1)
-//   let final_user_language = user_language.language
-//   let notification_type = 'visit'
-//   let notification_response = notification_language_translations[final_user_language].GroupNotification
-//   console.log(notification_response.body("name ", "lan"))
-// })()
+(async () => {
+  let [user_language] = await get_user_language(1)
+  let final_user_language = user_language.language
+  let notification_type = 'visit'
+  let notification_response = notification_language_translations[final_user_language].GroupNotification
+  // console.log(notification_response.body("name ", "lan"))
+  let sender_id = 6;
+  let reciver_id1 = 2;
+  let group_id = "6_1";
+  let already_check_request = await already_check_request_function(sender_id, reciver_id1, group_id, notification_type)
+  console.log(already_check_request)
+})()
 
 exports.send_notification = async (req, res) => {
   try {
@@ -4472,7 +4480,6 @@ exports.send_notification = async (req, res) => {
         success: false,
       });
     } else {
-
       console.log(req.body)
       let reciver_id_for_language = String(reciver_id).replace(/\[|\]/g, '');
       console.log(reciver_id_for_language)
@@ -4576,7 +4583,6 @@ exports.send_notification = async (req, res) => {
           notification: {
             title: group_request_notification_response.title,
             body: group_request_notification_response.body,
-            // body: data[0].username + " requested to add you to the group!",
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4599,7 +4605,13 @@ exports.send_notification = async (req, res) => {
                     body: data[0].username + " requested to add in the group!",
                     notification_type: "group_request",
                   };
-                  const result1 = await addnotification(send_notification);
+                  let already_check_request = await already_check_request_function(sender_id, reciver_id1, group_id, notification_type)
+                  if (already_check_request.length > 0) {
+                    // return handleError(res, 400, "You have already Requested for this group")
+                    const update_notification_new = await update_request_reject(sender_id, reciver_id_for_language, group_id, notification_type, 3)
+                  } else {
+                    const result1 = await addnotification(send_notification);
+                  }
                   let response = null
                   if (token.dont_disturb == 1) {
                     console.log("Don't disturb user ")
@@ -4681,6 +4693,7 @@ exports.send_notification = async (req, res) => {
         if (notification_id) {
           const updatenoti = await updateReqnotification(notification_id, 1)
         }
+
         const result = await addnotification(send_notification);
         try {
           let response = null;
@@ -4699,6 +4712,7 @@ exports.send_notification = async (req, res) => {
         });
 
       } else if (notification_type == 'request_reject') {
+        console.log(req.body)
         let request_reject_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
@@ -4729,7 +4743,6 @@ exports.send_notification = async (req, res) => {
           notification: {
             title: request_reject_notification_response.title,
             body: request_reject_notification_response.body,
-            // body: data[0].username + " rejected your request to add in the group!",
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4749,11 +4762,23 @@ exports.send_notification = async (req, res) => {
           body: data[0].username + " rejected your request to add in the group!",
           notification_type: "request_reject",
         };
-        if (notification_id) {
-          const updatenoti = await updateReqnotification(notification_id, 2)
+
+        let already_check_request = await already_check_request_function(sender_id, reciver_id_for_language, group_id, notification_type)
+        let delete_request_notification = await delete_notification_request_reject(sender_id, reciver_id_for_language, group_id)
+
+        console.log(delete_request_notification, "delete requests notification")
+        if (already_check_request.length > 0) {
+          const update_notification_new = await update_request_reject(sender_id, reciver_id_for_language, group_id, notification_type, 2)
+          console.log(update_notification_new, "update_notification_new")
+        } else {
+          const result = await addnotification(send_notification);
         }
 
-        const result = await addnotification(send_notification);
+        if (notification_id) {
+          const update_notification = await updateReqnotification(notification_id, 2)
+          console.log(update_notification)
+        }
+
 
         let response = null;
         try {
@@ -7181,7 +7206,6 @@ function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscri
   return { query: baseQuery, params: queryParams };
 };
 
-
 exports.new_get_all_users = async (req, res) => {
   try {
     const { looking_for, relationship_type,
@@ -7588,7 +7612,6 @@ exports.get_my_Albums_To_share = async (req, res) => {
 
   }
 };
-
 
 exports.shareMyAlbums = async (req, res) => {
   try {
@@ -8121,7 +8144,6 @@ h1 {
 
   `;
 }
-
 
 
 exports.get_users_by_ids = async (req, res) => {

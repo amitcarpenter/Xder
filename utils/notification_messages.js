@@ -44,6 +44,10 @@ exports.notification_language_translations = {
             title: "Group Notification",
             body: (username, groupName) => `${username} invited you to the ${groupName} group.`,
         },
+        verify: {
+            title: "Account Verified",
+            body: 'Your profile has been successfully verified. Enjoy a free 3-day full plan. Activate now!',
+        }
     },
     Spanish: {
         visit: {
@@ -90,6 +94,10 @@ exports.notification_language_translations = {
             title: "Notificación de Grupo",
             body: (username, groupName) => `${username} te invitó al grupo ${groupName}.`,
         },
+        verify: {
+            title: "Cuenta Verificada",
+            body: 'Su perfil ha sido verificado exitosamente. Disfruta de un plan completo gratuito de 3 días. ¡Activa ahora!',
+        }
     },
     French: {
         visit: {
@@ -136,5 +144,9 @@ exports.notification_language_translations = {
             title: "Notification de Groupe",
             body: (username, groupName) => `${username} vous a invité dans le groupe ${groupName}.`,
         },
+        verify: {
+            title: "Compte Vérifié",
+            body: `Votre profil a été vérifié avec succès. Profitez d'un forfait complet gratuit de 3 jours. Activez maintenant !`,
+        }
     }
 }
