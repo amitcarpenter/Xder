@@ -3045,7 +3045,6 @@ exports.myAlbumSharing = async (req, res) => {
     const user_info = await getData("users", `where id= ${user_id}`);
     let cheksub = await checkSubscriptionDetail(user_id);
 
-    console.log("checksub==========>", cheksub)
 
     if (cheksub) {
       albumlimit = cheksub.album;
@@ -3328,12 +3327,19 @@ exports.group_notification = async (req, res) => {
     } else {
       const userData = await fetchUserBy_Id(user_id);
       await Promise.all(id.map(async (id_1) => {
+        let reciver_id_for_language = String(id_1).replace(/\[|\]/g, '');
+        console.log(reciver_id_for_language)
+        let [user_language] = await get_user_language(reciver_id_for_language)
+        let final_user_language = user_language.language
+        let notification_response = notification_language_translations[final_user_language].GroupNotification
         const userFcm1 = await fetch_fcm(id_1);
         const message = {
           token: userFcm1[0]?.fcm_token,
           notification: {
-            title: "Group Notification",
-            body: `${userData[0].username} Invited you in ${group_name} group`,
+            // title: "Group Notification",
+            // body: `${userData[0].username} Invited you in ${group_name} group`,
+            title: notification_response.title,
+            body: notification_response.body(userData[0].username, group_name),
           },
           data: {
             user_id: `${user_id}`,
@@ -3368,6 +3374,7 @@ exports.group_notification = async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err)
     return res.json({
       success: false,
       message: err.message,
@@ -3490,9 +3497,6 @@ exports.accept_reject_group_invite = async (req, res) => {
             status: 200
           });
         }
-
-
-
       } else {
         return res.json({
           success: true,
@@ -3771,8 +3775,6 @@ exports.get_profile_visit = async (req, res) => {
     });
   }
 };
-
-
 
 exports.Allnotification = async (req, res) => {
   try {
@@ -4436,12 +4438,13 @@ exports.addShowme = async (req, res) => {
   }
 };
 
-(async () => {
-  let [user_language] = await get_user_language(1)
-  let final_user_language = user_language.language
-  let notification_response = notification_language_translations[final_user_language].Visit
-  console.log(notification_response)
-})()
+// (async () => {
+//   let [user_language] = await get_user_language(1)
+//   let final_user_language = user_language.language
+//   let notification_type = 'visit'
+//   let notification_response = notification_language_translations[final_user_language].GroupNotification
+//   console.log(notification_response.body("name ", "lan"))
+// })()
 
 exports.send_notification = async (req, res) => {
   try {
@@ -4470,12 +4473,18 @@ exports.send_notification = async (req, res) => {
       });
     } else {
 
-      let [user_language] = await get_user_language(reciver_id)
+      console.log(req.body)
+      let reciver_id_for_language = String(reciver_id).replace(/\[|\]/g, '');
+      console.log(reciver_id_for_language)
+      let [user_language] = await get_user_language(reciver_id_for_language)
+      console.log(user_language)
+      if (!user_language) {
+        return handleError(res, 404, "User Lanaguage not found")
+      }
       let final_user_language = user_language.language
-      let notification_response = notification_language_translations[final_user_language].Visit
-
 
       if (notification_type == 'visit') {
+        let visit_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         const Get_fcm = await fetch_fcm(reciver_id);
@@ -4518,8 +4527,8 @@ exports.send_notification = async (req, res) => {
           const message = {
             token: Get_fcm[0].fcm_token,
             notification: {
-              title: notification_response.title,
-              body: data[0].username + notification_response.body,
+              title: visit_notification_response.title,
+              body: data[0].username + visit_notification_response.body,
             },
             data: {
               sender_id: `${sender_id}`,
@@ -4556,15 +4565,18 @@ exports.send_notification = async (req, res) => {
           });
         }
       } else if (notification_type == 'group_request') {
+        console.log(req.body)
+        let group_request_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
-        
+
         const message = {
           notification: {
-            title: "Group Request",
-            body: data[0].username + " requested to add you to the group!",
+            title: group_request_notification_response.title,
+            body: group_request_notification_response.body,
+            // body: data[0].username + " requested to add you to the group!",
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4611,6 +4623,7 @@ exports.send_notification = async (req, res) => {
               status: 200
             });
           } catch (error) {
+            console.log(error)
             return res.status(500).json({
               message: error.message,
               success: false,
@@ -4620,6 +4633,7 @@ exports.send_notification = async (req, res) => {
         };
         await sendNotifications();
       } else if (notification_type == 'request_accept') {
+        let request_accept_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         const Get_fcm = await fetch_fcm(reciver_id);
@@ -4644,8 +4658,9 @@ exports.send_notification = async (req, res) => {
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "group request",
-            body: data[0].username + " accepted your request to add in the group!",
+            title: request_accept_notification_response.title,
+            body: request_accept_notification_response.body,
+            // body: data[0].username + " accepted your request to add in the group!",
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4654,7 +4669,6 @@ exports.send_notification = async (req, res) => {
             screen: 'group request',
           },
         };
-        let user_id = sender_id
         const send_notification = {
           user_id: reciver_id,
           sender_id: sender_id,
@@ -4685,6 +4699,7 @@ exports.send_notification = async (req, res) => {
         });
 
       } else if (notification_type == 'request_reject') {
+        let request_reject_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         const Get_fcm = await fetch_fcm(reciver_id);
@@ -4712,8 +4727,9 @@ exports.send_notification = async (req, res) => {
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "group request",
-            body: data[0].username + " rejected your request to add in the group!",
+            title: request_reject_notification_response.title,
+            body: request_reject_notification_response.body,
+            // body: data[0].username + " rejected your request to add in the group!",
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4914,14 +4930,16 @@ exports.send_notification = async (req, res) => {
         await sendNotifications();
       } else if (notification_type == 'album_request') {
         let send_notification_id = null
+        let album_request_notification_response = notification_language_translations[final_user_language][notification_type]
+
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         let reciver_id1 = String(reciver_id).replace(/\[|\]/g, '');
         const allFcmTokens = await getData("users", ` where id IN (${reciver_id1})`);
         const message = {
           notification: {
-            title: "Album Request",
-            body: data[0].username + " requested to view your albums!",
+            title: album_request_notification_response.title,
+            body: data[0].username + album_request_notification_response.body,
           },
           data: {
             sender_id: `${sender_id}`,
@@ -4980,6 +4998,7 @@ exports.send_notification = async (req, res) => {
         };
         await sendNotifications();
       } else if (notification_type == 'album_accept') {
+        let album_accept_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         const Get_fcm = await fetch_fcm(reciver_id);
@@ -5004,8 +5023,9 @@ exports.send_notification = async (req, res) => {
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "Album Request Accepted",
-            body: data[0].username + " accepted your request to view the album!",
+            title: album_accept_notification_response.title,
+            body: album_accept_notification_response.body,
+            // body: data[0].username + " accepted your request to view the album!",
           },
 
           data: {
@@ -5045,6 +5065,7 @@ exports.send_notification = async (req, res) => {
           status: 200
         });
       } else if (notification_type == 'album_reject') {
+        let album_reject_notification_response = notification_language_translations[final_user_language][notification_type]
         let id = sender_id
         let data = await fetchUserBy_Id(id);
         const Get_fcm = await fetch_fcm(reciver_id);
@@ -5069,8 +5090,9 @@ exports.send_notification = async (req, res) => {
         const message = {
           token: Get_fcm[0].fcm_token,
           notification: {
-            title: "Album Request Rejected",
-            body: data[0].username + " rejected your request to view the album!",
+            title: album_reject_notification_response.title,
+            body: album_reject_notification_response.body,
+            // body: data[0].username + " rejected your request to view the album!",
           },
 
           data: {
@@ -5118,6 +5140,7 @@ exports.send_notification = async (req, res) => {
       }
     }
   } catch (error) {
+    console.log(error)
     return res.json({
       success: false,
       message: error.message,

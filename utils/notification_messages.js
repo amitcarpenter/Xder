@@ -1,8 +1,8 @@
 exports.notification_language_translations = {
     English: {
-        Visit: {
+        visit: {
             title: "Profile Visit",
-            body: "Someone visited your profile.",
+            body: " visited your profile.",
         },
         group_request: {
             title: "Group Request",
@@ -30,7 +30,7 @@ exports.notification_language_translations = {
         },
         album_request: {
             title: "Album Access Request",
-            body: "Someone requested access to your album.",
+            body: " requested access to your album.",
         },
         album_accept: {
             title: "Album Access Accepted",
@@ -40,11 +40,15 @@ exports.notification_language_translations = {
             title: "Album Access Rejected",
             body: "Your album access request has been rejected.",
         },
+        GroupNotification: {
+            title: "Group Notification",
+            body: (username, groupName) => `${username} invited you to the ${groupName} group.`,
+        },
     },
     Spanish: {
-        Visit: {
+        visit: {
             title: "Visita al perfil",
-            body: "Alguien visitó tu perfil.",
+            body: " visitó tu perfil.",
         },
         group_request: {
             title: "Solicitud de grupo",
@@ -72,7 +76,7 @@ exports.notification_language_translations = {
         },
         album_request: {
             title: "Solicitud de acceso al álbum",
-            body: "Alguien solicitó acceso a tu álbum.",
+            body: " solicitó acceso a tu álbum.",
         },
         album_accept: {
             title: "Acceso al álbum aceptado",
@@ -82,11 +86,15 @@ exports.notification_language_translations = {
             title: "Acceso al álbum rechazado",
             body: "Tu solicitud de acceso al álbum ha sido rechazada.",
         },
+        GroupNotification: {
+            title: "Notificación de Grupo",
+            body: (username, groupName) => `${username} te invitó al grupo ${groupName}.`,
+        },
     },
     French: {
-        Visit: {
+        visit: {
             title: "Visite de profil",
-            body: "Quelqu'un a visité votre profil.",
+            body: " a visité votre profil.",
         },
         group_request: {
             title: "Demande de groupe",
@@ -114,7 +122,7 @@ exports.notification_language_translations = {
         },
         album_request: {
             title: "Demande d'accès à l'album",
-            body: "Quelqu'un a demandé l'accès à votre album.",
+            body: " a demandé l'accès à votre album.",
         },
         album_accept: {
             title: "Accès à l'album accepté",
@@ -124,5 +132,9 @@ exports.notification_language_translations = {
             title: "Accès à l'album refusé",
             body: "Votre demande d'accès à l'album a été refusée.",
         },
-    },
-};
+        GroupNotification: {
+            title: "Notification de Groupe",
+            body: (username, groupName) => `${username} vous a invité dans le groupe ${groupName}.`,
+        },
+    }
+}
