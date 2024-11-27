@@ -227,7 +227,6 @@ exports.AddsubscriptionPlan = async (req, res) => {
 
 exports.activatePlan = async (req, res) => {
   try {
-
     const { user_sub_id, plan_days, plan_type } = req.body;
     const schema = Joi.alternatives(
       Joi.object({

@@ -11,7 +11,7 @@ const { fetchAdminByEmail, registerAdmin } = require('../../models/admin/auth');
 const { joiErrorHandle, handleError, handleSuccess } = require('../../utils/responseHandler');
 const { collection, doc, deleteDoc, getDocs, getDoc, updateDoc } = require("firebase/firestore");
 const { db_firebase } = require('../../config/firebase');
-const { profileimages } = require('../../models/users');
+const { profileimages, delete_group_report } = require('../../models/users');
 const { base_url } = require('../../config');
 
 
@@ -256,8 +256,6 @@ exports.get_all_group_reports = async (req, res) => {
 };
 
 
-
-
 const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
     const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
     const chatGroupRef = collection(db_firebase, collectionName);
@@ -273,7 +271,7 @@ const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
 exports.delete_chat_group = async (req, res) => {
     try {
         const deleteGroupSchema = Joi.object({
-            group_id: Joi.number().required(),
+            group_id: Joi.string().required(),
             group_type: Joi.string().valid("private", "public").required()
         })
 
@@ -282,9 +280,14 @@ exports.delete_chat_group = async (req, res) => {
         const { group_id, group_type } = value;
 
         const isPrivateGroup = group_type === 'private';
-        const result = await delete_group_by_id(group_id, isPrivateGroup);
 
-        return handleSuccess(res, 200, "Group deleted successfully", result);
+        try {
+            const result = await delete_group_by_id(group_id, isPrivateGroup);
+        } catch (error) {
+            console.log(error.message)
+        }
+        const delete_group = delete_group_report(group_id)
+        return handleSuccess(res, 200, "Group deleted successfully");
     } catch (error) {
         console.error("Error deleting group:", error.message);
         return handleError(res, 500, "Error deleting group: " + error.message);

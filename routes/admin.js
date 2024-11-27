@@ -41,6 +41,7 @@ router.delete("/delete-user", authenticateAdmin, userControllers.delete_user);
 //================================= Report ====================================
 router.get("/get-all-reports", authenticateAdmin, reportControllers.get_all_report_user);
 router.get("/get-all-group-reports", authenticateAdmin, reportControllers.get_all_group_reports);
+router.post("/delete-group", authenticateAdmin, reportControllers.delete_chat_group);
 
 
 //================================= Notification ====================================

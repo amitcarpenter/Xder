@@ -2,6 +2,7 @@ const { collection, doc, deleteDoc, getDocs, getDoc, updateDoc } = require("fire
 const { db } = require('../../config/firebase');
 const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
 const Joi = require("joi");
+const { get_user_data_by_id } = require("../../models/users");
 
 
 exports.getAllFirebaseUsers = async (req, res) => {
@@ -24,10 +25,31 @@ exports.getChatGroups = async (req, res) => {
         const publicChats = publicChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const privateChats = privateChatDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+
+        const public_group_data = await Promise.all(publicChats.map(async (chat) => {
+            const membersWithData = await Promise.all(chat.member.map(async (user) => {
+                const user_data = await get_user_data_by_id(user.id);
+                user.user = user_data;
+                return user;
+            }));
+            return { ...chat, member: membersWithData };
+        }));
+
+        const private_group_data = await Promise.all(privateChats.map(async (chat) => {
+            const membersWithData = await Promise.all(chat.member.map(async (user) => {
+                const user_data = await get_user_data_by_id(user.id);
+                user.user = user_data;
+                return user;
+            }));
+            return { ...chat, member: membersWithData };
+        }));
+
+
         const data = {
-            publicChatGroup: publicChats,
-            privateChatGroup: privateChats
+            publicChatGroup: public_group_data,
+            privateChatGroup: private_group_data
         };
+
 
         return handleSuccess(res, 200, "Data retrieved from both chat groups", data);
     } catch (error) {

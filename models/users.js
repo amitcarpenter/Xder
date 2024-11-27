@@ -932,7 +932,12 @@ module.exports = {
       console.error('Error deleting notification:', error);
       throw error;
     }
-  }
+  },
+
+  delete_group_report: async (group_id) => {
+    return db.query(`DELETE FROM reports WHERE group_id = '${group_id}';`);
+},
+
 
 
 
