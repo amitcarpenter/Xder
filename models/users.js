@@ -329,7 +329,10 @@ module.exports = {
     }
 
     if (search != undefined && search != "") {
-      where += ` AND (username LIKE '%${search}%' OR country LIKE '%${search}%' OR tags LIKE '%${search}%')`;
+      where += ` AND (username LIKE '%${search}%' OR country LIKE '%${search}%' OR tags REGEXP '\\b${search}\\b')`;
+      // where += ` AND (username LIKE '%${search}%' OR country LIKE '%${search}%' OR tags LIKE '%${search}%')`;
+
+
     }
 
     const query = `SELECT * FROM users ${where} ORDER BY id DESC`;
