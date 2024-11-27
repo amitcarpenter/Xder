@@ -211,18 +211,19 @@ exports.get_all_report_user = async (req, res) => {
 
 
 
-const get_group_data_by_id = async (groupId) => {
-    const collectionName = 'privateChatGroup';
-    // const collectionName = 'publicChatGroup';
+
+const get_group_data_by_id = async (groupId, isPrivateGroup = true) => {
+    const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
     const chatGroupRef = collection(db_firebase, collectionName);
-    const groupQuery = query(chatGroupRef, where("id", "==", groupId));
-    const groupDocs = await getDocs(groupQuery);
-    if (groupDocs.empty) {
+    const groupDoc = await getDoc(doc(chatGroupRef, groupId));
+
+    if (!groupDoc.exists()) {
         throw new Error("Chat group not found");
     }
 
-    return groupDocs.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return { id: groupDoc.id, ...groupDoc.data() };
 };
+
 
 
 exports.get_all_group_reports = async (req, res) => {
@@ -255,5 +256,39 @@ exports.get_all_group_reports = async (req, res) => {
 };
 
 
+
+
+const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
+    const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
+    const chatGroupRef = collection(db_firebase, collectionName);
+    const groupDocRef = doc(chatGroupRef, groupId);
+    const groupDoc = await getDoc(groupDocRef);
+    if (!groupDoc.exists()) {
+        throw new Error("Chat group not found");
+    }
+    await deleteDoc(groupDocRef);
+    return { message: "Group deleted successfully", id: groupId };
+};
+
+exports.delete_chat_group = async (req, res) => {
+    try {
+        const deleteGroupSchema = Joi.object({
+            group_id: Joi.number().required(),
+            group_type: Joi.string().valid("private", "public").required()
+        })
+
+        const { error, value } = deleteGroupSchema.validate(req.body);
+        if (error) return joiErrorHandle(res, error);
+        const { group_id, group_type } = value;
+
+        const isPrivateGroup = group_type === 'private';
+        const result = await delete_group_by_id(group_id, isPrivateGroup);
+
+        return handleSuccess(res, 200, "Group deleted successfully", result);
+    } catch (error) {
+        console.error("Error deleting group:", error.message);
+        return handleError(res, 500, "Error deleting group: " + error.message);
+    }
+};
 
 
