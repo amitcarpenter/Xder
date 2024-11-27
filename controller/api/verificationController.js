@@ -1,8 +1,10 @@
 const { getSelectedColumn } = require('../../models/common');
-const { fetchUserBy_Id, get_user_language, addnotification } = require('../../models/users');
+const { fetchUserBy_Id, get_user_language, addnotification, fetch_fcm } = require('../../models/users');
 const pool = require('../../utils/database');
+const { notification_language_translations } = require('../../utils/notification_messages');
 const { handleSuccess, handleError, joiErrorHandle } = require('../../utils/responseHandler');
 const Joi = require('joi');
+const userFcm = require('../../utils/firebaseAdminUser.js');
 
 
 
@@ -76,44 +78,46 @@ exports.send_notification_on_verify = async (user_id) => {
         let [user_language] = await get_user_language(user_id)
         let final_user_language = user_language.language
         let verify_notification_response = notification_language_translations[final_user_language].verify
-
         const Get_fcm = await fetch_fcm(user_id);
-        let where = "WHERE sender_id = '" + sender_id + "' AND reciver_id = '" + reciver_id + "' AND notification_type='visit' ";
 
-        if (Get_fcm[0].dont_disturb == 1) {
-            const send_notification = {
-                user_id: reciver_id,
-                sender_id: 0,
-                reciver_id: reciver_id,
-                body: "Your Account is Verified Successfully",
-                notification_type: "verify",
-            };
+        const send_notification = {
+            user_id: user_id,
+            sender_id: 0,
+            reciver_id: user_id,
+            body: "Your Account is Verified Successfully",
+            notification_type: "verify",
+        };
 
-            const message = {
-                token: Get_fcm[0].fcm_token,
-                notification: {
-                    title: verify_notification_response.title,
-                    body: verify_notification_response.body,
-                },
-                data: {
-                    sender_id: `${sender_id}`,
-                    reciver_id: `${reciver_id}`,
-                    screen: 'visit profile',
-                },
-            };
+        console.log("first")
+        const message = {
+            token: Get_fcm[0].fcm_token,
+            notification: {
+                title: verify_notification_response.title,
+                body: verify_notification_response.body,
+            },
+            data: {
+                sender_id: `${0}`,
+                reciver_id: `${user_id}`,
+                screen: 'Account Verified',
+            },
+        };
+        console.log("second")
+
+        try {
+            let response = null;
             try {
-                let response = null;
-                try {
-                    response = await userFcm.messaging().send(message);
-                } catch (error) {
-                    console.error(error.message)
-                }
-                console.log('Successfully sent message:', response);
-                await addnotification(send_notification);
+                console.log("third")
+                response = await userFcm.messaging().send(message);
             } catch (error) {
-                console.error('Error sending message:', error);
+                console.log("fourth")
+                console.error(error.message)
             }
+            console.log('Successfully sent message:', response);
+            await addnotification(send_notification);
+        } catch (error) {
+            console.error('Error sending message:', error);
         }
+
     } catch (error) {
         console.error(error)
     }

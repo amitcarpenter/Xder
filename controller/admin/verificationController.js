@@ -102,9 +102,11 @@ exports.verifyUser = async (req, res) => {
             return handleError(res, 404, 'User not found or already verified.');
         }
         await active_offer_subscription_for_verify(user_id)
-        await send_notification_on_verify(user_id)
+        let response_notfication = await send_notification_on_verify(user_id)
+        console.log(response_notfication)
         return handleSuccess(res, 200, 'User verified successfully.');
     } catch (error) {
+        console.error(error)
         return handleError(res, 500, 'Error updating verification status.');
     }
 };

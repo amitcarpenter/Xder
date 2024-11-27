@@ -486,7 +486,6 @@ exports.active_offer_subscription_for_verify = async (user_id) => {
     if (saved_subscription.affectedRows > 0) {
       console.log("Subscription Added Successfully!")
     }
-
   } catch (error) {
     console.error(error.message)
   }

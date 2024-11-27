@@ -8206,7 +8206,7 @@ exports.update_user_language = async (req, res) => {
   const schema = Joi.object({
     user_id: Joi.number().integer().required(),
     language: Joi.string().valid("Spanish", "French", "English").required(),
-  }); s
+  });
   const result = schema.validate(req.body);
   if (result.error) {
     const message = result.error.details.map((i) => i.message).join(",");
