@@ -3181,36 +3181,24 @@ exports.editAlbum = async (req, res) => {
       const token = token_1.replace("Bearer ", "");
       const decoded = jwt.decode(token);
       const user_id = decoded.data.id;
-
       let filename = "";
       const check_user = await getData("users", `where id= ${user_id}`);
       let images = [];
       let baseurlimage = ['1'];
       if (check_user.length != 0) {
-
         if (req.files) {
+          console.log(req.files)
           const file = req.files;
-          // if (file.length != 0) {
           for (let i = 0; i < file.length; i++) {
             images.push(req.files[i].filename);
             if (req.files[i].filename) {
               baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
             }
           }
-          // } else {
-          //   return res.json({
-          //     message: "Please select image to upload.",
-          //     success: false,
-          //     status: 400,
-          //   });
-
-          // }
         }
         if (album_name) {
           const upalbum = await updateAlbum(album_name, album_id);
         }
-
-        // if (images.length > 0) {
         await Promise.all(images.map(async (item) => {
           let albums = { 'album_image': item, 'album_id': album_id, 'user_id': user_id };
           const result = await uploadAlbums(albums);
@@ -3222,14 +3210,6 @@ exports.editAlbum = async (req, res) => {
           images: baseurlimage,
           status: 200,
         });
-
-        // } else {
-        //   return res.json({
-        //     message: "Something went wrong!",
-        //     success: true,
-        //     status: 200,
-        //   });
-        // }
 
       } else {
         return res.json({
@@ -3243,7 +3223,7 @@ exports.editAlbum = async (req, res) => {
     console.log(error);
     return res.json({
       success: false,
-      message: "An internal server error occurred. Please try again later.",
+      message: error.message,
       status: 500,
       error: error,
     });
