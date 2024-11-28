@@ -20,6 +20,9 @@ const userFcm = require('../../utils/firebaseAdminUser.js');
 const pool = require('../../utils/database');
 const ejs = require("ejs")
 require("dotenv").config();
+const ffmpeg = require('fluent-ffmpeg');
+const VideoThumbnailGenerator = require('video-thumbnail-generator').default;
+const ffmpegPath = '/usr/bin/ffmpeg';
 
 
 const {
@@ -117,6 +120,7 @@ const e = require("express");
 const { handleError, handleSuccess, joiErrorHandle } = require("../../utils/responseHandler.js");
 const { sendEmail } = require("../../utils/emailService.js");
 const { notification_language_translations } = require("../../utils/notification_messages.js");
+const { serializeUser } = require("passport");
 
 let image_logo = process.env.LOGO_URL
 
@@ -149,6 +153,11 @@ const generateVerificationLink = (token, baseUrl) => {
   return `${baseUrl}/verifyUserEmail?token=${token}`;
 };
 
+
+
+
+
+
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the Earth in kilometers
   const dLat = deg2rad(lat2 - lat1);
@@ -159,6 +168,30 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c; // Distance in kilometers
   return distance;
+}
+
+
+async function generateThumbnail(videoUrl) {
+  return new Promise((resolve, reject) => {
+    const tg = new VideoThumbnailGenerator({
+      sourcePath: videoUrl,
+      thumbnailPath: './public/albums',
+      width: 320,
+      height: 240,
+      ffmpegPath: ffmpegPath
+    });
+    tg.generate().then((result) => {
+      console.log('Thumbnail generated successfully');
+      const thumbnailName = result[0];
+      console.log('Thumbnail saved as:', thumbnailName);
+      const thumbnailPath = `http://44.199.1.149:4000/albums/${thumbnailName}`;
+      console.log('Thumbnail Path:', thumbnailPath);
+      resolve(thumbnailPath);
+    }).catch(err => {
+      console.error('Error generating thumbnail:', err);
+      reject(err);
+    });
+  });
 }
 
 function deg2rad(deg) {
@@ -194,17 +227,12 @@ function calculateAge(dateString) {
   const [day, month, year] = dateString.split('/').map(Number);
   const birthDate = new Date(year, month - 1, day);
   const currentDate = new Date();
-
-  // Calculate the difference in years
   const age = currentDate.getFullYear() - birthDate.getFullYear();
-
-  // Check if the birthday has already occurred this year
   if (
     currentDate.getMonth() < birthDate.getMonth() ||
     (currentDate.getMonth() === birthDate.getMonth() &&
       currentDate.getDate() < birthDate.getDate())
   ) {
-    // If not, subtract 1 from the age
     return age - 1;
   }
 
@@ -1383,6 +1411,7 @@ exports.complete_Profile = async (req, res) => {
         success: false,
       });
     } else {
+      console.log(req.body)
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -1620,7 +1649,6 @@ exports.editProfile = async (req, res) => {
 
 exports.get_all_users_1 = async (req, res) => {
   try {
-
     const authHeader = req.headers.authorization;
     const token_1 = authHeader;
     const token = token_1.replace("Bearer ", "");
@@ -1701,29 +1729,352 @@ exports.get_all_users_1 = async (req, res) => {
   }
 };
 
-exports.get_all_users = async (req, res) => {
+// exports.get_all_users = async (req, res) => {
+//   try {
+//     const { age1, age2, search, body_type, relationship_status,
+//       looking_for, meet_at, height_1, height_2,
+//       weight_1, weight_2, online, app_verify, has_photo, has_album } = req.body;
+//     const schema = Joi.alternatives(
+//       Joi.object({
+//         age1: [Joi.number().allow(null, "").optional(),],
+//         age2: [Joi.number().allow(null, "").optional(),],
+//         body_type: [Joi.string().allow(null, "").optional(),],
+//         relationship_status: [Joi.string().allow(null, "").optional(),],
+//         looking_for: [Joi.string().allow(null, "").optional(),],
+//         meet_at: [Joi.string().allow(null, "").optional(),],
+//         height_1: [Joi.number().allow(null, "").optional(),],
+//         height_2: [Joi.number().allow(null, "").optional(),],
+//         weight_1: [Joi.number().allow(null, "").optional(),],
+//         weight_2: [Joi.number().allow(null, "").optional(),],
+//         search: [Joi.string().allow(null, "").optional(),],
+//         online: [Joi.string().allow(null, "").optional(),],
+//         app_verify: [Joi.string().allow(null, "").optional(),],
+//         has_photo: [Joi.string().allow(null, "").optional()],
+//         has_album: [Joi.string().allow(null, "").optional()],
+//       })
+//     );
+//     const result = schema.validate(req.body);
+//     if (result.error) {
+//       const message = result.error.details.map((i) => i.message).join(",");
+//       return res.json({
+//         message: result.error.details[0].message,
+//         error: message,
+//         missingParams: result.error.details[0].message,
+//         status: 400,
+//         success: false,
+//       });
+//     } else {
+//       const authHeader = req.headers.authorization;
+//       const token_1 = authHeader;
+//       const token = token_1.replace("Bearer ", "");
+//       const decoded = jwt.decode(token);
+//       const user_id = decoded.data.id;
+//       let array = [];
+//       var profile_length = "";
+//       let checksub = await checkSubscriptionDetail(user_id);
+//       const check_user = await getData("users", `where id= ${user_id}`);
+//       if (checksub) {
+//         profile_length = checksub.home_profile;
+//       } else {
+//         profile_length = "";
+//       }
+//       let all_users = await filter(age1, age2, search, user_id, body_type, relationship_status, looking_for, meet_at, height_1, height_2,
+//         weight_1, weight_2, online, app_verify, has_photo);
+
+
+//       await Promise.all(
+//         all_users.map(async (item) => {
+//           const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
+//           item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
+//           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+//           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
+//             const unit = 'metric';
+//             const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+//             const destination = item.latitude + ',' + item.longitude;
+//             try {
+//               const disvalue = await distanceShow(unit, origin, destination);
+//               item.distance = disvalue.distance;
+//             } catch (error) {
+//               console.error('Error in yourAsyncFunction:', error);
+//             }
+//           } else {
+//             item.distance = ""
+//           }
+//           if (item.profile_image != "No image") {
+//             item.profile_image = baseurl + "/profile/" + item.profile_image;
+//           }
+//           const profileimage = await profileimages(item.id);
+//           if (profileimage?.length > 0) {
+//             item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
+//           } else {
+//             item.images = [];
+//           }
+//           const favorite_user_id = item.id;
+//           const check_favoritesUser = await check_favorites_User(
+//             user_id,
+//             favorite_user_id
+//           );
+//           if (check_favoritesUser[0].count != 0) {
+//             item.favorites_user = "Y";
+//           } else {
+//             item.favorites_user = "N";
+//           }
+//           item.select = false;
+//           item.admin = false;
+//           item.album_id = 0;
+//           const My1Albums = await MyAlbums(item.id);
+//           if (My1Albums.length > 0) {
+//             item.album_id = My1Albums[0]?.id;
+//             if (has_album != undefined && has_album != "" && has_album != "0") {
+//               array.push(item);
+//             }
+//           }
+//         })
+//       );
+//       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
+//         all_users = array;
+//       } else if (has_album != "" && has_album != undefined && has_album != "0") {
+//         all_users = array;
+//       } else {
+//         all_users = all_users;
+//       }
+
+//       if (all_users.length != 0) {
+//         const viewd_count = await fetchVisitsInPast24Hours(user_id);
+//         const checkViewed = await checkViewedProfile(user_id);
+//         return res.json({
+//           message: "all users ",
+//           status: 200,
+//           success: true,
+//           total: all_users.length,
+//           all_users: all_users,
+//           profile_length: profile_length,
+//           viewed_count: viewd_count ? viewd_count.length : 0,
+//           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
+//         });
+//       } else {
+//         return res.json({
+//           message: "No data found ",
+//           status: 400,
+//           success: false,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.json({
+//       success: false,
+//       message: "Internal server error",
+//       status: 500,
+//       error: error,
+//     });
+//   }
+// };
+
+function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscription_id) {
+  let baseQuery = `SELECT * FROM users WHERE id != ${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
+  let queryParams = [];
+  const keysLength = Object.keys(filters).length;
+  let maxProfiles;
+  if (subscription_id === 1) {
+    maxProfiles = 300;
+  } else if (subscription_id >= 2 && subscription_id <= 5) {
+    maxProfiles = 600;
+  } else if (subscription_id === 6) {
+    maxProfiles = Infinity;
+  }
+  if (userIds) {
+    baseQuery += " AND id NOT IN (?)";
+    queryParams.push([...userIds]);
+  }
+  if (chatted_userIds) {
+    baseQuery += " AND id IN (?)";
+    queryParams.push([...chatted_userIds]);
+  }
+  if (keysLength === 0) {
+    baseQuery += " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
+  }
+
+  if (filters.looking_for) {
+    const looking_forValues = filters.looking_for.split(',');
+    baseQuery += ' AND (';
+    for (let i = 0; i < looking_forValues.length; i++) {
+      baseQuery += `FIND_IN_SET(?, looking_for)`;
+      queryParams.push(looking_forValues[i]);
+      if (i !== looking_forValues.length - 1) {
+        baseQuery += ' OR ';
+      }
+    }
+    baseQuery += ')';
+  }
+
+  if (filters.relationship_type) {
+    const relationship_typeValues = filters.relationship_type.split(',');
+    baseQuery += ' AND (';
+    for (let i = 0; i < relationship_typeValues.length; i++) {
+      baseQuery += `FIND_IN_SET(?, relationship_type)`;
+      queryParams.push(relationship_typeValues[i]);
+      if (i !== relationship_typeValues.length - 1) {
+        baseQuery += ' OR ';
+      }
+    }
+    baseQuery += ')';
+  }
+
+  if (filters.sexual_orientation) {
+    baseQuery += " AND sexual_orientation = ?";
+    queryParams.push(filters.sexual_orientation);
+  }
+
+  if (filters.gender) {
+    baseQuery += " AND gender = ?";
+    queryParams.push(filters.gender);
+  }
+
+  if (filters.ethnicity) {
+    const ethnicityValues = filters.ethnicity.split(',');
+    baseQuery += ' AND (';
+    for (let i = 0; i < ethnicityValues.length; i++) {
+      baseQuery += `FIND_IN_SET(?, ethnicity)`;
+      queryParams.push(ethnicityValues[i]);
+      if (i !== ethnicityValues.length - 1) {
+        baseQuery += ' OR ';
+      }
+    }
+    baseQuery += ')';
+  }
+
+  if (filters.age1 && filters.age2) {
+    baseQuery += " AND age BETWEEN ? AND ?";
+    queryParams.push(filters.age1);
+    queryParams.push(filters.age2);
+  }
+
+  if (filters.online !== null && filters.online !== undefined) {
+    baseQuery += " AND online_status = ?";
+    queryParams.push(parseInt(filters.online));
+  }
+
+  if (filters.app_verify != null && filters.app_verify != undefined) {
+    baseQuery += " AND app_verify = ?";
+    queryParams.push(parseInt(filters.app_verify));
+  }
+
+  // if (filters.has_photo != undefined && filters.has_photo != null) {
+  //   baseQuery += " AND has_photo = ?";
+  //   queryParams.push(parseInt(filters.has_photo));
+  // }
+
+  // if (filters.search) {
+  //   const searchValues = filters.search.split(',').map(term => term.trim());
+  //   baseQuery += ' AND (';
+  //   for (let i = 0; i < searchValues.length; i++) {
+  //     const searchTerm = searchValues[i];
+  //     baseQuery += `(username LIKE ? OR name LIKE ? OR country LIKE ?  OR city LIKE ? OR FIND_IN_SET(?, tags))`;
+  //     queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, searchTerm);
+  //     if (i !== searchValues.length - 1) {
+  //       baseQuery += ' OR ';
+  //     }
+  //   }
+  //   baseQuery += ')';
+  // }
+
+
+  // if (filters.search) {
+  //   const searchValues = filters.search.split(',').map(term => term.trim().toLowerCase());
+  //   baseQuery += ' AND (';
+  //   for (let i = 0; i < searchValues.length; i++) {
+  //     const searchTerm = searchValues[i];
+  //     baseQuery += `
+  //       (
+  //         LOWER(username) LIKE ? OR
+  //         LOWER(name) LIKE ? OR
+  //         LOWER(country) LIKE ? OR
+  //         LOWER(city) LIKE ? OR
+  //         FIND_IN_SET(?, REPLACE(LOWER(tags), ' ', ''))
+  //       )`;
+  //     queryParams.push(
+  //       `%${searchTerm}%`, // username
+  //       `%${searchTerm}%`, // name
+  //       `%${searchTerm}%`, // country
+  //       `%${searchTerm}%`, // city
+  //       searchTerm.replace(/\s+/g, '') // Remove spaces from search term
+  //     );
+
+  //     if (i !== searchValues.length - 1) {
+  //       baseQuery += ' OR ';
+  //     }
+  //   }
+  //   baseQuery += ')';
+  // }
+
+
+  if (filters.search) {
+    const searchValues = filters.search.split(',').map(term => term.trim().toLowerCase());
+    baseQuery += ' AND (';
+    for (let i = 0; i < searchValues.length; i++) {
+      const searchTerm = searchValues[i];
+      baseQuery += `
+        (
+          LOWER(username) LIKE ? OR
+          LOWER(name) LIKE ? OR
+          LOWER(country) LIKE ? OR
+          LOWER(city) LIKE ? OR
+          LOWER(REPLACE(tags, ' ', '')) LIKE ?
+        )`;
+      queryParams.push(
+        `%${searchTerm}%`, // username
+        `%${searchTerm}%`, // name
+        `%${searchTerm}%`, // country
+        `%${searchTerm}%`, // city
+        `%${searchTerm.replace(/\s+/g, '')}%` // match substring in tags without spaces
+      );
+
+      if (i !== searchValues.length - 1) {
+        baseQuery += ' OR ';
+      }
+    }
+    baseQuery += ')';
+  }
+
+  let effectiveLimit;
+  if (maxProfiles === Infinity) {
+    effectiveLimit = 100000000;
+  } else {
+    effectiveLimit = maxProfiles
+  }
+  baseQuery += ` ORDER BY id DESC LIMIT ? `;
+  queryParams.push(effectiveLimit);
+  return { query: baseQuery, params: queryParams };
+};
+
+exports.new_get_all_users = async (req, res) => {
   try {
-    const { age1, age2, search, body_type, relationship_status,
-      looking_for, meet_at, height_1, height_2,
-      weight_1, weight_2, online, app_verify, has_photo, has_album } = req.body;
+    const { looking_for, relationship_type,
+      sexual_orientation, gender,
+      ethnicity, age1, age2, online, app_verify, has_photo, has_album, all_chatted_userIds, havent_chatted_userIds, search, data,
+      onlyRecent, is_verified } = req.body
     const schema = Joi.alternatives(
       Joi.object({
-        age1: [Joi.number().allow(null, "").optional(),],
-        age2: [Joi.number().allow(null, "").optional(),],
-        body_type: [Joi.string().allow(null, "").optional(),],
-        relationship_status: [Joi.string().allow(null, "").optional(),],
-        looking_for: [Joi.string().allow(null, "").optional(),],
-        meet_at: [Joi.string().allow(null, "").optional(),],
-        height_1: [Joi.number().allow(null, "").optional(),],
-        height_2: [Joi.number().allow(null, "").optional(),],
-        weight_1: [Joi.number().allow(null, "").optional(),],
-        weight_2: [Joi.number().allow(null, "").optional(),],
-        search: [Joi.string().allow(null, "").optional(),],
-        online: [Joi.string().allow(null, "").optional(),],
-        app_verify: [Joi.string().allow(null, "").optional(),],
-        has_photo: [Joi.string().allow(null, "").optional()],
-        has_album: [Joi.string().allow(null, "").optional()],
-
+        looking_for: Joi.string().optional(),
+        relationship_type: Joi.string().optional(),
+        sexual_orientation: Joi.string().optional(),
+        gender: Joi.string().optional(),
+        ethnicity: Joi.string().optional(),
+        age1: Joi.number().optional(),
+        age2: Joi.number().optional(),
+        app_verify: Joi.string().optional(),
+        online: Joi.string().optional(),
+        has_photo: Joi.string().optional(),
+        has_album: Joi.number().optional(),
+        havent_chatted_userIds: Joi.string().optional(),
+        all_chatted_userIds: Joi.string().optional(),
+        search: Joi.string().optional(),
+        page: Joi.number().optional(),
+        limit: Joi.number().optional(),
+        data: Joi.string().optional(),
+        onlyRecent: Joi.number().optional(),
+        is_verified: Joi.boolean().optional().allow("").allow(null)
       })
     );
     const result = schema.validate(req.body);
@@ -1746,29 +2097,48 @@ exports.get_all_users = async (req, res) => {
       var profile_length = "";
       let checksub = await checkSubscriptionDetail(user_id);
       const check_user = await getData("users", `where id= ${user_id}`);
+      const birthdate = check_user[0].DOB;
+      const get_age = calculateAge(birthdate);
+      check_user.date_of_birth = get_age;
       if (checksub) {
         profile_length = checksub.home_profile;
       } else {
         profile_length = "";
       }
-      let all_users = await filter(age1, age2, search, user_id, body_type, relationship_status, looking_for, meet_at, height_1, height_2,
-        weight_1, weight_2, online, app_verify, has_photo);
-
+      let userIds = null;
+      let chatted_userIds = null
+      if (havent_chatted_userIds) { userIds = havent_chatted_userIds.split(',').map(item => parseInt(item)); }
+      if (all_chatted_userIds) { chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item)); }
+      const subscriptionStatus = await checkSubscriptionDetail(user_id);
+      const subscription_id = subscriptionStatus.id
+      const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
+      let all_users = await selectUsersByFilters(query, params);
 
       await Promise.all(
         all_users.map(async (item) => {
+          let birthdate = item.DOB;
+          let get_age = calculateAge(birthdate);
+          item.age = get_age;
           const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
           item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
           item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
+          item.view_me = settingshow_me[0]?.view_me
+          item.explore = settingshow_me[0]?.explore
+
           if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
-            const unit = 'metric';
-            const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
-            const destination = item.latitude + ',' + item.longitude;
-            try {
-              const disvalue = await distanceShow(unit, origin, destination);
-              item.distance = disvalue.distance;
-            } catch (error) {
-              console.error('Error in yourAsyncFunction:', error);
+            console.log(settingshow_me[0]?.distance)
+            if (settingshow_me[0]?.distance == 1) {
+              const unit = 'metric';
+              const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
+              const destination = item.latitude + ',' + item.longitude;
+              try {
+                const disvalue = await distanceShow(unit, origin, destination);
+                item.distance = disvalue.distance;
+              } catch (error) {
+                console.error('Error in yourAsyncFunction:', error);
+              }
+            } else {
+              console.log("Disctance Restrict")
             }
           } else {
             item.distance = ""
@@ -1804,6 +2174,7 @@ exports.get_all_users = async (req, res) => {
           }
         })
       );
+
       if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
         all_users = array;
       } else if (has_album != "" && has_album != undefined && has_album != "0") {
@@ -1811,16 +2182,69 @@ exports.get_all_users = async (req, res) => {
       } else {
         all_users = all_users;
       }
-
-      if (all_users.length != 0) {
+      if (all_users.length > 0) {
         const viewd_count = await fetchVisitsInPast24Hours(user_id);
         const checkViewed = await checkViewedProfile(user_id);
+        const userWithImages = await getUniqueUserIds();
+        let final_users = []
+        const userIdsArray = userWithImages[0].user_ids.split(',').map((ele) => parseInt(ele));
+        if (has_photo == "1") {
+          final_users = all_users.filter((user) => {
+            return userIdsArray.includes(user.id)
+          })
+          all_users = final_users
+        }
+
+        //===================== Change =================
+        const usersWithDistance = await Promise.all(
+          all_users
+            .filter((user) => user.distance)
+            .map(async (user) => {
+              const distance = user.distance.trim();
+              let distanceInMeters;
+
+              if (distance.endsWith("km")) {
+                distanceInMeters = parseFloat(distance.replace("km", "")) * 1000;
+              } else if (distance.endsWith("m")) {
+                distanceInMeters = parseFloat(distance.replace("m", ""));
+              } else {
+                distanceInMeters = Infinity;
+              }
+
+              return { ...user, distanceInMeters };
+            })
+        );
+        const sortedUsersWithDistance = usersWithDistance.sort(
+          (a, b) => a.distanceInMeters - b.distanceInMeters
+        );
+        const usersWithoutDistance = all_users.filter((user) => !user.distance);
+        const sortedUsers = [...sortedUsersWithDistance, ...usersWithoutDistance];
+
+        //===================== Change ==================
+        let filteredSortedUsers = sortedUsers.filter(user => user.explore !== 0);
+
+
+        if (is_verified == true) {
+          filteredSortedUsers = filteredSortedUsers.filter(user => user.is_verified == 1);
+        }
+
+
+        //============== Distance check ================================
+        // const users = await Promise.all(filteredSortedUsers.map((user) => {
+        //   const { distance_status, distance, ...rest } = user;
+        //   if (distance_status) {
+        //     return { ...rest, distance };
+        //   }
+        //   return rest;
+        // }))
+
+        //=========================== End Distance check =================== 
         return res.json({
           message: "all users ",
           status: 200,
           success: true,
-          total: all_users.length,
-          all_users: all_users,
+          total: filteredSortedUsers.length,
+          all_users: filteredSortedUsers,
           profile_length: profile_length,
           viewed_count: viewd_count ? viewd_count.length : 0,
           checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
@@ -1834,10 +2258,9 @@ exports.get_all_users = async (req, res) => {
       }
     }
   } catch (error) {
-    console.log(error);
-    return res.json({
+    return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: error.message,
       status: 500,
       error: error,
     });
@@ -2407,14 +2830,15 @@ exports.myAlbum = async (req, res) => {
     const user_info = await getData("users", `where id= ${user_id}`);
 
     if (user_info != 0) {
+
+
       const my_album = await MyAlbums(user_id);
       const imageExtensions = ['jpeg', 'jpg', 'png', 'gif'];
       const videoExtensions = ['mp4', 'mkv', 'avi', 'mov'];
 
       await Promise.all(
         my_album.map(async (item, i) => {
-
-
+          let album_image_arr = []
           if (item.profile_image != 'No image') {
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           } else {
@@ -2452,6 +2876,7 @@ exports.myAlbum = async (req, res) => {
               }
             }
             item.album_images = albumphotos;
+            album_image_arr = albumphotos
             item.total_photos = albumphotos.length;
           } else {
             item.total_photos = 0;
@@ -2459,7 +2884,13 @@ exports.myAlbum = async (req, res) => {
           }
           item.hasImage = hasImage;
           item.hasVideo = hasVideo
-
+          if (album_image_arr.length > 0) {
+            if (hasVideo) {
+              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+            } else {
+              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+            }
+          }
         })
       );
       var arraydata = { 'is_plus': '1' };
@@ -3061,7 +3492,7 @@ exports.myAlbumSharing = async (req, res) => {
       const videoExtensions = ['mp4', 'mkv', 'avi', 'mov'];
       await Promise.all(
         my_album.map(async (item, i) => {
-
+          let album_image_arr = []
           if (item.profile_image != 'No image') {
             item.profile_image = baseurl + "/profile/" + item.profile_image;
           } else {
@@ -3099,6 +3530,7 @@ exports.myAlbumSharing = async (req, res) => {
               }
             }
             item.album_images = albumphotos;
+            album_image_arr = albumphotos
             item.total_photos = albumphotos.length;
           } else {
             item.total_photos = 0;
@@ -3106,6 +3538,14 @@ exports.myAlbumSharing = async (req, res) => {
           }
           item.hasImage = hasImage;
           item.hasVideo = hasVideo
+
+          if (album_image_arr.length > 0) {
+            if (hasVideo) {
+              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+            } else {
+              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+            }
+          }
         })
       );
       return res.json({
@@ -3132,6 +3572,7 @@ exports.myAlbumSharing = async (req, res) => {
     });
   }
 };
+
 
 exports.myAlbumbyIdsingle = async (req, res) => {
   try {
@@ -4441,18 +4882,18 @@ exports.addShowme = async (req, res) => {
   }
 };
 
-(async () => {
-  let [user_language] = await get_user_language(1)
-  let final_user_language = user_language.language
-  let notification_type = 'visit'
-  let notification_response = notification_language_translations[final_user_language].GroupNotification
-  // console.log(notification_response.body("name ", "lan"))
-  let sender_id = 6;
-  let reciver_id1 = 2;
-  let group_id = "6_1";
-  let already_check_request = await already_check_request_function(sender_id, reciver_id1, group_id, notification_type)
-  console.log(already_check_request)
-})()
+// (async () => {
+//   let [user_language] = await get_user_language(1)
+//   let final_user_language = user_language.language
+//   let notification_type = 'visit'
+//   let notification_response = notification_language_translations[final_user_language].GroupNotification
+//   // console.log(notification_response.body("name ", "lan"))
+//   let sender_id = 6;
+//   let reciver_id1 = 2;
+//   let group_id = "6_1";
+//   let already_check_request = await already_check_request_function(sender_id, reciver_id1, group_id, notification_type)
+//   console.log(already_check_request)
+// })()
 
 exports.send_notification = async (req, res) => {
   try {
@@ -6932,6 +7373,9 @@ exports.newComplete_Profile = async (req, res) => {
         const birthdate = DOB;
         const age = calculateAge(birthdate);
 
+        console.log(age)
+        console.log("####################")
+
         let user = {
           name: name,
           profile_image: filename,
@@ -7087,343 +7531,6 @@ function buildSelectQuery(user_id, filters, userIds) {
   return { query: baseQuery, params: queryParams };
 }
 
-function newBuildSelectQuery(user_id, filters, userIds, chatted_userIds, subscription_id) {
-  let baseQuery = `SELECT * FROM users WHERE id != ${user_id} AND complete_profile_status = 1 AND incognito_mode = 0`;
-  let queryParams = [];
-  const keysLength = Object.keys(filters).length;
-  let maxProfiles;
-  if (subscription_id === 1) {
-    maxProfiles = 300;
-  } else if (subscription_id >= 2 && subscription_id <= 5) {
-    maxProfiles = 600;
-  } else if (subscription_id === 6) {
-    maxProfiles = Infinity;
-  }
-  if (userIds) {
-    baseQuery += " AND id NOT IN (?)";
-    queryParams.push([...userIds]);
-  }
-  if (chatted_userIds) {
-    baseQuery += " AND id IN (?)";
-    queryParams.push([...chatted_userIds]);
-  }
-  if (keysLength === 0) {
-    baseQuery += " AND (online_status  = 1 OR last_seen >= DATE_SUB(NOW(), INTERVAL 48 HOUR))";
-  }
-
-  if (filters.looking_for) {
-    const looking_forValues = filters.looking_for.split(',');
-    baseQuery += ' AND (';
-    for (let i = 0; i < looking_forValues.length; i++) {
-      baseQuery += `FIND_IN_SET(?, looking_for)`;
-      queryParams.push(looking_forValues[i]);
-      if (i !== looking_forValues.length - 1) {
-        baseQuery += ' OR ';
-      }
-    }
-    baseQuery += ')';
-  }
-
-  if (filters.relationship_type) {
-    const relationship_typeValues = filters.relationship_type.split(',');
-    baseQuery += ' AND (';
-    for (let i = 0; i < relationship_typeValues.length; i++) {
-      baseQuery += `FIND_IN_SET(?, relationship_type)`;
-      queryParams.push(relationship_typeValues[i]);
-      if (i !== relationship_typeValues.length - 1) {
-        baseQuery += ' OR ';
-      }
-    }
-    baseQuery += ')';
-  }
-
-  if (filters.sexual_orientation) {
-    baseQuery += " AND sexual_orientation = ?";
-    queryParams.push(filters.sexual_orientation);
-  }
-
-  if (filters.gender) {
-    baseQuery += " AND gender = ?";
-    queryParams.push(filters.gender);
-  }
-
-  if (filters.ethnicity) {
-    const ethnicityValues = filters.ethnicity.split(',');
-    baseQuery += ' AND (';
-    for (let i = 0; i < ethnicityValues.length; i++) {
-      baseQuery += `FIND_IN_SET(?, ethnicity)`;
-      queryParams.push(ethnicityValues[i]);
-      if (i !== ethnicityValues.length - 1) {
-        baseQuery += ' OR ';
-      }
-    }
-    baseQuery += ')';
-  }
-
-  if (filters.age1 && filters.age2) {
-    baseQuery += " AND age BETWEEN ? AND ?";
-    queryParams.push(filters.age1);
-    queryParams.push(filters.age2);
-  }
-
-  if (filters.online !== null && filters.online !== undefined) {
-    baseQuery += " AND online_status = ?";
-    queryParams.push(parseInt(filters.online));
-  }
-
-  if (filters.app_verify != null && filters.app_verify != undefined) {
-    baseQuery += " AND app_verify = ?";
-    queryParams.push(parseInt(filters.app_verify));
-  }
-
-  // if (filters.has_photo != undefined && filters.has_photo != null) {
-  //   baseQuery += " AND has_photo = ?";
-  //   queryParams.push(parseInt(filters.has_photo));
-  // }
-
-  if (filters.search) {
-    const searchValues = filters.search.split(',').map(term => term.trim());
-    baseQuery += ' AND (';
-    for (let i = 0; i < searchValues.length; i++) {
-      const searchTerm = searchValues[i];
-      baseQuery += `(username LIKE ? OR name LIKE ? OR country LIKE ?  OR city LIKE ? OR FIND_IN_SET(?, tags))`;
-      queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, searchTerm);
-      if (i !== searchValues.length - 1) {
-        baseQuery += ' OR ';
-      }
-    }
-    baseQuery += ')';
-  }
-
-  let effectiveLimit;
-  if (maxProfiles === Infinity) {
-    effectiveLimit = 100000000;
-  } else {
-    effectiveLimit = maxProfiles
-  }
-  baseQuery += ` ORDER BY id DESC LIMIT ? `;
-  queryParams.push(effectiveLimit);
-  return { query: baseQuery, params: queryParams };
-};
-
-exports.new_get_all_users = async (req, res) => {
-  try {
-    const { looking_for, relationship_type,
-      sexual_orientation, gender,
-      ethnicity, age1, age2, online, app_verify, has_photo, has_album, all_chatted_userIds, havent_chatted_userIds, search, data,
-      onlyRecent, is_verified } = req.body
-    const schema = Joi.alternatives(
-      Joi.object({
-        looking_for: Joi.string().optional(),
-        relationship_type: Joi.string().optional(),
-        sexual_orientation: Joi.string().optional(),
-        gender: Joi.string().optional(),
-        ethnicity: Joi.string().optional(),
-        age1: Joi.number().optional(),
-        age2: Joi.number().optional(),
-        app_verify: Joi.string().optional(),
-        online: Joi.string().optional(),
-        has_photo: Joi.string().optional(),
-        has_album: Joi.number().optional(),
-        havent_chatted_userIds: Joi.string().optional(),
-        all_chatted_userIds: Joi.string().optional(),
-        search: Joi.string().optional(),
-        page: Joi.number().optional(),
-        limit: Joi.number().optional(),
-        data: Joi.string().optional(),
-        onlyRecent: Joi.number().optional(),
-        is_verified: Joi.boolean().optional().allow("").allow(null)
-      })
-    );
-    const result = schema.validate(req.body);
-    if (result.error) {
-      const message = result.error.details.map((i) => i.message).join(",");
-      return res.json({
-        message: result.error.details[0].message,
-        error: message,
-        missingParams: result.error.details[0].message,
-        status: 400,
-        success: false,
-      });
-    } else {
-      const authHeader = req.headers.authorization;
-      const token_1 = authHeader;
-      const token = token_1.replace("Bearer ", "");
-      const decoded = jwt.decode(token);
-      const user_id = decoded.data.id;
-      let array = [];
-      var profile_length = "";
-      let checksub = await checkSubscriptionDetail(user_id);
-      const check_user = await getData("users", `where id= ${user_id}`);
-      const birthdate = check_user[0].DOB;
-      const get_age = calculateAge(birthdate);
-      check_user.date_of_birth = get_age;
-      if (checksub) {
-        profile_length = checksub.home_profile;
-      } else {
-        profile_length = "";
-      }
-      let userIds = null;
-      let chatted_userIds = null
-      if (havent_chatted_userIds) { userIds = havent_chatted_userIds.split(',').map(item => parseInt(item)); }
-      if (all_chatted_userIds) { chatted_userIds = all_chatted_userIds.split(',').map(item => parseInt(item)); }
-      const subscriptionStatus = await checkSubscriptionDetail(user_id);
-      const subscription_id = subscriptionStatus.id
-      const { query, params } = newBuildSelectQuery(user_id, req.body, userIds, chatted_userIds, subscription_id);
-      let all_users = await selectUsersByFilters(query, params);
-
-      await Promise.all(
-        all_users.map(async (item) => {
-          let birthdate = item.DOB;
-          let get_age = calculateAge(birthdate);
-          item.age = get_age;
-          const settingshow_me = await getData("setting_show_me", `where user_id= ${item.id}`);
-          item.explore_status = (settingshow_me[0]?.explore == 1) ? true : false
-          item.distance_status = (settingshow_me[0]?.distance == 1) ? true : false
-          item.view_me = settingshow_me[0]?.view_me
-          item.explore = settingshow_me[0]?.explore
-
-          if (item.latitude != null && item.latitude != "" && item.latitude != undefined && item.longitude != null && item.longitude != "" && item.longitude != undefined) {
-            console.log(settingshow_me[0]?.distance)
-            if (settingshow_me[0]?.distance == 1) {
-              const unit = 'metric';
-              const origin = check_user[0]?.latitude + ',' + check_user[0]?.longitude;
-              const destination = item.latitude + ',' + item.longitude;
-              try {
-                const disvalue = await distanceShow(unit, origin, destination);
-                item.distance = disvalue.distance;
-              } catch (error) {
-                console.error('Error in yourAsyncFunction:', error);
-              }
-            } else {
-              console.log("Disctance Restrict")
-            }
-          } else {
-            item.distance = ""
-          }
-          if (item.profile_image != "No image") {
-            item.profile_image = baseurl + "/profile/" + item.profile_image;
-          }
-          const profileimage = await profileimages(item.id);
-          if (profileimage?.length > 0) {
-            item.images = profileimage.map(imageObj => imageObj.image ? baseurl + '/profile/' + imageObj.image : "");
-          } else {
-            item.images = [];
-          }
-          const favorite_user_id = item.id;
-          const check_favoritesUser = await check_favorites_User(
-            user_id,
-            favorite_user_id
-          );
-          if (check_favoritesUser[0].count != 0) {
-            item.favorites_user = "Y";
-          } else {
-            item.favorites_user = "N";
-          }
-          item.select = false;
-          item.admin = false;
-          item.album_id = 0;
-          const My1Albums = await MyAlbums(item.id);
-          if (My1Albums.length > 0) {
-            item.album_id = My1Albums[0]?.id;
-            if (has_album != undefined && has_album != "" && has_album != "0") {
-              array.push(item);
-            }
-          }
-        })
-      );
-
-      if (array.length > 0 && has_album != "" && has_album != undefined && has_album != "0") {
-        all_users = array;
-      } else if (has_album != "" && has_album != undefined && has_album != "0") {
-        all_users = array;
-      } else {
-        all_users = all_users;
-      }
-      if (all_users.length > 0) {
-        const viewd_count = await fetchVisitsInPast24Hours(user_id);
-        const checkViewed = await checkViewedProfile(user_id);
-        const userWithImages = await getUniqueUserIds();
-        let final_users = []
-        const userIdsArray = userWithImages[0].user_ids.split(',').map((ele) => parseInt(ele));
-        if (has_photo == "1") {
-          final_users = all_users.filter((user) => {
-            return userIdsArray.includes(user.id)
-          })
-          all_users = final_users
-        }
-
-        //===================== Change =================
-        const usersWithDistance = await Promise.all(
-          all_users
-            .filter((user) => user.distance)
-            .map(async (user) => {
-              const distance = user.distance.trim();
-              let distanceInMeters;
-
-              if (distance.endsWith("km")) {
-                distanceInMeters = parseFloat(distance.replace("km", "")) * 1000;
-              } else if (distance.endsWith("m")) {
-                distanceInMeters = parseFloat(distance.replace("m", ""));
-              } else {
-                distanceInMeters = Infinity;
-              }
-
-              return { ...user, distanceInMeters };
-            })
-        );
-        const sortedUsersWithDistance = usersWithDistance.sort(
-          (a, b) => a.distanceInMeters - b.distanceInMeters
-        );
-        const usersWithoutDistance = all_users.filter((user) => !user.distance);
-        const sortedUsers = [...sortedUsersWithDistance, ...usersWithoutDistance];
-
-        //===================== Change ==================
-        let filteredSortedUsers = sortedUsers.filter(user => user.explore !== 0);
-
-
-        if (is_verified == true) {
-          filteredSortedUsers = filteredSortedUsers.filter(user => user.is_verified == 1);
-        }
-
-
-        //============== Distance check ================================
-        // const users = await Promise.all(filteredSortedUsers.map((user) => {
-        //   const { distance_status, distance, ...rest } = user;
-        //   if (distance_status) {
-        //     return { ...rest, distance };
-        //   }
-        //   return rest;
-        // }))
-
-        //=========================== End Distance check =================== 
-        return res.json({
-          message: "all users ",
-          status: 200,
-          success: true,
-          total: filteredSortedUsers.length,
-          all_users: filteredSortedUsers,
-          profile_length: profile_length,
-          viewed_count: viewd_count ? viewd_count.length : 0,
-          checkViewed: checkViewed ? checkViewed[0].count_profile : 0,
-        });
-      } else {
-        return res.json({
-          message: "No data found ",
-          status: 400,
-          success: false,
-        });
-      }
-    }
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-      status: 500,
-      error: error,
-    });
-  }
-};
 
 exports.deleteProfileimage = async (req, res) => {
   try {
@@ -8245,3 +8352,10 @@ exports.update_user_language = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+

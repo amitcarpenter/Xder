@@ -182,7 +182,7 @@ const APP_URL = process.env.APP_URL
 
 exports.get_all_report_user = async (req, res) => {
     try {
-        const get_report_query = 'SELECT * FROM reports where reciver_id != 0';
+        const get_report_query = 'SELECT * FROM reports where reciver_id != 0 ORDER BY id DESC';
         const reports = await db.query(get_report_query);
 
         const updatedReports = await Promise.all(reports.map(async (report) => {
@@ -228,7 +228,7 @@ const get_group_data_by_id = async (groupId, isPrivateGroup = true) => {
 
 exports.get_all_group_reports = async (req, res) => {
     try {
-        const get_report_query = 'SELECT * FROM reports WHERE group_id != 0';
+        const get_report_query = 'SELECT * FROM reports WHERE group_id != 0 ORDER BY id DESC';
         const reports = await db.query(get_report_query);
         const updatedReports = await Promise.all(reports.map(async (report) => {
             const sender_query = 'SELECT * FROM users WHERE id = ?';
@@ -272,7 +272,7 @@ exports.delete_chat_group = async (req, res) => {
     try {
         const deleteGroupSchema = Joi.object({
             group_id: Joi.string().required(),
-            group_type: Joi.string().valid("private", "public").required()
+            group_type: Joi.string().valid("private", "public").optional().allow("").allow(null)
         })
 
         const { error, value } = deleteGroupSchema.validate(req.body);

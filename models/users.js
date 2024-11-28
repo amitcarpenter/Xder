@@ -697,6 +697,8 @@ module.exports = {
   },
 
   selectUsersByFilters: async (query, params) => {
+    console.log(query)
+    console.log(params)
     return db.query(query, params);
   },
 
