@@ -3156,79 +3156,164 @@ exports.myAlbumbyId = async (req, res) => {
   }
 };
 
+// exports.editAlbum = async (req, res) => {
+//   try {
+//     const { album_id, album_name } = req.body;
+//     const schema = Joi.alternatives(
+//       Joi.object({
+//         album_id: [Joi.string().empty().optional()],
+//         album_name: [Joi.string().empty().optional()],
+//       })
+//     );
+//     const result = schema.validate(req.body);
+//     if (result.error) {
+//       const message = result.error.details.map((i) => i.message).join(",");
+//       return res.json({
+//         message: result.error.details[0].message,
+//         error: message,
+//         missingParams: result.error.details[0].message,
+//         status: 400,
+//         success: false,
+//       });
+//     } else {
+//       const authHeader = req.headers.authorization;
+//       const token_1 = authHeader;
+//       const token = token_1.replace("Bearer ", "");
+//       const decoded = jwt.decode(token);
+//       const user_id = decoded.data.id;
+//       let filename = "";
+//       const check_user = await getData("users", `where id= ${user_id}`);
+//       let images = [];
+//       let baseurlimage = ['1'];
+//       if (check_user.length != 0) {
+//         if (req.files) {
+//           console.log(req.files)
+//           const file = req.files;
+//           for (let i = 0; i < file.length; i++) {
+//             images.push(req.files[i].filename);
+//             if (req.files[i].filename) {
+//               baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
+//             }
+//           }
+//         }
+//         if (album_name) {
+//           const upalbum = await updateAlbum(album_name, album_id);
+//         }
+//         await Promise.all(images.map(async (item) => {
+//           let albums = { 'album_image': item, 'album_id': album_id, 'user_id': user_id };
+//           const result = await uploadAlbums(albums);
+//         }));
+
+//         return res.json({
+//           message: "Photos Added to Albums Successfully",
+//           success: true,
+//           images: baseurlimage,
+//           status: 200,
+//         });
+
+//       } else {
+//         return res.json({
+//           message: "User not found please sign-up first",
+//           success: false,
+//           status: 400,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.json({
+//       success: false,
+//       message: error.message,
+//       status: 500,
+//       error: error,
+//     });
+//   }
+// };
+
+
 exports.editAlbum = async (req, res) => {
   try {
     const { album_id, album_name } = req.body;
-    const schema = Joi.alternatives(
-      Joi.object({
-        album_id: [Joi.string().empty().optional()],
-        album_name: [Joi.string().empty().optional()],
-      })
-    );
+    const schema = Joi.object({
+      album_id: Joi.string().optional().allow(""),
+      album_name: Joi.string().optional().allow(""),
+    });
     const result = schema.validate(req.body);
     if (result.error) {
-      const message = result.error.details.map((i) => i.message).join(",");
       return res.json({
         message: result.error.details[0].message,
-        error: message,
-        missingParams: result.error.details[0].message,
+        error: result.error.details.map((i) => i.message).join(","),
         status: 400,
         success: false,
       });
-    } else {
-      const authHeader = req.headers.authorization;
-      const token_1 = authHeader;
-      const token = token_1.replace("Bearer ", "");
-      const decoded = jwt.decode(token);
-      const user_id = decoded.data.id;
-      let filename = "";
-      const check_user = await getData("users", `where id= ${user_id}`);
-      let images = [];
-      let baseurlimage = ['1'];
-      if (check_user.length != 0) {
-        if (req.files) {
-          console.log(req.files)
-          const file = req.files;
-          for (let i = 0; i < file.length; i++) {
-            images.push(req.files[i].filename);
-            if (req.files[i].filename) {
-              baseurlimage.push(baseurl + '/albums/' + req.files[i].filename);
-            }
-          }
-        }
-        if (album_name) {
-          const upalbum = await updateAlbum(album_name, album_id);
-        }
-        await Promise.all(images.map(async (item) => {
-          let albums = { 'album_image': item, 'album_id': album_id, 'user_id': user_id };
-          const result = await uploadAlbums(albums);
-        }));
-
-        return res.json({
-          message: "Photos Added to Albums Successfully",
-          success: true,
-          images: baseurlimage,
-          status: 200,
-        });
-
-      } else {
-        return res.json({
-          message: "User not found please sign-up first",
-          success: false,
-          status: 400,
-        });
-      }
     }
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.json({
+        message: "Authorization header missing",
+        status: 401,
+        success: false,
+      });
+    }
+    const token = authHeader.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded?.data?.id;
+
+    if (!user_id) {
+      return res.json({
+        message: "Invalid or missing token",
+        status: 401,
+        success: false,
+      });
+    }
+
+    const check_user = await getData("users", `where id= ${user_id}`);
+    if (!check_user.length) {
+      return res.json({
+        message: "User not found. Please sign-up first.",
+        status: 400,
+        success: false,
+      });
+    }
+
+    let images = [];
+    let baseurlimage = [];
+
+    if (req.files && req.files.length > 0) {
+      console.log(req.files)
+      images = req.files.map((file) => file.filename);
+      console.log(images)
+      baseurlimage = images.map((filename) => `${baseurl}/albums/${filename}`);
+    }
+
+    if (album_name) {
+      await updateAlbum(album_name, album_id);
+    }
+
+    await Promise.all(
+      images.map((image) => {
+        const albumData = { album_image: image, album_id, user_id };
+        return uploadAlbums(albumData);
+      })
+    );
+
+    return res.json({
+      message: "Photos added to album successfully",
+      success: true,
+      images: baseurlimage,
+      status: 200,
+    });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.json({
       success: false,
       message: error.message,
       status: 500,
-      error: error,
     });
   }
 };
+
 
 exports.deleteAlbumPhotos = async (req, res) => {
   try {
