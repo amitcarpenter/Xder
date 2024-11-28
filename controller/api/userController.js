@@ -3573,7 +3573,6 @@ exports.myAlbumSharing = async (req, res) => {
   }
 };
 
-
 exports.myAlbumbyIdsingle = async (req, res) => {
   try {
 

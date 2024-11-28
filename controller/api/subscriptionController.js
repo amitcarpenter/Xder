@@ -225,6 +225,102 @@ exports.AddsubscriptionPlan = async (req, res) => {
   }
 };
 
+// exports.activatePlan = async (req, res) => {
+//   try {
+//     const { user_sub_id, plan_days, plan_type } = req.body;
+//     const schema = Joi.alternatives(
+//       Joi.object({
+//         user_sub_id: [Joi.string().empty().required()],
+//         plan_days: [Joi.string().empty().required()],
+//         plan_type: [Joi.string().empty().required()],
+//       })
+//     );
+//     const result = schema.validate(req.body);
+//     if (result.error) {
+//       const message = result.error.details.map((i) => i.message).join(",");
+//       return res.json({
+//         message: result.error.details[0].message,
+//         error: message,
+//         missingParams: result.error.details[0].message,
+//         status: 400,
+//         success: false,
+//       });
+//     } else {
+
+//       const authHeader = req.headers.authorization;
+//       const token_1 = authHeader;
+//       const token = token_1.replace("Bearer ", "");
+//       const decoded = jwt.decode(token);
+//       const user_id = decoded.data.id;
+//       let subscription = "";
+//       const user_info = await getData("users", `where id= ${user_id}`);
+
+//       const currentDate = moment();
+//       let start_date = currentDate.format('YYYY-MM-DD')
+//       const expires = currentDate.clone().add(plan_days, plan_type);
+//       let expDate = expires.format('YYYY-MM-DD')
+
+
+//       console.log(start_date, "Start data")
+//       console.log(expires, "expires")
+//       console.log(expDate, "expDate")
+
+//       if (user_info != 0) {
+//         const subsdata = await userCurrentSubscription(user_id);
+//         if (subsdata.length > 0) {
+
+//           let data1 = ` overlap_status=1,sub_status=0,overlap_date='${start_date}'`;
+
+//           let updateold = await updateData('user_subscription', ` where id='${subsdata[0].id}' `, data1)
+//         }
+
+//         subscription = ` user_id='${user_id}',expired_at='${expDate}',start_date='${start_date}',sub_status=1 `;
+
+//         let updateold1 = await updateData('user_subscription', ` where id='${user_sub_id}' `, subscription)
+
+
+//         if (updateold1.affectedRows > 0) {
+
+//           return res.json({
+//             status: 200,
+//             success: true,
+//             message: "Subscription Activated Successfully!",
+//           });
+//         } else {
+//           return res.json({
+//             status: 400,
+//             success: false,
+//             message: "Something went wrong!",
+//           });
+//         }
+
+//       } else {
+//         return res.json({
+//           status: 400,
+//           success: false,
+//           message: "User Not Found",
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     return res.json({
+//       success: false,
+//       message: "Internal server error",
+//       status: 500,
+//       error: error,
+//     });
+//   }
+// };
+
+
+
+
+// 0|index  | 2024-11-28 Start data
+// 0|index  | Moment<2024-11-28T07:19:08+00:00> expires
+// 0|index  | 2024-11-28 expDate
+
+
 exports.activatePlan = async (req, res) => {
   try {
     const { user_sub_id, plan_days, plan_type } = req.body;
@@ -245,70 +341,80 @@ exports.activatePlan = async (req, res) => {
         status: 400,
         success: false,
       });
-    } else {
-
-      const authHeader = req.headers.authorization;
-      const token_1 = authHeader;
-      const token = token_1.replace("Bearer ", "");
-      const decoded = jwt.decode(token);
-      const user_id = decoded.data.id;
-      let subscription = "";
-      const user_info = await getData("users", `where id= ${user_id}`);
-
-      const currentDate = moment();
-      let start_date = currentDate.format('YYYY-MM-DD')
-      const expires = currentDate.clone().add(plan_days, plan_type);
-      let expDate = expires.format('YYYY-MM-DD')
-
-      if (user_info != 0) {
-
-        const subsdata = await userCurrentSubscription(user_id);
-
-        if (subsdata.length > 0) {
-
-          let data1 = ` overlap_status=1,sub_status=0,overlap_date='${start_date}'`;
-
-          let updateold = await updateData('user_subscription', ` where id='${subsdata[0].id}' `, data1)
-        }
-
-        subscription = ` user_id='${user_id}',expired_at='${expDate}',start_date='${start_date}',sub_status=1 `;
-
-        let updateold1 = await updateData('user_subscription', ` where id='${user_sub_id}' `, subscription)
-
-
-        if (updateold1.affectedRows > 0) {
-
-          return res.json({
-            status: 200,
-            success: true,
-            message: "Subscription Activated Successfully!",
-          });
-        } else {
-          return res.json({
-            status: 400,
-            success: false,
-            message: "Something went wrong!",
-          });
-        }
-
-      } else {
-        return res.json({
-          status: 400,
-          success: false,
-          message: "User Not Found",
-        });
-      }
     }
+
+    const authHeader = req.headers.authorization;
+    const token_1 = authHeader;
+    const token = token_1.replace("Bearer ", "");
+    const decoded = jwt.decode(token);
+    const user_id = decoded.data.id;
+    let subscription = "";
+    const user_info = await getData("users", `where id= ${user_id}`);
+
+    // const currentDate = moment();
+    // let start_date = currentDate.format('YYYY-MM-DD')
+    // const expires = currentDate.clone().add(plan_days, plan_type);
+    // let expDate = expires.format('YYYY-MM-DD')
+
+
+    const currentDate = moment();
+
+    let start_date = currentDate.format('YYYY-MM-DD');
+    const expires = currentDate.clone().add(plan_days, plan_type);
+    let expDate = expires.format('YYYY-MM-DD');
+
+    console.log(start_date, "Start date");
+    console.log(expires.toString(), "Expires");
+    console.log(expDate, "ExpDate");
+
+    if (!user_info) {
+      return res.json({
+        status: 400,
+        success: false,
+        message: "User Not Found",
+      });
+    }
+    const subsdata = await userCurrentSubscription(user_id);
+    if (subsdata.length > 0) {
+
+      let data1 = ` overlap_status=1,sub_status=0,overlap_date='${start_date}'`;
+
+      let updateold = await updateData('user_subscription', ` where id='${subsdata[0].id}' `, data1)
+    }
+
+    subscription = ` user_id='${user_id}',expired_at='${expDate}',start_date='${start_date}',sub_status=1 `;
+
+    let updateold1 = await updateData('user_subscription', ` where id='${user_sub_id}' `, subscription)
+
+
+    if (updateold1.affectedRows > 0) {
+
+      return res.json({
+        status: 200,
+        success: true,
+        message: "Subscription Activated Successfully!",
+      });
+    } else {
+      return res.json({
+        status: 400,
+        success: false,
+        message: "Something went wrong!",
+      });
+    }
+
+
+
   } catch (error) {
     console.log(error);
     return res.json({
       success: false,
-      message: "Internal server error",
+      message: error.message,
       status: 500,
       error: error,
     });
   }
 };
+
 
 exports.ChecksubscriptionUser = async (req, res) => {
   try {
