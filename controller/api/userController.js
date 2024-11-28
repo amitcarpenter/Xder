@@ -2884,13 +2884,13 @@ exports.myAlbum = async (req, res) => {
           }
           item.hasImage = hasImage;
           item.hasVideo = hasVideo
-          if (album_image_arr.length > 0) {
-            if (hasVideo) {
-              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
-            } else {
-              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
-            }
-          }
+          // if (album_image_arr.length > 0) {
+          //   if (hasVideo) {
+          //     item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+          //   } else {
+          //     item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+          //   }
+          // }
         })
       );
       var arraydata = { 'is_plus': '1' };
@@ -3539,13 +3539,13 @@ exports.myAlbumSharing = async (req, res) => {
           item.hasImage = hasImage;
           item.hasVideo = hasVideo
 
-          if (album_image_arr.length > 0) {
-            if (hasVideo) {
-              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
-            } else {
-              item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
-            }
-          }
+          // if (album_image_arr.length > 0) {
+          //   if (hasVideo) {
+          //     item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+          //   } else {
+          //     item.album_thumbnail = await generateThumbnail(album_image_arr[0].album_image)
+          //   }
+          // }
         })
       );
       return res.json({
