@@ -104,8 +104,8 @@ const {
   update_request_reject,
   delete_notification_request_reject,
   get_album_data,
-  update_thubnail_album_data, 
-  } = require("../../models/users.js");
+  update_thubnail_album_data,
+} = require("../../models/users.js");
 
 const {
   insertData,
@@ -337,6 +337,12 @@ exports.signUp = async (req, res) => {
     if (error) return joiErrorHandle(res, error);
 
     const { email, password, confirm_password, phone_number } = req.body;
+
+    console.log("reqbody", req.body)
+    console.log("sign up ")
+    console.log("sign up ")
+    console.log("sign up ")
+    console.log("sign up ")
 
     const data = await fetchUserByEmail(email);
     const check_phone_number = await getData(
@@ -1500,6 +1506,7 @@ exports.complete_Profile = async (req, res) => {
 };
 
 exports.editProfile = async (req, res) => {
+  console.log("edit projfile @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
   try {
     const {
       name,
@@ -1524,6 +1531,9 @@ exports.editProfile = async (req, res) => {
       facebook,
       covid_19,
     } = req.body;
+
+    console.log(req.body)
+    console.log("#####################")
     const schema = Joi.alternatives(
       Joi.object({
         name: [Joi.string().empty()],
@@ -1552,6 +1562,7 @@ exports.editProfile = async (req, res) => {
     );
     const result = schema.validate(req.body);
     if (result.error) {
+      console.log(result.error)
       const message = result.error.details.map((i) => i.message).join(",");
       return res.json({
         message: result.error.details[0].message,
@@ -1561,6 +1572,12 @@ exports.editProfile = async (req, res) => {
         success: false,
       });
     } else {
+      console.log(req.body)
+      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@")
+      console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@")
       const authHeader = req.headers.authorization;
       const token_1 = authHeader;
       const token = token_1.replace("Bearer ", "");
@@ -1582,13 +1599,13 @@ exports.editProfile = async (req, res) => {
             status: 400,
           });
         }
-        let get_age = '';
+        let get_age = userInfo[0].age;
         if (DOB) {
           const birthdate = DOB;
           get_age = calculateAge(birthdate);
-        } else {
-          get_age = "";
         }
+
+        console.log(get_age, "AGEgggggggggg")
         let user = {
           name: name ? name : userInfo[0].name,
           profile_image: filename ? filename : userInfo[0].profile_image,
@@ -1614,7 +1631,7 @@ exports.editProfile = async (req, res) => {
           twitter_link: twitter ? twitter : userInfo[0].twitter_link != null ? userInfo[0].twitter_link : "",
           instagram_link: instagram ? instagram : userInfo[0].instagram_link != null ? userInfo[0].instagram_link : "",
           facebook_link: facebook ? facebook : userInfo[0].facebook_link != null ? userInfo[0].facebook_link : "",
-          age: get_age ? get_age : 0
+          age: get_age
         };
         console.log(user);
         const result = await updateUserById(user, user_id);
@@ -3737,16 +3754,16 @@ exports.myAlbumbyIdsingle = async (req, res) => {
 
               // Separate images and videos based on file extensions
               item.album_images = albumphotos.filter(photo => {
-                const imageExtensions = ['.jpeg', '.jpg', '.png', '.gif'];
+                const imageExtensions = ['.jpeg', '.jpg', '.png', '.gif', '.mp4', '.mkv', '.avi', '.mov'];
                 const fileExtension = photo.album_image.slice(photo.album_image.lastIndexOf('.')).toLowerCase();
                 return imageExtensions.includes(fileExtension);
               });
 
-              item.album_videos = albumphotos.filter(photo => {
-                const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
-                const fileExtension = photo.album_image.slice(photo.album_image.lastIndexOf('.')).toLowerCase();
-                return videoExtensions.includes(fileExtension);
-              });
+              // item.album_videos = albumphotos.filter(photo => {
+              //   const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov'];
+              //   const fileExtension = photo.album_image.slice(photo.album_image.lastIndexOf('.')).toLowerCase();
+              //   return videoExtensions.includes(fileExtension);
+              // });
               // 07032024 ameen
               // item.album_images = albumphotos;
               // item.album_images.unshift(arraydata);
@@ -7381,7 +7398,7 @@ exports.newEditProfile = async (req, res) => {
           instagram_link: instagram_link ? instagram_link : userInfo[0].instagram_link != null ? userInfo[0].instagram_link : "",
           facebook_link: facebook_link ? facebook_link : userInfo[0].facebook_link != null ? userInfo[0].facebook_link : "",
           linkedIn_link: linkedIn_link ? linkedIn_link : userInfo[0].li != null ? userInfo[0].linkedIn_link : "",
-          age: get_age ? get_age : 0,
+          age: get_age ? get_age : userInfo[0].age,
           profile_image: req.file && req.file.filename ? req.file.filename : userInfo[0].profile_image,
           sub_gender: sub_gender ? sub_gender : userInfo[0].sub_gender,
           CountryCode: CountryCode ? CountryCode : userInfo[0].CountryCode
