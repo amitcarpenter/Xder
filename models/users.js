@@ -129,6 +129,8 @@ module.exports = {
     return db.query(" select * from users where id= ?", [id]);
   },
 
+
+
   fetchUserByIdtoken: async (id) => {
     return db.query(`select * from users where token = '${id}' `);
   },
@@ -941,9 +943,23 @@ module.exports = {
 
   delete_group_report: async (group_id) => {
     return db.query(`DELETE FROM reports WHERE group_id = '${group_id}';`);
-},
+  },
 
 
+  get_album_data: async (albums_photo_id) => {
+    const query = `
+      SELECT * FROM albums_photos 
+      WHERE id = ${albums_photo_id} 
+  `;
+    return db.query(query);
+  },
 
+  update_thubnail_album_data: async (albums_photo_id, album_thumbnail) => {
+    const query = `
+      UPDATE albums_photos SET album_thumbnail = '${album_thumbnail}'
+      WHERE id = ${albums_photo_id} 
+  `;
+    return db.query(query);
+  },
 
 }

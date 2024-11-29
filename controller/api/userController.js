@@ -102,7 +102,9 @@ const {
   get_user_language,
   already_check_request_function,
   update_request_reject,
-  delete_notification_request_reject } = require("../../models/users.js");
+  delete_notification_request_reject,
+  get_album_data,
+  update_thubnail_album_data } = require("../../models/users.js");
 
 const {
   insertData,
@@ -2775,12 +2777,38 @@ exports.add_Album = async (req, res) => {
               }
             }
           }
+
+          console.log(req.files, "req.file")
+
           if (images.length > 0) {
             await Promise.all(images.map(async (item) => {
               let albums = { 'album_image': item, 'album_id': result.insertId, 'user_id': user_id };
               const result1 = await uploadAlbums(albums);
+              console.log(result1)
+              const [album_data] = await get_album_data(result1.insertId)
+              console.log(album_data, "album data")
+              if (!album_data.album_image) {
+                console.error("albumn image not found")
+              }
+              let image_url = baseurl + "/albums/" + album_data.album_image;
+              console.log(image_url)
+              let final_image_url = image_url
+              
+              if (image_url.endsWith('.mp4') || image_url.endsWith('.avi')) {
+                try {
+                  final_image_url = await generateThumbnail(image_url)
+                } catch (error) {
+                  console.error(error.message)
+                }
+              }
+              const update_album = await update_thubnail_album_data(result1.insertId, final_image_url)
+              console.log(update_album, "update albumn image findal")
+
             }));
           }
+
+
+
 
 
           return res.json({

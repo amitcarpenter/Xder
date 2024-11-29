@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { fetchUserById } = require('../models/users')
+const { fetchUserById, get_user_data_by_id } = require('../models/users')
 const { handleError } = require('../utils/responseHandler');
 const db = require('../utils/database');
 
@@ -11,14 +11,26 @@ const auth = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
 
+    console.log(bearerHeader)
+
     if (typeof bearerHeader !== undefined) {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
       const verifyUser = jwt.verify(req.token, JWT_SECRET);
       const userdata = verifyUser.data.id
       console.log(verifyUser, "user verify");
+      console.log(verifyUser.data.id)
+      const [user] = await get_user_data_by_id(verifyUser.data.id);
 
-      const user = await fetchUserById({ id: verifyUser.data.id });
+      if (!user) return handleError(res, 404, "User Not Found");
+
+      if (user.is_blocked == 1) {
+        return res.json({
+          message: "You are Blocked By Admin",
+          status: 401,
+          success: false
+        });
+      }
 
       if (user !== null) {
         next();
