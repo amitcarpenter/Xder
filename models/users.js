@@ -445,9 +445,19 @@ module.exports = {
   },
 
 
+  // albumsPhotos: async (user_id, album_id) => {
+  //   return db.query(
+  //     `select *, concat('${baseurl}` + `/albums/' , album_image) AS album_image   from  albums_photos  where user_id ='${user_id}' and album_id = '${album_id}' `
+  //   );
+  // },
+
   albumsPhotos: async (user_id, album_id) => {
     return db.query(
-      `select *, concat('${baseurl}` + `/albums/' , album_image) AS album_image   from  albums_photos  where user_id ='${user_id}' and album_id = '${album_id}' `
+      `SELECT *, 
+        concat('${baseurl}/albums/', album_image) AS album_image,
+        concat('${baseurl}/albums/', album_thumbnail) AS album_thumbnail
+      FROM albums_photos 
+      WHERE user_id = '${user_id}' AND album_id = '${album_id}'`
     );
   },
 

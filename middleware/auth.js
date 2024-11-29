@@ -10,16 +10,12 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const auth = async (req, res, next) => {
   try {
     const bearerHeader = req.headers["authorization"];
-
-    console.log(bearerHeader)
-
     if (typeof bearerHeader !== undefined) {
       const bearer = bearerHeader.split(" ");
       req.token = bearer[1];
       const verifyUser = jwt.verify(req.token, JWT_SECRET);
       const userdata = verifyUser.data.id
       console.log(verifyUser, "user verify");
-      console.log(verifyUser.data.id)
       const [user] = await get_user_data_by_id(verifyUser.data.id);
 
       if (!user) return handleError(res, 404, "User Not Found");

@@ -104,7 +104,8 @@ const {
   update_request_reject,
   delete_notification_request_reject,
   get_album_data,
-  update_thubnail_album_data } = require("../../models/users.js");
+  update_thubnail_album_data, 
+  } = require("../../models/users.js");
 
 const {
   insertData,
@@ -186,7 +187,7 @@ async function generateThumbnail(videoUrl) {
       console.log('Thumbnail generated successfully');
       const thumbnailName = result[0];
       console.log('Thumbnail saved as:', thumbnailName);
-      const thumbnailPath = `http://44.199.1.149:4000/albums/${thumbnailName}`;
+      const thumbnailPath = `${thumbnailName}`;
       console.log('Thumbnail Path:', thumbnailPath);
       resolve(thumbnailPath);
     }).catch(err => {
@@ -2792,8 +2793,8 @@ exports.add_Album = async (req, res) => {
               }
               let image_url = baseurl + "/albums/" + album_data.album_image;
               console.log(image_url)
-              let final_image_url = image_url
-              
+              let final_image_url = album_data.album_image
+
               if (image_url.endsWith('.mp4') || image_url.endsWith('.avi')) {
                 try {
                   final_image_url = await generateThumbnail(image_url)
@@ -2880,6 +2881,7 @@ exports.myAlbum = async (req, res) => {
             item.images = [];
           }
 
+          // const albumphotos = await albumsPhotosWithAlbumThubnail(item.user_id, item.id);
           const albumphotos = await albumsPhotos(item.user_id, item.id);
           let hasImage = false;
           let hasVideo = false;
@@ -3320,9 +3322,28 @@ exports.editAlbum = async (req, res) => {
     }
 
     await Promise.all(
-      images.map((image) => {
+      images.map(async (image) => {
         const albumData = { album_image: image, album_id, user_id };
-        return uploadAlbums(albumData);
+        const result1 = await uploadAlbums(albumData);
+        console.log(result1)
+        const [album_data] = await get_album_data(result1.insertId)
+        console.log(album_data, "album data")
+        if (!album_data.album_image) {
+          console.error("albumn image not found")
+        }
+        let image_url = baseurl + "/albums/" + album_data.album_image;
+        console.log(image_url)
+        let final_image_url = album_data.album_image
+
+        if (image_url.endsWith('.mp4') || image_url.endsWith('.avi')) {
+          try {
+            final_image_url = await generateThumbnail(image_url)
+          } catch (error) {
+            console.error(error.message)
+          }
+        }
+        const update_album = await update_thubnail_album_data(result1.insertId, final_image_url)
+        console.log(update_album, "update albumn image findal")
       })
     );
 
