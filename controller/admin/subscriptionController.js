@@ -35,6 +35,8 @@ exports.getAllSubscriptions = async (req, res) => {
             FROM user_subscription s
             LEFT JOIN users u ON s.user_id = u.id
             LEFT JOIN subscription_plan sp ON s.subscription_id = sp.id
+            WHERE 
+                s.sub_status = '1'
         `;
         const conditions = [];
         const values = [];
@@ -53,6 +55,37 @@ exports.getAllSubscriptions = async (req, res) => {
         }
 
         const result = await pool.query(query, values);
+
+        // let query = `
+        //         SELECT 
+        //             s.*, 
+        //             u.*, 
+        //             sp.* 
+        //         FROM 
+        //             user_subscription s
+        //         LEFT JOIN 
+        //             users u ON s.user_id = u.id
+        //         LEFT JOIN 
+        //             subscription_plan sp ON s.subscription_id = sp.id
+        //         WHERE 
+        //             s.start_date IS NOT NULL
+        //             AND s.expired_at < CURRENT_DATE
+        //         `;
+
+        // if (plan_name) {
+        //     query += ` AND sp.plan_name = ?`;
+        // }
+        // if (plan_type) {
+        //     query += ` AND sp.plan_type = ?`;
+        // }
+
+        // const values = [];
+        // if (plan_name) values.push(plan_name);
+        // if (plan_type) values.push(plan_type);
+
+        // const result = await pool.query(query, values);
+
+
         if (result.length === 0) {
             return handleError(res, 404, 'No subscriptions found.');
         }

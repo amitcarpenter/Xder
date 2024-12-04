@@ -7758,8 +7758,6 @@ exports.new_add_Album = async (req, res) => {
               const result1 = await uploadAlbums(albums);
             }));
           }
-
-
           return res.json({
             message: "Photos Added to Albums Successfully",
             album_id: result.insertId,
@@ -7775,7 +7773,6 @@ exports.new_add_Album = async (req, res) => {
             status: 200,
           });
         }
-
       } else {
         return res.json({
           message: "User not found please sign-up first",
@@ -7822,7 +7819,8 @@ exports.get_my_Albums_To_share = async (req, res) => {
 
       if (albumImages.length > 0) {
         album.count = albumImages.length
-        album.image = albumImages[0].album_image;
+        album.album_image = albumImages[0].album_image;
+        album.album_thumbnail = albumImages[0].album_thumbnail;
       }
       else {
         album.count = 0
@@ -7833,6 +7831,7 @@ exports.get_my_Albums_To_share = async (req, res) => {
         album.isShared = true
       } else { album.isShared = false }
     }))
+
     return res.status(200).json({
       status: 200,
       message: 'My albums to share ',
@@ -7952,7 +7951,9 @@ exports.getAllbums = async (req, res) => {
           }
         }
         album.count = albumImages.length
-        album.image = albumImages[0].album_image;
+        // album.image = albumImages[0].album_image;
+        album.album_image = albumImages[0].album_image;
+        album.album_thumbnail = albumImages[0].album_thumbnail;
       }
       else {
         album.count = 0

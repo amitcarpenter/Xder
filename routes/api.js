@@ -105,7 +105,7 @@ router.post("/allSeen", userController.markAllSeen);
 router.post('/deleteProfileImage', auth, userController.deleteProfileimage);
 router.post('/myAlbumsToShare', userController.get_my_Albums_To_share);
 router.post('/shareMyAlbums', userController.shareMyAlbums);
-router.post('/getAlbums/:userId', userController.getAllbums);
+router.post('/getAlbums/:userId', auth, userController.getAllbums);
 router.post('/cancelAlbumRequest', auth, userController.cancelAlbumRequest);
 router.post('/createInvoice', auth, userController.createInvoice);
 router.post("/getAllGroupRequests", userController.getAllGroupRequest);
