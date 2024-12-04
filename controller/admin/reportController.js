@@ -209,21 +209,38 @@ exports.get_all_report_user = async (req, res) => {
     }
 };
 
+// const get_group_data_by_id = async (groupId, isPrivateGroup = false) => {
+//     const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
+//     console.log(collectionName)
+//     const chatGroupRef = collection(db_firebase, collectionName);
+//     const groupDoc = await getDoc(doc(chatGroupRef, groupId));
+
+//     if (!groupDoc.exists()) {
+//         throw new Error("Chat group not found");
+//     }
+
+//     return { id: groupDoc.id, ...groupDoc.data() };
+// };
 
 
+const get_group_data_by_id = async (groupId) => {
+    // Define both collection names
+    const collectionNames = ['privateChatGroup', 'publicChatGroup'];
+    
+    // Iterate through both collection names to search for the groupId
+    for (const collectionName of collectionNames) {
+        const chatGroupRef = collection(db_firebase, collectionName);
+        const groupDoc = await getDoc(doc(chatGroupRef, groupId));
 
-const get_group_data_by_id = async (groupId, isPrivateGroup = true) => {
-    const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
-    const chatGroupRef = collection(db_firebase, collectionName);
-    const groupDoc = await getDoc(doc(chatGroupRef, groupId));
-
-    if (!groupDoc.exists()) {
-        throw new Error("Chat group not found");
+        if (groupDoc.exists()) {
+            // Return data from the first found group
+            return { id: groupDoc.id, ...groupDoc.data() };
+        }
     }
 
-    return { id: groupDoc.id, ...groupDoc.data() };
+    // If the group was not found in either collection
+    throw new Error("Chat group not found");
 };
-
 
 
 exports.get_all_group_reports = async (req, res) => {
@@ -254,7 +271,6 @@ exports.get_all_group_reports = async (req, res) => {
         return handleError(res, 500, "Error retrieving reports: " + error.message);
     }
 };
-
 
 const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
     const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
