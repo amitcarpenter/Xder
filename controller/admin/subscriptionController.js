@@ -36,7 +36,7 @@ exports.getAllSubscriptions = async (req, res) => {
             LEFT JOIN users u ON s.user_id = u.id
             LEFT JOIN subscription_plan sp ON s.subscription_id = sp.id
             WHERE 
-                s.sub_status = '1'
+                s.sub_status = '1' 
         `;
         const conditions = [];
         const values = [];
