@@ -74,8 +74,13 @@ exports.get_all_group_reports = async (req, res) => {
             const [sender] = await db.query(sender_query, [report.sender_id]);
 
             let group_data = null;
+            let admin_data = null;
             try {
                 group_data = await get_group_data_by_id(report.group_id);
+                if (group_data) {
+                    const get_admin_data = `SELECT * FROM users WHERE id = ${group_data.adminId}`;
+                    [admin_data] = await db.query(get_admin_data);
+                }
             } catch (firebaseError) {
                 console.error("Error fetching group data:", firebaseError.message);
             }
@@ -83,7 +88,8 @@ exports.get_all_group_reports = async (req, res) => {
             return {
                 ...report,
                 sender,
-                group_data
+                group_data,
+                admin_data
             };
         }));
 
