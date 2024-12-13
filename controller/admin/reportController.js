@@ -106,6 +106,21 @@ const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
     return { message: "Group deleted successfully", id: groupId };
 };
 
+// const delete_group_by_id = async (groupId, isPrivateGroup = true) => {
+//     try {
+//         const collectionName = isPrivateGroup ? 'privateChatGroup' : 'publicChatGroup';
+//         const groupDocPath = `${collectionName}/${groupId}`;
+
+//         // Recursively delete the document and all its subcollections
+//         await admin.firestore().recursiveDelete(admin.firestore().doc(groupDocPath));
+
+//         return { message: "Group and its subcollections deleted successfully", id: groupId };
+//     } catch (error) {
+//         console.error("Error deleting group:", error);
+//         throw new Error("Failed to delete the group and its subcollections");
+//     }
+// };
+
 exports.delete_chat_group = async (req, res) => {
     try {
         const deleteGroupSchema = Joi.object({
